@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { PetProfile, Species, Gender } from '../types';
 
 const MOCK_PATIENTS: PetProfile[] = [
+  { id: 'PET-LUNA-123', name: 'Luna', species: Species.Dog, breed: 'Golden Retriever', dateOfBirth: '2021-06-15', gender: Gender.Female, avatar: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=200&h=200' },
   { id: 'PET-MAX-55', name: 'Max', species: Species.Dog, breed: 'Beagle', dateOfBirth: '2019-04-12', gender: Gender.Male, avatar: 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?auto=format&fit=crop&q=80&w=200&h=200' },
   { id: 'PET-BELLA-22', name: 'Bella', species: Species.Cat, breed: 'Siamese', dateOfBirth: '2022-08-20', gender: Gender.Female, avatar: 'https://images.unsplash.com/photo-1513245538231-152271936348?auto=format&fit=crop&q=80&w=200&h=200' },
   { id: 'PET-CHARLIE-88', name: 'Charlie', species: Species.Dog, breed: 'Poodle', dateOfBirth: '2023-01-05', gender: Gender.Male, avatar: 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&q=80&w=200&h=200' },
@@ -17,6 +18,9 @@ interface DoctorPatientsScreenProps {
 const DoctorPatientsScreen: React.FC<DoctorPatientsScreenProps> = ({ onViewRecords }) => {
   const [selectedPatient, setSelectedPatient] = useState<PetProfile | null>(null);
 
+  // Strictly limited to 10 recent patients
+  const recentPatients = MOCK_PATIENTS.slice(0, 10);
+
   const handleViewRecords = () => {
     if (selectedPatient && onViewRecords) {
       onViewRecords(selectedPatient.id);
@@ -26,10 +30,13 @@ const DoctorPatientsScreen: React.FC<DoctorPatientsScreenProps> = ({ onViewRecor
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <h3 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50 px-2">Recent Cases</h3>
+      <div className="px-2">
+        <h3 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50">Recent Cases</h3>
+        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">Showing last 10 visits</p>
+      </div>
       
       <div className="grid grid-cols-1 gap-4">
-        {MOCK_PATIENTS.map((patient, idx) => (
+        {recentPatients.map((patient, idx) => (
           <div 
             key={patient.id}
             onClick={() => setSelectedPatient(patient)}
@@ -53,7 +60,7 @@ const DoctorPatientsScreen: React.FC<DoctorPatientsScreenProps> = ({ onViewRecor
       </div>
 
       <div className="text-center py-6 mt-4">
-        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">End of Recent Activity</p>
+        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">End of Record History</p>
       </div>
 
       {/* Floating Panel (Modal) */}

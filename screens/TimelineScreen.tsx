@@ -243,7 +243,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({ timeline, setTimeline, docume
         </div>
       </section>
 
-      {/* --- Doctors Consulted Section (NEW) --- */}
+      {/* --- Doctors Consulted Section --- */}
       <section className="space-y-6 pt-8 border-t-2 border-zinc-100 dark:border-zinc-900">
         <div>
           <h2 className="text-3xl font-bold font-lobster text-indigo-600 dark:text-indigo-400 tracking-wide">Doctors Consulted</h2>
@@ -273,26 +273,29 @@ const TimelineScreen: React.FC<TimelineProps> = ({ timeline, setTimeline, docume
         </div>
       </section>
 
-      {/* Doctor Profile Modal */}
+      {/* Doctor Profile Modal - Enhanced with New Fields */}
       {selectedDoctor && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-zinc-950/80 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[3rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col border-4 border-indigo-100 dark:border-zinc-800">
             <div className="p-8 text-center space-y-4">
-              <div className="w-24 h-24 bg-indigo-50 text-indigo-600 rounded-[2rem] flex items-center justify-center text-4xl mx-auto border-4 border-white dark:border-zinc-800 shadow-xl">
+              <div className="w-24 h-24 bg-gradient-to-tr from-indigo-500 to-purple-600 text-white rounded-[2rem] flex items-center justify-center text-4xl mx-auto border-4 border-white dark:border-zinc-800 shadow-xl">
                 <i className="fa-solid fa-stethoscope"></i>
               </div>
               <div>
-                <h3 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50">{selectedDoctor.name}</h3>
+                <h3 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50 leading-tight">{selectedDoctor.name}</h3>
                 <p className="text-[11px] font-black text-indigo-500 uppercase tracking-[0.2em]">{selectedDoctor.specialization}</p>
               </div>
-              <div className="pt-6 space-y-4 text-left border-t dark:border-zinc-800">
-                <ModalInfo label="UID" value={selectedDoctor.id} />
+              <div className="pt-6 space-y-4 text-left border-t dark:border-zinc-800 overflow-y-auto max-h-[300px] no-scrollbar">
+                <ModalInfo label="Qualification" value={selectedDoctor.qualification} />
+                <ModalInfo label="Reg. ID" value={selectedDoctor.registrationId} />
+                <ModalInfo label="Experience" value={selectedDoctor.experience} />
                 <ModalInfo label="Clinic" value={selectedDoctor.clinic} />
+                <ModalInfo label="Address" value={selectedDoctor.address} />
                 <ModalInfo label="Contact" value={selectedDoctor.contact} />
               </div>
               <button 
                 onClick={() => setSelectedDoctor(null)}
-                className="w-full mt-8 bg-zinc-900 dark:bg-zinc-800 text-white font-black py-5 rounded-[2rem] shadow-xl uppercase tracking-widest hover:brightness-110 transition-all"
+                className="w-full mt-8 bg-zinc-900 dark:bg-zinc-800 text-white font-black py-5 rounded-[2rem] shadow-xl uppercase tracking-widest hover:brightness-110 transition-all active:scale-95"
               >
                 Close Profile
               </button>
@@ -305,9 +308,9 @@ const TimelineScreen: React.FC<TimelineProps> = ({ timeline, setTimeline, docume
 };
 
 const ModalInfo: React.FC<{ label: string, value: string }> = ({ label, value }) => (
-  <div className="flex justify-between items-center">
+  <div className="flex flex-col py-1">
     <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">{label}</span>
-    <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{value}</span>
+    <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200 leading-tight">{value}</span>
   </div>
 );
 

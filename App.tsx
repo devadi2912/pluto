@@ -63,8 +63,28 @@ const MOCK_ROUTINE: RoutineItem[] = [
 ];
 
 const MOCK_CONSULTED_DOCTORS: Doctor[] = [
-  { id: 'DOC-SMITH-45', name: 'Dr. Sarah Smith', specialization: 'Cardiology Specialist', clinic: 'Green Valley Clinic', contact: '555-0102' },
-  { id: 'DOC-WONG-99', name: 'Dr. Mike Wong', specialization: 'Dental Vet', clinic: 'Smile Pet Center', contact: '555-0199' }
+  { 
+    id: 'DOC-SMITH-45', 
+    name: 'Dr. Sarah Smith', 
+    specialization: 'Cardiology Specialist', 
+    qualification: 'DVM, PhD Cardiology',
+    registrationId: 'VET-TX-99881',
+    experience: '12 Years',
+    clinic: 'Green Valley Clinic', 
+    address: '123 Pawsome Way, Austin, TX',
+    contact: '555-0102' 
+  },
+  { 
+    id: 'DOC-WONG-99', 
+    name: 'Dr. Mike Wong', 
+    specialization: 'Dental Vet', 
+    qualification: 'DVM, DDSV',
+    registrationId: 'VET-TX-11223',
+    experience: '8 Years',
+    clinic: 'Smile Pet Center', 
+    address: '88 Bark Blvd, Austin, TX',
+    contact: '555-0199' 
+  }
 ];
 
 const App: React.FC = () => {

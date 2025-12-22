@@ -27,8 +27,12 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, darkMode, setDarkMode 
         id: `DOC-${mockId}`,
         name: `Dr. ${username}`,
         specialization: 'General Veterinary',
+        qualification: 'DVM, M.Sc Animal Health',
+        registrationId: `VET-ID-${mockId.substr(0,5)}`,
+        experience: '10+ Years',
         clinic: 'Pluto Animal Hospital',
-        contact: 'contact@plutocare.com'
+        address: '77 Galaxy Square, Pet City, PC 10101',
+        contact: '+1 (555) 123-4567'
       } : undefined
     };
 

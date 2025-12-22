@@ -77,7 +77,11 @@ export interface Doctor {
   id: string;
   name: string;
   specialization: string;
+  qualification: string;
+  registrationId: string;
+  experience: string;
   clinic: string;
+  address: string;
   contact: string;
 }
 

@@ -13,6 +13,8 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<PetProfile>(pet);
   const [copied, setCopied] = useState(false);
+  const [showBirthdaySparkle, setShowBirthdaySparkle] = useState(false);
+  const [isPartyTime, setIsPartyTime] = useState(false);
 
   const handleSave = () => {
     setPet(formData);
@@ -23,6 +25,16 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
     navigator.clipboard.writeText(pet.id);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const triggerBirthdayEffect = () => {
+    setShowBirthdaySparkle(true);
+    setTimeout(() => setShowBirthdaySparkle(false), 1000);
+  };
+
+  const triggerParty = () => {
+    setIsPartyTime(true);
+    setTimeout(() => setIsPartyTime(false), 1500);
   };
 
   const calculateAge = (dob: string) => {
@@ -100,13 +112,19 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
         <h2 className="text-4xl font-bold font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide">Pet Identity</h2>
         <button 
           onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-          className={`px-8 py-3 rounded-2xl text-[11px] font-black tracking-widest uppercase transition-all shadow-xl active:scale-95 ${
+          className={`px-5 py-2.5 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all shadow-md active:scale-95 relative group overflow-hidden ${
             isEditing 
-              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-b-4 border-emerald-700' 
-              : 'bg-gradient-to-r from-orange-500 via-pink-500 to-rose-600 text-white border-b-4 border-rose-800'
+              ? 'bg-emerald-500 text-white hover:bg-emerald-600' 
+              : 'bg-gradient-to-r from-orange-500 to-rose-500 text-white hover:shadow-xl hover:-translate-y-0.5'
           }`}
         >
-          {isEditing ? 'Save' : 'Edit Info'}
+          <div className="flex items-center gap-2 relative z-10">
+            <i className={`fa-solid ${isEditing ? 'fa-check' : 'fa-pen-to-square'} text-xs`}></i>
+            {isEditing ? 'Save' : 'Edit Info'}
+          </div>
+          {!isEditing && (
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+          )}
         </button>
       </div>
 
@@ -132,7 +150,7 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
       </div>
 
       <div className="bg-white dark:bg-zinc-900 rounded-[3rem] border-2 border-zinc-100 dark:border-zinc-800 p-8 space-y-8 shadow-xl">
-        {/* Unified Identifier Design */}
+        {/* Identifier Display */}
         <div className="space-y-3 relative">
           <label className="text-[11px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-[0.15em] ml-1">Unique Identifier</label>
           <div className="relative">
@@ -177,13 +195,27 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
         </div>
 
         <div className="grid grid-cols-2 gap-8">
-          <InputField 
-            label="Birthday" 
-            type="date"
-            value={formData.dateOfBirth} 
-            onChange={(v) => setFormData({...formData, dateOfBirth: v})} 
-            disabled={!isEditing} 
-          />
+          <div className="relative group">
+            <InputField 
+              label="Birthday" 
+              type="date"
+              value={formData.dateOfBirth} 
+              onChange={(v) => setFormData({...formData, dateOfBirth: v})} 
+              disabled={!isEditing} 
+              onClick={triggerBirthdayEffect}
+              className={`transition-all duration-300 ${!isEditing ? 'hover:scale-105 hover:shadow-xl hover:rotate-1 cursor-pointer' : ''}`}
+            />
+            {showBirthdaySparkle && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                <i className="fa-solid fa-sparkles text-amber-400 text-3xl animate-ping"></i>
+              </div>
+            )}
+            {!isEditing && (
+              <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-amber-400 text-white text-[8px] px-2 py-1 rounded-full font-black uppercase tracking-tighter shadow-sm animate-bounce">
+                Click for Magic!
+              </div>
+            )}
+          </div>
           <InputField 
             label="Calculated Age" 
             value={calculateAge(isEditing ? formData.dateOfBirth : pet.dateOfBirth)} 
@@ -206,23 +238,38 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
       <section className="space-y-5">
         <h3 className="text-2xl font-bold font-lobster text-zinc-900 dark:text-zinc-50 px-2">Vitals & Stats</h3>
         <div className="grid grid-cols-2 gap-5">
-           <div className="bg-gradient-to-br from-indigo-500 via-purple-600 to-purple-800 p-7 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group">
+           {/* Birthday Stats Button with Party Animation */}
+           <button 
+             onClick={triggerParty}
+             className={`bg-gradient-to-br from-indigo-500 via-purple-600 to-purple-800 p-7 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group transition-all duration-500 hover:scale-[1.05] active:scale-95 text-left border-2 border-transparent hover:border-white/30 ${isPartyTime ? 'animate-bounce' : ''}`}
+           >
+              {/* Confetti Animation Layer */}
+              {isPartyTime && (
+                <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+                   <i className="fa-solid fa-star absolute text-yellow-300 text-sm top-2 left-4 animate-ping"></i>
+                   <i className="fa-solid fa-heart absolute text-pink-400 text-xs bottom-4 right-10 animate-bounce"></i>
+                   <i className="fa-solid fa-sparkles absolute text-amber-300 text-lg top-10 right-4 animate-pulse"></i>
+                   <i className="fa-solid fa-certificate absolute text-indigo-300 text-xs top-4 left-1/2 animate-spin"></i>
+                </div>
+              )}
+              
               <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-4 border border-white/30 backdrop-blur-md">
-                <i className="fa-solid fa-cake-candles text-xl"></i>
+              <div className={`w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-4 border border-white/30 backdrop-blur-md transition-transform duration-300 ${isPartyTime ? 'scale-125 rotate-12 bg-white/40' : 'group-hover:scale-110'}`}>
+                <i className={`fa-solid ${isPartyTime ? 'fa-gift' : 'fa-cake-candles'} text-xl`}></i>
               </div>
               <p className="text-[10px] font-black uppercase tracking-widest text-indigo-100">Next B-Day</p>
               <p className="text-2xl font-bold mt-1">
                 {new Date(pet.dateOfBirth).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
               </p>
-           </div>
+           </button>
+
            <button 
              onClick={handleVitalityClick}
              disabled={vitality.label === "Excellent"}
-             className={`bg-gradient-to-br ${vitality.colorClass} p-7 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group transition-all duration-500 text-left ${vitality.label !== "Excellent" ? 'hover:scale-[1.05] active:scale-95 cursor-pointer' : 'cursor-default'}`}
+             className={`bg-gradient-to-br ${vitality.colorClass} p-7 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group transition-all duration-500 text-left border-2 border-transparent ${vitality.label !== "Excellent" ? 'hover:scale-[1.05] active:scale-95 cursor-pointer hover:border-white/30' : 'cursor-default'}`}
            >
               <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-4 border border-white/30 backdrop-blur-md">
+              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-4 border border-white/30 backdrop-blur-md group-hover:scale-110 transition-transform">
                 <i className={`fa-solid ${vitality.icon} text-xl`}></i>
               </div>
               <p className="text-[10px] font-black uppercase tracking-widest opacity-80">{vitality.detail}</p>
@@ -239,9 +286,11 @@ const InputField: React.FC<{
   value: string, 
   onChange: (v: string) => void, 
   disabled?: boolean,
-  type?: string
-}> = ({ label, value, onChange, disabled, type = "text" }) => (
-  <div className="space-y-3">
+  type?: string,
+  onClick?: () => void,
+  className?: string
+}> = ({ label, value, onChange, disabled, type = "text", onClick, className = "" }) => (
+  <div className={`space-y-3 ${className}`} onClick={onClick}>
     <label className="text-[11px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-[0.15em] ml-1">{label}</label>
     <input 
       type={type}
