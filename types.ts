@@ -12,6 +12,7 @@ export enum Gender {
 }
 
 export interface PetProfile {
+  id: string;
   name: string;
   species: Species;
   breed: string;
@@ -68,4 +69,22 @@ export interface RoutineItem {
   time: string;
   completed: boolean;
   category: 'Food' | 'Walk' | 'Medication' | 'Play' | 'Sleep' | 'Other';
+}
+
+export type UserRole = 'PET_OWNER' | 'DOCTOR';
+
+export interface Doctor {
+  id: string;
+  name: string;
+  specialization: string;
+  clinic: string;
+  contact: string;
+}
+
+export interface AuthUser {
+  id: string;
+  username: string;
+  role: UserRole;
+  petId?: string;
+  doctorDetails?: Doctor;
 }

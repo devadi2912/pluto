@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { TimelineEntry, EntryType, PetDocument, Reminder } from '../types';
+import { TimelineEntry, EntryType, PetDocument, Reminder, Doctor } from '../types';
 
 interface TimelineProps {
   timeline: TimelineEntry[];
@@ -8,11 +8,13 @@ interface TimelineProps {
   documents: PetDocument[];
   reminders: Reminder[];
   setReminders: (r: Reminder[]) => void;
+  consultedDoctors?: Doctor[];
 }
 
-const TimelineScreen: React.FC<TimelineProps> = ({ timeline, setTimeline, documents, reminders, setReminders }) => {
+const TimelineScreen: React.FC<TimelineProps> = ({ timeline, setTimeline, documents, reminders, setReminders, consultedDoctors = [] }) => {
   const [showAdd, setShowAdd] = useState(false);
   const [showAddReminder, setShowAddReminder] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   
   const [newEntry, setNewEntry] = useState<Partial<TimelineEntry>>({
     type: EntryType.Note,
@@ -240,8 +242,73 @@ const TimelineScreen: React.FC<TimelineProps> = ({ timeline, setTimeline, docume
           )}
         </div>
       </section>
+
+      {/* --- Doctors Consulted Section (NEW) --- */}
+      <section className="space-y-6 pt-8 border-t-2 border-zinc-100 dark:border-zinc-900">
+        <div>
+          <h2 className="text-3xl font-bold font-lobster text-indigo-600 dark:text-indigo-400 tracking-wide">Doctors Consulted</h2>
+          <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mt-1">Medical access history</p>
+        </div>
+        <div className="grid grid-cols-1 gap-4">
+          {consultedDoctors.length === 0 ? (
+            <p className="text-center py-6 text-zinc-400 text-xs italic">No doctors have accessed this pet yet.</p>
+          ) : (
+            consultedDoctors.map(doc => (
+              <div 
+                key={doc.id}
+                onClick={() => setSelectedDoctor(doc)}
+                className="bg-white dark:bg-zinc-900 border-2 border-zinc-50 dark:border-zinc-800 p-5 rounded-[2rem] flex items-center gap-4 hover:border-indigo-200 dark:hover:border-indigo-900 cursor-pointer transition-all shadow-sm group active:scale-95"
+              >
+                <div className="w-12 h-12 bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 rounded-2xl flex items-center justify-center text-xl">
+                  <i className="fa-solid fa-user-md"></i>
+                </div>
+                <div className="flex-1">
+                  <h5 className="font-bold text-zinc-800 dark:text-zinc-200">{doc.name}</h5>
+                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">{doc.specialization}</p>
+                </div>
+                <i className="fa-solid fa-chevron-right text-zinc-200 group-hover:text-indigo-400 transition-colors"></i>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
+      {/* Doctor Profile Modal */}
+      {selectedDoctor && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-zinc-950/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[3rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col border-4 border-indigo-100 dark:border-zinc-800">
+            <div className="p-8 text-center space-y-4">
+              <div className="w-24 h-24 bg-indigo-50 text-indigo-600 rounded-[2rem] flex items-center justify-center text-4xl mx-auto border-4 border-white dark:border-zinc-800 shadow-xl">
+                <i className="fa-solid fa-stethoscope"></i>
+              </div>
+              <div>
+                <h3 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50">{selectedDoctor.name}</h3>
+                <p className="text-[11px] font-black text-indigo-500 uppercase tracking-[0.2em]">{selectedDoctor.specialization}</p>
+              </div>
+              <div className="pt-6 space-y-4 text-left border-t dark:border-zinc-800">
+                <ModalInfo label="UID" value={selectedDoctor.id} />
+                <ModalInfo label="Clinic" value={selectedDoctor.clinic} />
+                <ModalInfo label="Contact" value={selectedDoctor.contact} />
+              </div>
+              <button 
+                onClick={() => setSelectedDoctor(null)}
+                className="w-full mt-8 bg-zinc-900 dark:bg-zinc-800 text-white font-black py-5 rounded-[2rem] shadow-xl uppercase tracking-widest hover:brightness-110 transition-all"
+              >
+                Close Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+const ModalInfo: React.FC<{ label: string, value: string }> = ({ label, value }) => (
+  <div className="flex justify-between items-center">
+    <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">{label}</span>
+    <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{value}</span>
+  </div>
+);
 
 export default TimelineScreen;

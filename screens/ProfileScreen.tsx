@@ -10,10 +10,17 @@ interface ProfileProps {
 const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<PetProfile>(pet);
+  const [copied, setCopied] = useState(false);
 
   const handleSave = () => {
     setPet(formData);
     setIsEditing(false);
+  };
+
+  const copyId = () => {
+    navigator.clipboard.writeText(pet.id);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -54,6 +61,22 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet }) => {
       </div>
 
       <div className="bg-white dark:bg-zinc-900 rounded-[3rem] border-2 border-zinc-100 dark:border-zinc-800 p-8 space-y-8 shadow-xl">
+        {/* Pet ID Section - Subtle addition blending with details */}
+        <div className="pb-4 border-b dark:border-zinc-800 flex items-center justify-between">
+          <div>
+             <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Unique Identifier</label>
+             <p className="text-sm font-black text-zinc-900 dark:text-zinc-50 tracking-tighter mt-0.5">{pet.id}</p>
+          </div>
+          <button 
+            onClick={copyId}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+              copied ? 'bg-emerald-500 text-white' : 'bg-zinc-50 dark:bg-zinc-800 text-zinc-400 hover:text-orange-500'
+            }`}
+          >
+            <i className={`fa-solid ${copied ? 'fa-check' : 'fa-copy'}`}></i>
+          </button>
+        </div>
+
         <InputField 
           label="Display Name" 
           value={formData.name} 

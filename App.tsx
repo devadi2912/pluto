@@ -9,15 +9,20 @@ import {
   Reminder, 
   DailyChecklist,
   EntryType,
-  RoutineItem
+  RoutineItem,
+  AuthUser,
+  Doctor
 } from './types';
 import Dashboard from './screens/Dashboard';
 import ProfileScreen from './screens/ProfileScreen';
 import TimelineScreen from './screens/TimelineScreen';
 import DocumentsScreen from './screens/DocumentsScreen';
 import AIScreen from './screens/AIScreen';
+import AuthScreen from './screens/AuthScreen';
+import DoctorDashboard from './screens/DoctorDashboard';
 
 const MOCK_PET: PetProfile = {
+  id: 'PET-LUNA-123',
   name: 'Luna',
   species: Species.Dog,
   breed: 'Golden Retriever',
@@ -56,7 +61,13 @@ const MOCK_ROUTINE: RoutineItem[] = [
   { id: '3', title: 'Evening Walk', time: '18:00', completed: false, category: 'Walk' },
 ];
 
+const MOCK_CONSULTED_DOCTORS: Doctor[] = [
+  { id: 'DOC-SMITH-45', name: 'Dr. Sarah Smith', specialization: 'Cardiology Specialist', clinic: 'Green Valley Clinic', contact: '555-0102' },
+  { id: 'DOC-WONG-99', name: 'Dr. Mike Wong', specialization: 'Dental Vet', clinic: 'Smile Pet Center', contact: '555-0199' }
+];
+
 const App: React.FC = () => {
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'profile' | 'timeline' | 'documents' | 'ai'>('dashboard');
   const [darkMode, setDarkMode] = useState(false);
   const [pet, setPet] = useState<PetProfile>(MOCK_PET);
@@ -65,6 +76,7 @@ const App: React.FC = () => {
   const [reminders, setReminders] = useState<Reminder[]>(MOCK_REMINDERS);
   const [checklist, setChecklist] = useState<DailyChecklist>(MOCK_CHECKLIST);
   const [routine, setRoutine] = useState<RoutineItem[]>(MOCK_ROUTINE);
+  const [consultedDoctors] = useState<Doctor[]>(MOCK_CONSULTED_DOCTORS);
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -129,6 +141,7 @@ const App: React.FC = () => {
             documents={documents} 
             reminders={reminders}
             setReminders={setReminders}
+            consultedDoctors={consultedDoctors}
           />
         );
       case 'documents':
@@ -139,6 +152,49 @@ const App: React.FC = () => {
         return <Dashboard pet={pet} reminders={reminders} checklist={checklist} setChecklist={setChecklist} routine={routine} setRoutine={setRoutine} onCompleteReminder={handleCompleteReminder} />;
     }
   };
+
+  if (!user) {
+    return <AuthScreen onLogin={setUser} darkMode={darkMode} setDarkMode={setDarkMode} />;
+  }
+
+  if (user.role === 'DOCTOR') {
+    return (
+      <div className="flex flex-col h-screen max-w-lg mx-auto bg-white dark:bg-zinc-950 shadow-2xl overflow-hidden relative font-comic transition-colors">
+        <header className="p-4 flex items-center justify-between border-b border-zinc-200/40 dark:border-zinc-800/40 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-2xl sticky top-0 z-40 transition-all shadow-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-400 rounded-full flex items-center justify-center text-white shadow-md">
+              <i className="fa-solid fa-user-doctor text-lg"></i>
+            </div>
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 font-lobster tracking-tight">Pluto Doctor</h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setDarkMode(!darkMode)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-sm border-2 ${
+                darkMode 
+                  ? 'bg-zinc-900/50 text-amber-300 border-zinc-800/50' 
+                  : 'bg-indigo-50/50 text-indigo-600 border-indigo-100/50'
+              }`}
+            >
+              <i className={`fa-solid ${darkMode ? 'fa-moon' : 'fa-sun'}`}></i>
+            </button>
+            <button 
+              onClick={() => setUser(null)}
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-rose-500 transition-colors shadow-sm"
+            >
+              <i className="fa-solid fa-right-from-bracket"></i>
+            </button>
+          </div>
+        </header>
+        <DoctorDashboard 
+          doctor={user} 
+          petData={{ pet, timeline, documents, checklist, routine, reminders }} 
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen max-w-lg mx-auto bg-white dark:bg-zinc-950 shadow-2xl overflow-hidden relative font-comic transition-colors">
@@ -160,18 +216,20 @@ const App: React.FC = () => {
           >
             <i className={`fa-solid ${darkMode ? 'fa-moon' : 'fa-sun'}`}></i>
           </button>
-          <div className="relative group cursor-pointer">
-            <img src={pet.avatar} className="w-10 h-10 rounded-full border-2 border-orange-500 p-0.5 shadow-sm group-hover:scale-110 transition-transform" alt="avatar" />
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
-          </div>
+          <button 
+            onClick={() => setUser(null)}
+            className="w-10 h-10 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-rose-500 transition-colors shadow-sm"
+          >
+            <i className="fa-solid fa-right-from-bracket"></i>
+          </button>
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto custom-scrollbar pb-24 text-zinc-900 dark:text-zinc-100">
+      <main className="flex-1 overflow-y-auto custom-scrollbar pb-32 text-zinc-900 dark:text-zinc-100">
         {renderScreen()}
       </main>
 
-      <nav className="absolute bottom-0 left-0 right-0 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-2xl border-t-2 border-zinc-200/40 dark:border-zinc-800/40 flex justify-around p-3 pb-8 z-40 transition-all shadow-[0_-10px_30px_rgba(0,0,0,0.08)]">
+      <nav className="absolute bottom-0 left-0 right-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-2xl border-t-2 border-zinc-200/40 dark:border-zinc-800/40 flex justify-around p-3 pb-10 z-50 transition-all shadow-[0_-15px_40px_rgba(0,0,0,0.1)]">
         <NavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon="house" label="Home" color="orange" />
         <NavButton active={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')} icon="calendar-days" label="Journal" color="emerald" />
         <NavButton active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} icon="sparkles" label="Pluto AI" isAction petAvatar={pet.avatar} />
@@ -182,13 +240,13 @@ const App: React.FC = () => {
   );
 };
 
-const NavButton: React.FC<{ 
+export const NavButton: React.FC<{ 
   active: boolean, 
   onClick: () => void, 
   icon: string, 
   label: string,
   isAction?: boolean,
-  color?: 'orange' | 'emerald' | 'amber' | 'rose',
+  color?: 'orange' | 'emerald' | 'amber' | 'rose' | 'indigo',
   petAvatar?: string
 }> = ({ active, onClick, icon, label, isAction, color = 'orange', petAvatar }) => {
   const colorMap = {
@@ -196,6 +254,7 @@ const NavButton: React.FC<{
     emerald: 'text-emerald-600 dark:text-emerald-400',
     amber: 'text-amber-600 dark:text-amber-400',
     rose: 'text-rose-600 dark:text-rose-400',
+    indigo: 'text-indigo-600 dark:text-indigo-400',
   };
 
   if (isAction) {
@@ -206,19 +265,17 @@ const NavButton: React.FC<{
         <div className={`
           w-14 h-14 flex items-center justify-center rounded-2xl transition-all shadow-xl border-2 relative overflow-hidden
           ${active 
-            ? 'bg-orange-500 text-white shadow-orange-500/50 scale-110 border-white/40' 
+            ? `${color === 'indigo' ? 'bg-indigo-600' : 'bg-orange-500'} text-white shadow-xl scale-110 border-white/40` 
             : 'bg-zinc-100/60 dark:bg-zinc-900/60 backdrop-blur-md text-zinc-500 dark:text-zinc-400 shadow-sm hover:scale-110 border-zinc-200/50 dark:border-zinc-800/50'
           }
         `}>
-          {active ? (
-            <div className="absolute inset-0 flex items-center justify-center animate-pulse">
-               <i className="fa-solid fa-sparkles text-2xl"></i>
-            </div>
-          ) : (
+          {petAvatar && !active ? (
             <div className="flex flex-col items-center justify-center gap-0.5">
                <img src={petAvatar} className="w-8 h-8 rounded-full border border-white/50" alt="pet" />
                <i className="fa-solid fa-sparkles text-[10px] text-orange-400 opacity-60"></i>
             </div>
+          ) : (
+            <i className={`fa-solid fa-${icon} text-2xl`}></i>
           )}
         </div>
         <span className={`text-[11px] font-bold uppercase tracking-widest ${active ? 'text-zinc-900 dark:text-zinc-50' : 'text-zinc-600 dark:text-zinc-500'} truncate max-w-[64px] transition-colors`}>
