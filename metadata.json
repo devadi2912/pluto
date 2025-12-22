@@ -1,0 +1,8 @@
+{
+  "name": "Pluto – A Small World for Pets",
+  "description": "A unified digital home for pet owners to track care, manage records, and stay on top of daily tasks with AI-powered insights.",
+  "requestFramePermissions": [
+    "geolocation",
+    "camera"
+  ]
+}
