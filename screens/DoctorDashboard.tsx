@@ -5,7 +5,7 @@ import Dashboard from './Dashboard';
 import TimelineScreen from './TimelineScreen';
 import DocumentsScreen from './DocumentsScreen';
 import ProfileScreen from './ProfileScreen';
-import { NavButton } from '../App';
+import { NavButton } from '../components/NavButton';
 import DoctorProfileScreen from './DoctorProfileScreen';
 import DoctorPatientsScreen from './DoctorPatientsScreen';
 import DoctorSearchScreen from './DoctorSearchScreen';
@@ -31,11 +31,13 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ doctor, petData, dark
   const [doctorProfile] = useState(doctor.doctorDetails!);
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'timeline' | 'docs' | 'identity'>('profile');
 
-  const handleSearch = () => {
-    if (searchId.toUpperCase() === petData.pet.id) {
+  const handleSearch = (id?: string) => {
+    const targetId = id || searchId;
+    // For demo purposes, we'll allow viewing the mock pet if the ID matches or if it's from the recent cases list
+    if (targetId.toUpperCase() === petData.pet.id || targetId.startsWith('PET-')) {
       setViewingPet(true);
     } else {
-      alert("Pet ID not found. Try: " + petData.pet.id);
+      alert("Pet ID not found. Try searching for: " + petData.pet.id);
     }
   };
 
@@ -46,7 +48,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ doctor, petData, dark
           <button onClick={() => setViewingPet(false)} className="w-8 h-8 flex items-center justify-center hover:bg-white/20 rounded-full transition-colors">
             <i className="fa-solid fa-arrow-left"></i>
           </button>
-          <span className="font-black uppercase tracking-widest text-xs">Patient: {petData.pet.name}</span>
+          <span className="font-black uppercase tracking-widest text-xs">Patient Dashboard</span>
         </div>
         <div className="flex items-center gap-3">
           <button 
@@ -93,7 +95,12 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ doctor, petData, dark
           <DocumentsScreen documents={petData.documents} setDocuments={() => {}} />
         )}
         {activeSubTab === 'identity' && (
-          <ProfileScreen pet={petData.pet} setPet={() => {}} />
+          // Fix: Added missing reminders prop to ProfileScreen
+          <ProfileScreen 
+            pet={petData.pet} 
+            setPet={() => {}} 
+            reminders={petData.reminders} 
+          />
         )}
       </div>
     </div>
@@ -104,10 +111,10 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ doctor, petData, dark
       case 'profile':
         return <DoctorProfileScreen doctorProfile={doctorProfile} doctorId={doctor.doctorDetails?.id || ''} />;
       case 'patients':
-        return <DoctorPatientsScreen />;
+        return <DoctorPatientsScreen onViewRecords={(id) => handleSearch(id)} />;
       case 'discover':
       default:
-        return <DoctorSearchScreen searchId={searchId} setSearchId={setSearchId} handleSearch={handleSearch} />;
+        return <DoctorSearchScreen searchId={searchId} setSearchId={setSearchId} handleSearch={() => handleSearch()} />;
     }
   };
 

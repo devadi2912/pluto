@@ -250,7 +250,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
               <button 
                 onClick={() => onCompleteReminder(reminder.id)}
-                className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-bold text-[10px] px-5 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 transition-all duration-300 hover:bg-emerald-500 hover:text-white hover:border-emerald-600 active:scale-95 uppercase tracking-widest"
+                className="bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 font-black text-[10px] px-5 py-3 rounded-xl border-2 border-zinc-100 dark:border-zinc-800 transition-all duration-300 hover:bg-emerald-500 hover:text-white hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:scale-95 active:translate-y-0 uppercase tracking-widest"
               >
                 MARK DONE
               </button>

@@ -12,6 +12,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, darkMode, setDarkMode 
   const [role, setRole] = useState<UserRole>('PET_OWNER');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = () => {
     if (!username.trim()) return;
@@ -55,7 +56,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, darkMode, setDarkMode 
           <i className="fa-solid fa-paw text-4xl"></i>
         </div>
         <h1 className="text-5xl font-lobster text-zinc-900 dark:text-zinc-50 tracking-tight">Welcome to Pluto</h1>
-        <p className="text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-widest text-[10px]">Your Pet's Digital Home</p>
+        <p className="text-zinc-600 dark:text-zinc-400 font-bold uppercase tracking-widest text-[10px]">Your Pet's Digital Home</p>
       </div>
 
       <div className="bg-white dark:bg-zinc-900 rounded-[3rem] p-8 shadow-2xl border-4 border-orange-50 dark:border-zinc-800 space-y-8">
@@ -63,7 +64,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, darkMode, setDarkMode 
           <button 
             onClick={() => setRole('PET_OWNER')}
             className={`flex-1 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
-              role === 'PET_OWNER' ? 'bg-white dark:bg-zinc-900 text-orange-600 shadow-md' : 'text-zinc-400'
+              role === 'PET_OWNER' ? 'bg-white dark:bg-zinc-900 text-orange-600 shadow-md' : 'text-zinc-500'
             }`}
           >
             Pet Owner
@@ -71,7 +72,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, darkMode, setDarkMode 
           <button 
             onClick={() => setRole('DOCTOR')}
             className={`flex-1 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
-              role === 'DOCTOR' ? 'bg-white dark:bg-zinc-900 text-orange-600 shadow-md' : 'text-zinc-400'
+              role === 'DOCTOR' ? 'bg-white dark:bg-zinc-900 text-orange-600 shadow-md' : 'text-zinc-500'
             }`}
           >
             Doctor
@@ -80,24 +81,34 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, darkMode, setDarkMode 
 
         <div className="space-y-6">
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-orange-600 uppercase tracking-widest ml-1">Username</label>
+            <label className="text-[10px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-widest ml-1">Username</label>
             <input 
               type="text" 
               placeholder="e.g. LunaLover99"
-              className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-orange-200 outline-none rounded-2xl font-bold dark:text-white"
+              className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-transparent focus:border-orange-200 outline-none rounded-2xl font-bold text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
               value={username}
               onChange={e => setUsername(e.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-orange-600 uppercase tracking-widest ml-1">Password</label>
-            <input 
-              type="password" 
-              placeholder="••••••••"
-              className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-orange-200 outline-none rounded-2xl font-bold dark:text-white"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-            />
+            <label className="text-[10px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-widest ml-1">Password</label>
+            <div className="relative">
+              <input 
+                type={showPassword ? "text" : "password"} 
+                placeholder="••••••••"
+                className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-transparent focus:border-orange-200 outline-none rounded-2xl font-bold text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 pr-14"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-xl text-zinc-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'} text-lg`}></i>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -109,7 +120,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, darkMode, setDarkMode 
         </button>
       </div>
 
-      <p className="mt-8 text-center text-zinc-400 text-[10px] font-black uppercase tracking-widest">
+      <p className="mt-8 text-center text-zinc-500 dark:text-zinc-500 text-[10px] font-black uppercase tracking-widest">
         By continuing you agree to Pluto's terms
       </p>
     </div>

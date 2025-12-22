@@ -31,7 +31,7 @@ const AIScreen: React.FC<AIProps> = ({ pet, timeline, documents, reminders }) =>
   const [messages, setMessages] = useState<Message[]>([
     { 
       role: 'ai', 
-      text: `Woof! I'm your Pluto AI. Ask me anything about ${pet.name}'s care history or documents!`, 
+      text: `Woof! I'm your Pluto AI. Ask me anything about ${pet.name}'s care history, or let me find nearby stores and daycares!`, 
       timestamp: new Date() 
     }
   ]);
@@ -113,7 +113,7 @@ const AIScreen: React.FC<AIProps> = ({ pet, timeline, documents, reminders }) =>
                   <div className="mt-4 pt-4 border-t border-orange-100 dark:border-zinc-800">
                     <p className="text-[10px] font-black uppercase text-orange-600 dark:text-orange-400 mb-3 tracking-widest flex items-center gap-2">
                       <i className="fa-solid fa-location-dot"></i>
-                      Nearby Care Locations
+                      Nearby Care & Services
                     </p>
                     <div className="space-y-2">
                       {msg.sources!.map((src, sIdx) => (
@@ -126,7 +126,7 @@ const AIScreen: React.FC<AIProps> = ({ pet, timeline, documents, reminders }) =>
                         >
                           <div className="flex items-center gap-3 overflow-hidden">
                             <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                              <i className="fa-solid fa-user-doctor text-[10px]"></i>
+                              <i className="fa-solid fa-shop text-[10px]"></i>
                             </div>
                             <span className="text-[11px] font-bold text-zinc-800 dark:text-zinc-200 truncate">{src.title}</span>
                           </div>
@@ -158,9 +158,10 @@ const AIScreen: React.FC<AIProps> = ({ pet, timeline, documents, reminders }) =>
       {/* Input Section - Removed Sticky to avoid footer overlap */}
       <div className="p-6 pt-2 pb-10">
         <div className="flex gap-2 overflow-x-auto no-scrollbar mb-4">
-          <SuggestionChip text="Last Vaccine?" onClick={() => setInput("When was the last vaccination?")} color="bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400 border-orange-100 dark:border-orange-900/50" />
-          <SuggestionChip text="Upcoming?" onClick={() => setInput("What care tasks are coming up?")} color="bg-pink-50 text-pink-700 dark:bg-pink-950/30 dark:text-pink-400 border-pink-100 dark:border-pink-900/50" />
+          <SuggestionChip text="Pet Stores" onClick={() => setInput("Find some top-rated pet stores nearby.")} color="bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400 border-orange-100 dark:border-orange-900/50" />
+          <SuggestionChip text="Daycares" onClick={() => setInput("Are there any pet daycares or boarding centers nearby?")} color="bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900/50" />
           <SuggestionChip text="Nearby Vets" onClick={() => setInput("Find some nearby vet clinics for Luna.")} color="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50" />
+          <SuggestionChip text="Last Vaccine?" onClick={() => setInput("When was the last vaccination?")} color="bg-pink-50 text-pink-700 dark:bg-pink-950/30 dark:text-pink-400 border-pink-100 dark:border-pink-900/50" />
         </div>
         <div className="relative">
           <input 

@@ -2,8 +2,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { PetProfile, TimelineEntry, PetDocument, Reminder } from "../types";
 
-const API_KEY = process.env.API_KEY || "";
-
 export const getAIResponse = async (
   prompt: string,
   context: {
@@ -14,7 +12,8 @@ export const getAIResponse = async (
     location?: { latitude: number; longitude: number };
   }
 ) => {
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  // Initialize AI client using the environment variable directly as per guidelines
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   // Simplified context string for the AI
   const petContext = `
@@ -40,18 +39,18 @@ export const getAIResponse = async (
     Your goal is to answer questions about the pet's history, upcoming tasks, and documents.
     
     STRICT RULES:
-    1. Only use the provided data.
+    1. Only use the provided data for medical history.
     2. DO NOT provide medical advice, diagnosis, or treatments.
-    3. If asked about nearby vets, use your Google Maps tool to find relevant locations if possible.
+    3. If asked about nearby vets, pet stores, pet daycares, grooming services, or hospitals, use your Google Maps tool to find relevant locations.
     4. Keep answers concise, warm, and professional.
   `;
 
   try {
-    const isLocationQuery = prompt.toLowerCase().includes("vet") || 
-                           prompt.toLowerCase().includes("clinic") || 
-                           prompt.toLowerCase().includes("hospital") ||
-                           prompt.toLowerCase().includes("nearby");
+    const query = prompt.toLowerCase();
+    const locationKeywords = ["vet", "clinic", "hospital", "nearby", "store", "shop", "daycare", "boarding", "grooming", "care center", "center"];
+    const isLocationQuery = locationKeywords.some(keyword => query.includes(keyword));
 
+    // Use gemini-2.5-flash for Maps grounding, gemini-3-pro-preview for reasoning tasks
     const model = isLocationQuery ? "gemini-2.5-flash" : "gemini-3-pro-preview";
     
     const config: any = {
@@ -81,6 +80,7 @@ export const getAIResponse = async (
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
 
     return {
+      // Use .text property directly instead of .text() method
       text: response.text || "I'm sorry, I couldn't process that request.",
       sources: groundingChunks?.map((chunk: any) => ({
         title: chunk.maps?.title || chunk.web?.title,

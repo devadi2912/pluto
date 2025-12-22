@@ -1,13 +1,15 @@
 
 import React, { useState } from 'react';
-import { PetProfile, Species, Gender } from '../types';
+import { PetProfile, Species, Gender, Reminder } from '../types';
 
 interface ProfileProps {
   pet: PetProfile;
   setPet: (pet: PetProfile) => void;
+  reminders: Reminder[];
+  onNavigate?: (tab: 'dashboard' | 'profile' | 'timeline' | 'documents' | 'ai') => void;
 }
 
-const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet }) => {
+const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavigate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<PetProfile>(pet);
   const [copied, setCopied] = useState(false);
@@ -21,6 +23,75 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet }) => {
     navigator.clipboard.writeText(pet.id);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const calculateAge = (dob: string) => {
+    try {
+      const birthDate = new Date(dob);
+      const today = new Date();
+      if (isNaN(birthDate.getTime())) return "Unknown";
+      
+      let years = today.getFullYear() - birthDate.getFullYear();
+      let months = today.getMonth() - birthDate.getMonth();
+      
+      if (months < 0 || (months === 0 && today.getDate() < birthDate.getDate())) {
+        years--;
+        months = (months + 12) % 12;
+      }
+      
+      if (years < 0) return "Not born yet";
+      if (years === 0) {
+        return months === 0 ? "Newborn" : `${months} ${months === 1 ? 'month' : 'months'}`;
+      }
+      return `${years} ${years === 1 ? 'year' : 'years'}${months > 0 ? `, ${months}m` : ''}`;
+    } catch (e) {
+      return "Unknown";
+    }
+  };
+
+  const getVitalityData = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const activeReminders = reminders.filter(r => !r.completed);
+    const overdue = activeReminders.filter(r => new Date(r.date) < today);
+    const dueSoon = activeReminders.filter(r => {
+      const date = new Date(r.date);
+      return date >= today && date.getTime() <= today.getTime() + (3 * 24 * 60 * 60 * 1000); // 3 days
+    });
+
+    if (overdue.length > 0) {
+      return {
+        label: "Attention Needed",
+        colorClass: "from-rose-500 via-red-600 to-red-800",
+        icon: "fa-triangle-exclamation",
+        detail: `${overdue.length} Task(s) Overdue`
+      };
+    }
+
+    if (dueSoon.length > 0) {
+      return {
+        label: "Care Due Soon",
+        colorClass: "from-amber-400 via-orange-500 to-orange-600",
+        icon: "fa-clock",
+        detail: "Upcoming Medicals"
+      };
+    }
+
+    return {
+      label: "Excellent",
+      colorClass: "from-orange-500 via-rose-500 to-rose-700",
+      icon: "fa-heart-pulse",
+      detail: "Fully Up To Date"
+    };
+  };
+
+  const vitality = getVitalityData();
+
+  const handleVitalityClick = () => {
+    if (vitality.label !== "Excellent" && onNavigate) {
+      onNavigate('dashboard');
+    }
   };
 
   return (
@@ -61,20 +132,25 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet }) => {
       </div>
 
       <div className="bg-white dark:bg-zinc-900 rounded-[3rem] border-2 border-zinc-100 dark:border-zinc-800 p-8 space-y-8 shadow-xl">
-        {/* Pet ID Section - Subtle addition blending with details */}
-        <div className="pb-4 border-b dark:border-zinc-800 flex items-center justify-between">
-          <div>
-             <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Unique Identifier</label>
-             <p className="text-sm font-black text-zinc-900 dark:text-zinc-50 tracking-tighter mt-0.5">{pet.id}</p>
+        {/* Unified Identifier Design */}
+        <div className="space-y-3 relative">
+          <label className="text-[11px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-[0.15em] ml-1">Unique Identifier</label>
+          <div className="relative">
+            <input 
+              type="text"
+              value={pet.id}
+              disabled
+              className="w-full p-5 rounded-[1.5rem] border-2 bg-zinc-50 dark:bg-zinc-800/50 border-transparent text-zinc-900 dark:text-zinc-50 shadow-inner font-bold tracking-tight"
+            />
+            <button 
+              onClick={copyId}
+              className={`absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                copied ? 'bg-emerald-500 text-white' : 'bg-white dark:bg-zinc-700 text-zinc-400 shadow-sm border dark:border-zinc-600 hover:text-orange-500'
+              }`}
+            >
+              <i className={`fa-solid ${copied ? 'fa-check' : 'fa-copy'}`}></i>
+            </button>
           </div>
-          <button 
-            onClick={copyId}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-              copied ? 'bg-emerald-500 text-white' : 'bg-zinc-50 dark:bg-zinc-800 text-zinc-400 hover:text-orange-500'
-            }`}
-          >
-            <i className={`fa-solid ${copied ? 'fa-check' : 'fa-copy'}`}></i>
-          </button>
         </div>
 
         <InputField 
@@ -108,6 +184,15 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet }) => {
             onChange={(v) => setFormData({...formData, dateOfBirth: v})} 
             disabled={!isEditing} 
           />
+          <InputField 
+            label="Calculated Age" 
+            value={calculateAge(isEditing ? formData.dateOfBirth : pet.dateOfBirth)} 
+            onChange={() => {}} 
+            disabled={true} 
+          />
+        </div>
+
+        <div className="grid grid-cols-1">
           <SelectField 
             label="Gender" 
             value={formData.gender} 
@@ -127,16 +212,22 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet }) => {
                 <i className="fa-solid fa-cake-candles text-xl"></i>
               </div>
               <p className="text-[10px] font-black uppercase tracking-widest text-indigo-100">Next B-Day</p>
-              <p className="text-2xl font-bold mt-1">June 15th</p>
+              <p className="text-2xl font-bold mt-1">
+                {new Date(pet.dateOfBirth).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
+              </p>
            </div>
-           <div className="bg-gradient-to-br from-orange-500 via-rose-500 to-rose-700 p-7 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group">
+           <button 
+             onClick={handleVitalityClick}
+             disabled={vitality.label === "Excellent"}
+             className={`bg-gradient-to-br ${vitality.colorClass} p-7 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group transition-all duration-500 text-left ${vitality.label !== "Excellent" ? 'hover:scale-[1.05] active:scale-95 cursor-pointer' : 'cursor-default'}`}
+           >
               <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
               <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-4 border border-white/30 backdrop-blur-md">
-                <i className="fa-solid fa-heart-pulse text-xl"></i>
+                <i className={`fa-solid ${vitality.icon} text-xl`}></i>
               </div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-rose-100">Vitality</p>
-              <p className="text-2xl font-bold mt-1">Excellent</p>
-           </div>
+              <p className="text-[10px] font-black uppercase tracking-widest opacity-80">{vitality.detail}</p>
+              <p className="text-2xl font-bold mt-1">{vitality.label}</p>
+           </button>
         </div>
       </section>
     </div>
@@ -172,7 +263,7 @@ const SelectField: React.FC<{
   options: string[],
   onChange: (v: string) => void, 
   disabled?: boolean 
-}> = ({ label, value, options, onChange, disabled }) => (
+ }> = ({ label, value, options, onChange, disabled }) => (
   <div className="space-y-3">
     <label className="text-[11px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-[0.15em] ml-1">{label}</label>
     <div className="relative">
