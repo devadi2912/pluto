@@ -10,6 +10,15 @@ import DoctorProfileScreen from './DoctorProfileScreen';
 import DoctorPatientsScreen from './DoctorPatientsScreen';
 import DoctorSearchScreen from './DoctorSearchScreen';
 
+interface PriorityItemData {
+  id: string;
+  title: string;
+  detail: string;
+  type: string;
+  color: string;
+  targetId: string;
+}
+
 interface DoctorDashboardProps {
   doctor: AuthUser;
   petData: {
@@ -31,51 +40,51 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ doctor, petData, dark
   const [doctorProfile] = useState(doctor.doctorDetails!);
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'timeline' | 'docs' | 'identity'>('profile');
   
-  // Track visited patients for the session
-  const [visitedPatientIds, setVisitedPatientIds] = useState<Set<string>>(new Set(['PET-LUNA-123']));
+  const [visitedPatientIds, setVisitedPatientIds] = useState<Set<string>>(new Set());
+  const [priorityItems, setPriorityItems] = useState<PriorityItemData[]>([]);
 
   const handleSearch = (id?: string) => {
     const targetId = (id || searchId).toUpperCase();
+    
     if (targetId === petData.pet.id || targetId.startsWith('PET-')) {
+      const isNewVisit = !visitedPatientIds.has(targetId);
       setVisitedPatientIds(prev => new Set([...Array.from(prev), targetId]));
+      
+      if (targetId === petData.pet.id) {
+        const newItems: PriorityItemData[] = petData.reminders
+          .filter(r => !r.completed)
+          .map(r => ({
+            id: `p-${r.id}-${Date.now()}`,
+            title: `${petData.pet.name}'s ${r.type}`,
+            detail: `Due: ${r.title}`,
+            type: "Urgent",
+            color: "bg-rose-100 text-rose-600 border-rose-200",
+            targetId: targetId
+          }))
+          .filter(newItem => !priorityItems.some(existing => existing.title === newItem.title));
+        
+        setPriorityItems(prev => [...prev, ...newItems]);
+      } else if (isNewVisit) {
+        const mockItem: PriorityItemData = {
+          id: `p-${targetId}-${Date.now()}`,
+          title: `${targetId.split('-')[1]}'s Follow-up`,
+          detail: "Check recent lab reports",
+          type: "Review",
+          color: "bg-amber-100 text-amber-600 border-amber-200",
+          targetId: targetId
+        };
+        setPriorityItems(prev => [...prev, mockItem]);
+      }
+
       setViewingPet(true);
     } else {
       alert("Pet ID not found. Try searching for: " + petData.pet.id);
     }
   };
 
-  // Logic for Priority Care: Filter items only if they belong to a pet that has something due 
-  // and is in our "visited/recent" scope.
-  const getPriorityItems = () => {
-    const items = [];
-    if (visitedPatientIds.has('PET-LUNA-123')) {
-      const dueMeds = petData.reminders.filter(r => !r.completed);
-      if (dueMeds.length > 0) {
-        items.push({
-          id: 'p1',
-          title: `${petData.pet.name}'s ${dueMeds[0].type}`,
-          detail: `Due: ${dueMeds[0].title}`,
-          type: "Urgent",
-          color: "bg-rose-100 text-rose-600 border-rose-200",
-          targetId: 'PET-LUNA-123'
-        });
-      }
-    }
-    
-    // Mocking an entry for another "recent" patient if they were visited
-    const others = Array.from(visitedPatientIds).filter(id => id !== 'PET-LUNA-123');
-    if (others.length > 0) {
-      items.push({
-        id: 'p2',
-        title: `${others[0].split('-')[1]}'s Lab Results`,
-        detail: "Awaiting clinical review",
-        type: "Review",
-        color: "bg-amber-100 text-amber-600 border-amber-200",
-        targetId: others[0]
-      });
-    }
-
-    return items;
+  const removePriorityItem = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPriorityItems(prev => prev.filter(item => item.id !== id));
   };
 
   const renderPetView = () => (
@@ -145,19 +154,22 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ doctor, petData, dark
         return <DoctorPatientsScreen onViewRecords={(id) => handleSearch(id)} />;
       case 'discover':
       default:
-        const priorityItems = getPriorityItems();
         return (
           <div className="space-y-10 animate-in fade-in duration-500">
-             {/* Quick Stats Grid */}
              <div className="grid grid-cols-2 gap-5">
-                <StatCard label="Patients Visited" value={visitedPatientIds.size} icon="users" color="bg-indigo-500" />
+                <StatCard label="Total Patients" value={visitedPatientIds.size} icon="users" color="bg-indigo-500" />
                 <StatCard label="Pending Care" value={priorityItems.length} icon="bell" color="bg-amber-500" />
              </div>
 
-             {/* Dynamic Priority Section */}
-             {priorityItems.length > 0 && (
-               <section className="space-y-4">
-                  <h3 className="text-2xl font-bold font-lobster text-zinc-900 dark:text-zinc-50 px-2">Priority Care</h3>
+             <section className="space-y-4">
+                <h3 className="text-2xl font-bold font-lobster text-zinc-900 dark:text-zinc-50 px-2">Priority Care</h3>
+                {priorityItems.length === 0 ? (
+                  <div className="bg-white/50 dark:bg-zinc-900/50 p-10 rounded-[2.5rem] border-2 border-dashed border-zinc-200 dark:border-zinc-800 text-center">
+                    <i className="fa-solid fa-clipboard-check text-4xl text-zinc-200 dark:text-zinc-800 mb-4"></i>
+                    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">No Active Priorities</p>
+                    <p className="text-xs text-zinc-300 dark:text-zinc-600 mt-2 font-bold">Search for a patient to stack priorities.</p>
+                  </div>
+                ) : (
                   <div className="space-y-4">
                      {priorityItems.map(item => (
                        <PriorityItem 
@@ -167,11 +179,12 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ doctor, petData, dark
                          type={item.type} 
                          color={item.color} 
                          onClick={() => handleSearch(item.targetId)}
+                         onRemove={(e) => removePriorityItem(item.id, e)}
                        />
                      ))}
                   </div>
-               </section>
-             )}
+                )}
+             </section>
 
              <DoctorSearchScreen searchId={searchId} setSearchId={setSearchId} handleSearch={() => handleSearch()} />
           </div>
@@ -184,7 +197,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ doctor, petData, dark
       {viewingPet ? renderPetView() : (
         <>
           <div className="flex-1 p-6 space-y-10 overflow-y-auto custom-scrollbar pb-40">
-            {/* Professional Header */}
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-4xl font-lobster text-zinc-900 dark:text-zinc-50 leading-tight">Practice Hub</h2>
@@ -201,28 +213,9 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ doctor, petData, dark
           </div>
 
           <nav className="absolute bottom-0 left-0 right-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-2xl border-t-2 border-zinc-200/40 dark:border-zinc-800/40 flex justify-around p-3 pb-10 z-50 shadow-[0_-15px_40px_rgba(0,0,0,0.1)]">
-            <NavButton 
-              active={activeMainTab === 'patients'} 
-              onClick={() => setActiveMainTab('patients')} 
-              icon="hospital-user" 
-              label="Patients" 
-              color="indigo" 
-            />
-            <NavButton 
-              active={activeMainTab === 'discover'} 
-              onClick={() => setActiveMainTab('discover')} 
-              icon="house-medical" 
-              label="Hub" 
-              isAction 
-              color="indigo"
-            />
-            <NavButton 
-              active={activeMainTab === 'profile'} 
-              onClick={() => setActiveMainTab('profile')} 
-              icon="address-card" 
-              label="Identity" 
-              color="emerald" 
-            />
+            <NavButton active={activeMainTab === 'patients'} onClick={() => setActiveMainTab('patients')} icon="hospital-user" label="Patients" color="orange" />
+            <NavButton active={activeMainTab === 'discover'} onClick={() => setActiveMainTab('discover')} icon="house-medical" label="Hub" isAction color="orange" />
+            <NavButton active={activeMainTab === 'profile'} onClick={() => setActiveMainTab('profile')} icon="address-card" label="Identity" color="emerald" />
           </nav>
         </>
       )}
@@ -235,20 +228,26 @@ const StatCard: React.FC<{ label: string, value: number, icon: string, color: st
 
   useEffect(() => {
     let start = 0;
+    const end = value;
+    if (start === end) {
+      setDisplayValue(end);
+      return;
+    }
     const duration = 1000;
-    const increment = value / (duration / 16);
-    
-    const animate = () => {
+    const stepTime = 16;
+    const totalSteps = duration / stepTime;
+    const increment = (end - start) / totalSteps;
+
+    const timer = setInterval(() => {
       start += increment;
-      if (start < value) {
-        setDisplayValue(Math.floor(start));
-        requestAnimationFrame(animate);
+      if ((increment > 0 && start >= end) || (increment < 0 && start <= end)) {
+        setDisplayValue(end);
+        clearInterval(timer);
       } else {
-        setDisplayValue(value);
+        setDisplayValue(Math.floor(start));
       }
-    };
-    
-    animate();
+    }, stepTime);
+    return () => clearInterval(timer);
   }, [value]);
 
   return (
@@ -261,29 +260,29 @@ const StatCard: React.FC<{ label: string, value: number, icon: string, color: st
   );
 };
 
-const PriorityItem: React.FC<{ title: string, detail: string, type: string, color: string, onClick: () => void }> = ({ title, detail, type, color, onClick }) => (
-  <button 
-    onClick={onClick}
-    className="w-full bg-white dark:bg-zinc-900 p-5 rounded-[2rem] border-2 border-zinc-50 dark:border-zinc-800 flex items-center gap-4 text-left hover:border-indigo-100 dark:hover:border-indigo-900 shadow-sm transition-all group active:scale-[0.98]"
-  >
-     <div className={`px-3 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-widest shadow-sm ${color}`}>
-        {type}
-     </div>
+const PriorityItem: React.FC<{ 
+  title: string, 
+  detail: string, 
+  type: string, 
+  color: string, 
+  onClick: () => void,
+  onRemove: (e: React.MouseEvent) => void
+}> = ({ title, detail, type, color, onClick, onRemove }) => (
+  <button onClick={onClick} className="w-full bg-white dark:bg-zinc-900 p-5 rounded-[2rem] border-2 border-zinc-50 dark:border-zinc-800 flex items-center gap-4 text-left hover:border-indigo-100 dark:hover:border-indigo-900 shadow-sm transition-all group active:scale-[0.98] relative">
+     <div className={`px-3 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-widest shadow-sm ${color}`}>{type}</div>
      <div className="flex-1">
         <h5 className="font-bold text-zinc-800 dark:text-zinc-100 text-sm">{title}</h5>
         <p className="text-[10px] text-zinc-400 font-bold">{detail}</p>
      </div>
-     <i className="fa-solid fa-chevron-right text-zinc-200 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all"></i>
+     <button onClick={onRemove} className="w-8 h-8 rounded-full bg-zinc-50 dark:bg-zinc-800 text-zinc-300 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center border border-transparent hover:border-rose-100">
+        <i className="fa-solid fa-xmark text-[10px]"></i>
+     </button>
+     <i className="fa-solid fa-chevron-right text-zinc-200 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all ml-1"></i>
   </button>
 );
 
 const SubNavTab: React.FC<{ label: string, active: boolean, onClick: () => void, icon: string }> = ({ label, active, onClick, icon }) => (
-  <button 
-    onClick={onClick}
-    className={`flex-1 flex flex-col items-center gap-2 py-4 px-6 border-b-4 transition-all ${
-      active ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-zinc-400'
-    }`}
-  >
+  <button onClick={onClick} className={`flex-1 flex flex-col items-center gap-2 py-4 px-6 border-b-4 transition-all ${active ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-zinc-400'}`}>
     <i className={`fa-solid fa-${icon} text-lg`}></i>
     <span className="text-[9px] font-black uppercase tracking-widest whitespace-nowrap">{label}</span>
   </button>

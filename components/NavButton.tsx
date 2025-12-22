@@ -27,20 +27,19 @@ export const NavButton: React.FC<{
         <div className={`
           w-[60px] h-[60px] flex items-center justify-center rounded-2xl transition-all duration-500 relative overflow-hidden border-2 group-hover:rotate-3
           ${active 
-            ? `bg-gradient-to-tr from-orange-500/90 to-rose-600/90 backdrop-blur-xl text-white scale-110 border-white/40 shadow-[0_12px_30px_rgba(249,115,22,0.4)]` 
+            ? `bg-gradient-to-tr from-orange-500 to-amber-600 backdrop-blur-xl text-white scale-110 border-white/40 shadow-[0_12px_30px_rgba(249,115,22,0.4)]` 
             : 'bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md text-zinc-500 dark:text-zinc-400 border-zinc-200/50 dark:border-zinc-800/50 shadow-xl group-hover:scale-105'
           }
         `}>
           {active ? (
-             <i className="fa-solid fa-wand-magic-sparkles text-xl transition-transform group-hover:scale-110 group-hover:animate-pulse"></i>
+             <i className="fa-solid fa-dog text-xl transition-transform group-hover:scale-110 group-hover:animate-bounce"></i>
           ) : (
             <div className="relative flex items-center justify-center w-full h-full">
-               {/* Subtle Frosted Dog Icon */}
-               <i className="fa-solid fa-dog text-2xl text-zinc-400/10 dark:text-zinc-600/10 absolute transition-all duration-700 group-hover:scale-125 group-hover:text-orange-400/10"></i>
+               {/* Just the Pup icon as requested, no overlapping home icon */}
+               <i className={`fa-solid fa-dog text-2xl transition-all duration-700 group-hover:scale-110 ${active ? 'text-white' : 'text-zinc-400 dark:text-zinc-600'}`}></i>
                {petAvatar && (
-                  <div className="relative z-10 flex flex-col items-center justify-center gap-0.5 transition-transform group-hover:scale-110">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
                     <img src={petAvatar} className="w-8 h-8 rounded-full border-2 border-white/80 dark:border-zinc-800 shadow-md" alt="pet" />
-                    <i className="fa-solid fa-sparkles text-[10px] text-orange-400/80 animate-pulse"></i>
                   </div>
                )}
             </div>
