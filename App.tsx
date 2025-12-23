@@ -86,6 +86,24 @@ const App: React.FC = () => {
   const handleLogout = () => setUser(null);
 
   const handleCompleteReminder = (id: string) => {
+    const reminder = reminders.find(r => r.id === id);
+    if (reminder) {
+      // Map reminder type to entry type
+      let entryType = EntryType.Note;
+      if (reminder.type === 'Vaccination') entryType = EntryType.Vaccination;
+      else if (reminder.type === 'Medication') entryType = EntryType.Medication;
+      else if (reminder.type === 'Vet follow-up') entryType = EntryType.VetVisit;
+
+      const newEntry: TimelineEntry = {
+        id: `auto-${Date.now()}`,
+        date: new Date().toISOString().split('T')[0],
+        type: entryType,
+        title: `${reminder.title}`,
+        notes: `Completed scheduled ${reminder.type.toLowerCase()} task.`
+      };
+
+      setTimeline(prev => [newEntry, ...prev]);
+    }
     setReminders(prev => prev.map(r => r.id === id ? { ...r, completed: true } : r));
   };
 
@@ -98,7 +116,7 @@ const App: React.FC = () => {
     { id: 'timeline', icon: 'calendar-days', label: 'Journal', color: 'emerald' as const },
     { id: 'ai', icon: 'wand-magic-sparkles', label: 'AI', color: 'orange' as const, isAction: true },
     { id: 'documents', icon: 'folder-open', label: 'Files', color: 'amber' as const },
-    { id: 'profile', icon: 'paw', label: pet.name, color: 'rose' as const }, // Named after pet
+    { id: 'profile', icon: 'paw', label: pet.name, color: 'rose' as const },
   ];
 
   const renderContent = () => {
@@ -138,17 +156,24 @@ const App: React.FC = () => {
         </div>
 
         <nav className="flex-1 space-y-4">
-          {navigationItems.map(item => (
+          {(user.role === 'DOCTOR' ? [
+            { id: 'patients', icon: 'hospital-user', label: 'Patients', color: 'orange' as const },
+            { id: 'discover', icon: 'house-medical', label: 'Hub', color: 'orange' as const },
+            { id: 'profile', icon: 'address-card', label: 'Identity', color: 'emerald' as const }
+          ] : navigationItems).map(item => (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id as any)}
+              onClick={() => {
+                if (user.role === 'DOCTOR') setDoctorActiveTab(item.id as any);
+                else setActiveTab(item.id as any);
+              }}
               className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${
-                activeTab === item.id 
+                (user.role === 'DOCTOR' ? doctorActiveTab === item.id : activeTab === item.id)
                   ? 'bg-orange-500 text-white shadow-xl translate-x-2' 
                   : 'text-zinc-500 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50'
               }`}
             >
-              <i className={`fa-solid fa-${item.id === 'ai' ? 'wand-magic-sparkles' : item.icon} text-lg group-hover:scale-110 transition-transform`}></i>
+              <i className={`fa-solid fa-${item.icon} text-lg group-hover:scale-110 transition-transform`}></i>
               <span className="font-black text-[10px] uppercase tracking-widest">{item.label}</span>
             </button>
           ))}
@@ -166,8 +191,8 @@ const App: React.FC = () => {
           <div className="flex items-center gap-3 px-2">
             <img src={pet.avatar} className="w-10 h-10 rounded-full border-2 border-orange-500 shadow-md" alt="Pet" />
             <div className="min-w-0">
-              <p className="text-sm font-bold truncate dark:text-zinc-50">{pet.name}</p>
-              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-tighter">Connected</p>
+              <p className="text-sm font-bold truncate dark:text-zinc-50">{user.username}</p>
+              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-tighter">{user.role}</p>
             </div>
           </div>
         </div>
@@ -176,7 +201,7 @@ const App: React.FC = () => {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col bg-white dark:bg-zinc-900 md:rounded-[4rem] shadow-2xl overflow-hidden relative border border-white/20 dark:border-zinc-800/50">
         
-        {/* Mobile Header - More Compact & Spinning Sun */}
+        {/* Mobile Header */}
         <div className="md:hidden p-2 px-3 flex items-center justify-between border-b border-white/20 dark:border-zinc-800/40 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-3xl sticky top-0 z-[60] shadow-sm">
           <div className="flex items-center gap-2 group">
             <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white shadow-md transition-transform group-active:rotate-12">
@@ -201,21 +226,23 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Bottom Nav - Thinner, Pinned Frosted Floating */}
-        <nav className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] bg-white/40 dark:bg-zinc-950/40 backdrop-blur-3xl border border-white/20 dark:border-zinc-800/30 rounded-[1.75rem] flex justify-around items-center p-1 pb-2 z-[70] shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition-all">
-          {navigationItems.map(item => (
-            <NavButton 
-              key={item.id} 
-              active={activeTab === item.id} 
-              onClick={() => setActiveTab(item.id as any)} 
-              icon={item.icon} 
-              label={item.label} 
-              color={item.color} 
-              isAction={item.isAction}
-              petAvatar={pet.avatar}
-            />
-          ))}
-        </nav>
+        {/* Mobile Bottom Nav - Only for Owner (Doctor has its own internal nav) */}
+        {user.role === 'PET_OWNER' && (
+          <nav className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] bg-white/40 dark:bg-zinc-950/40 backdrop-blur-3xl border border-white/20 dark:border-zinc-800/30 rounded-[1.75rem] flex justify-around items-center p-1 pb-2 z-[70] shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition-all">
+            {navigationItems.map(item => (
+              <NavButton 
+                key={item.id} 
+                active={activeTab === item.id} 
+                onClick={() => setActiveTab(item.id as any)} 
+                icon={item.icon} 
+                label={item.label} 
+                color={item.color} 
+                isAction={item.isAction}
+                petAvatar={pet.avatar}
+              />
+            ))}
+          </nav>
+        )}
       </main>
     </div>
   );

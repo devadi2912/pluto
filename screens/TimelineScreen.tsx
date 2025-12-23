@@ -95,7 +95,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({ timeline, setTimeline, docume
   return (
     <div className="p-8 md:p-12 space-y-16 animate-in slide-in-from-right-10 duration-700 pb-32">
       
-      {/* Planned Care - Restored Logic */}
+      {/* Planned Care */}
       <section className="space-y-8">
         <div className="flex items-center justify-between px-2">
           <div>
@@ -141,7 +141,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({ timeline, setTimeline, docume
         </div>
       </section>
 
-      {/* Care Journal - Restored Logic */}
+      {/* Care Journal */}
       <section className="space-y-8">
         <div className="flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800 pt-12 px-2">
           <div>
@@ -191,7 +191,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({ timeline, setTimeline, docume
         </div>
       </section>
 
-      {/* Restore Doctors Consulted Section back as requested */}
+      {/* Doctors Consulted Section */}
       <section className="space-y-8 pt-12 border-t border-zinc-100 dark:border-zinc-800 pb-20">
         <div className="px-2">
           <h2 className="text-4xl font-lobster text-indigo-600 dark:text-indigo-400 tracking-wide">Doctors Consulted</h2>
@@ -218,10 +218,16 @@ const TimelineScreen: React.FC<TimelineProps> = ({ timeline, setTimeline, docume
         </div>
       </section>
 
-      {/* Doctor Modal - Restored */}
+      {/* Doctor Modal - Updated to Frosted Floating Window */}
       {selectedDoctor && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-zinc-900/40 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[3rem] overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.3)] border-4 border-white dark:border-zinc-800 animate-in zoom-in-95 duration-200">
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/5 backdrop-blur-sm animate-in fade-in duration-300"
+          onClick={() => setSelectedDoctor(null)}
+        >
+          <div 
+            className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-3xl backdrop-saturate-150 w-full max-w-md rounded-[3rem] overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.15)] border-4 border-white/50 dark:border-zinc-800/50 animate-in zoom-in-95 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-10 text-center space-y-6">
               <div className="w-24 h-24 bg-indigo-500 text-white rounded-[2.5rem] flex items-center justify-center text-4xl mx-auto shadow-2xl rotate-3">
                 <i className="fa-solid fa-user-doctor"></i>
@@ -230,14 +236,23 @@ const TimelineScreen: React.FC<TimelineProps> = ({ timeline, setTimeline, docume
                 <h3 className="text-4xl font-lobster text-zinc-900 dark:text-zinc-50 leading-tight">{selectedDoctor.name}</h3>
                 <p className="text-xs font-black text-indigo-500 uppercase tracking-widest mt-1">{selectedDoctor.specialization}</p>
               </div>
-              <div className="space-y-4 text-left border-t border-zinc-100 dark:border-zinc-800 pt-6">
-                 <div className="flex justify-between items-center"><span className="text-xs font-black text-zinc-400 uppercase">Clinic</span><span className="text-sm font-bold text-zinc-800 dark:text-zinc-100">{selectedDoctor.clinic}</span></div>
-                 <div className="flex justify-between items-center"><span className="text-xs font-black text-zinc-400 uppercase">Experience</span><span className="text-sm font-bold text-zinc-800 dark:text-zinc-100">{selectedDoctor.experience}</span></div>
-                 <div className="flex justify-between items-center"><span className="text-xs font-black text-zinc-400 uppercase">Contact</span><span className="text-sm font-bold text-zinc-800 dark:text-zinc-100">{selectedDoctor.contact}</span></div>
+              <div className="space-y-4 text-left border-t border-white/20 dark:border-zinc-800/40 pt-6">
+                 <div className="flex justify-between items-center">
+                   <span className="text-xs font-black text-zinc-400 uppercase tracking-wider">Clinic</span>
+                   <span className="text-sm font-bold text-zinc-800 dark:text-zinc-100">{selectedDoctor.clinic}</span>
+                 </div>
+                 <div className="flex justify-between items-center">
+                   <span className="text-xs font-black text-zinc-400 uppercase tracking-wider">Experience</span>
+                   <span className="text-sm font-bold text-zinc-800 dark:text-zinc-100">{selectedDoctor.experience}</span>
+                 </div>
+                 <div className="flex justify-between items-center">
+                   <span className="text-xs font-black text-zinc-400 uppercase tracking-wider">Contact</span>
+                   <span className="text-sm font-bold text-zinc-800 dark:text-zinc-100">{selectedDoctor.contact}</span>
+                 </div>
               </div>
               <button 
                 onClick={() => setSelectedDoctor(null)}
-                className="w-full bg-zinc-900 dark:bg-zinc-800 text-white font-black py-6 rounded-3xl shadow-2xl uppercase tracking-widest hover:brightness-110 transition-all active:scale-95"
+                className="w-full bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 font-black py-6 rounded-3xl shadow-xl uppercase tracking-widest hover:scale-[1.02] transition-all active:scale-95"
               >
                 Close Profile
               </button>

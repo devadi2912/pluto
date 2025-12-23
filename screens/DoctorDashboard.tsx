@@ -165,7 +165,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
       case 'discover':
       default:
         return (
-          <div className="space-y-10 animate-in fade-in duration-500">
+          <div className="space-y-10 animate-in fade-in duration-500 pb-20">
              <div className="grid grid-cols-2 gap-5">
                 <StatCard label="Total Patients" value={visitedPatientIds.size} icon="users" color="bg-emerald-500" />
                 <StatCard label="Pending Care" value={priorityItems.length} icon="bell" color="bg-orange-500" />
@@ -225,7 +225,8 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
             {renderContent()}
           </div>
 
-          <nav className="absolute bottom-0 left-0 right-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-2xl border-t-2 border-zinc-200/40 dark:border-zinc-800/40 flex justify-around p-3 pb-10 z-50 shadow-[0_-15px_40px_rgba(0,0,0,0.1)]">
+          {/* Unified Slim Floating Footer for Doctor */}
+          <nav className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] bg-white/40 dark:bg-zinc-950/40 backdrop-blur-3xl border border-white/20 dark:border-zinc-800/30 rounded-[1.75rem] flex justify-around items-center p-1 pb-2 z-[70] shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition-all">
             <NavButton active={activeTab === 'patients'} onClick={() => setActiveTab('patients')} icon="hospital-user" label="Patients" color="orange" />
             <NavButton active={activeTab === 'discover'} onClick={() => setActiveTab('discover')} icon="house-medical" label="Hub" isAction color="orange" />
             <NavButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon="address-card" label="Identity" color="emerald" />
