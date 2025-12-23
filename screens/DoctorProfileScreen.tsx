@@ -17,17 +17,17 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
 
   return (
     <div className="space-y-12 animate-in fade-in duration-500 pb-44 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between px-2">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 px-2">
         <div>
           <h3 className="text-4xl md:text-5xl font-lobster text-zinc-900 dark:text-zinc-50 leading-tight tracking-wide">Professional Profile</h3>
           <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] mt-2">Verified Medical Identity Vault</p>
         </div>
         <button 
           onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-          className={`px-8 md:px-12 py-4 rounded-[1.75rem] text-[10px] font-black tracking-widest uppercase transition-all shadow-2xl border-b-8 ${
+          className={`px-8 md:px-12 py-4 rounded-[1.75rem] text-[10px] font-black tracking-widest uppercase transition-all shadow-2xl border-4 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] dark:hover:shadow-[0_0_20px_rgba(0,0,0,0.4)] ${
             isEditing 
-              ? 'bg-emerald-500 text-white border-emerald-700' 
-              : 'bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 border-zinc-800 dark:border-zinc-300 hover:scale-[1.03]'
+              ? 'bg-emerald-500 text-white border-white dark:border-black shadow-emerald-500/20' 
+              : 'bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 border-white dark:border-black hover:scale-[1.03]'
           }`}
         >
           <div className="flex items-center gap-3">
@@ -58,18 +58,18 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
               </div>
            </div>
 
-           <div className="backdrop-blur-xl bg-gradient-to-br from-indigo-600/90 to-indigo-900/90 p-8 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group border border-white/20">
+           <div className="backdrop-blur-xl bg-gradient-to-br from-indigo-600/90 to-indigo-900/90 p-8 rounded-[3rem] text-white shadow-[0_0_40px_rgba(79,70,229,0.4)] relative overflow-hidden group border-4 border-white dark:border-black">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
               <div className="relative z-10 flex flex-col gap-8">
                  <div className="flex items-center justify-between">
                     <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md shadow-lg">
                        <i className="fa-solid fa-microscope text-xl"></i>
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">Practice Registry</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">Practice History</span>
                  </div>
                  <div>
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-200">System Records</p>
-                    <p className="text-4xl font-black mt-2 tracking-tighter">4,281 <span className="text-xs font-black text-indigo-300 ml-1 uppercase opacity-60">Consults</span></p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-200">Patient Database</p>
+                    <p className="text-4xl font-black mt-2 tracking-tighter">4,281 <span className="text-xs font-black text-indigo-300 ml-1 uppercase opacity-60">Patients Visited</span></p>
                  </div>
               </div>
            </div>
@@ -103,7 +103,7 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
                  </div>
               </section>
 
-              <div className="p-10 bg-white/20 dark:bg-zinc-800/30 rounded-[3rem] border-2 border-zinc-100 dark:border-zinc-700/50 flex items-center gap-8 shadow-inner transition-all hover:bg-white/30">
+              <div className="p-6 md:p-10 bg-white/20 dark:bg-zinc-800/30 rounded-[3rem] border-2 border-zinc-100 dark:border-zinc-700/50 flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-6 md:gap-8 shadow-inner transition-all hover:bg-white/30">
                  <div className="w-20 h-20 bg-white dark:bg-zinc-900 rounded-[2rem] flex items-center justify-center text-emerald-500 text-4xl shadow-xl shrink-0 transition-transform hover:scale-105">
                     <i className="fa-solid fa-vault"></i>
                  </div>

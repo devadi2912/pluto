@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { TimelineEntry, EntryType, PetDocument, Reminder, Doctor, DailyLog } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface TimelineProps {
   timeline: TimelineEntry[];
@@ -11,33 +12,9 @@ interface TimelineProps {
   dailyLogs: Record<string, DailyLog>;
   onUpdateLog: (date: string, data: Partial<DailyLog>) => void;
   petName?: string;
+  petId: string;
   readOnly?: boolean;
 }
-
-const MOCK_CONSULTED_DOCTORS: Doctor[] = [
-  { 
-    id: 'DOC-SMITH-45', 
-    name: 'Dr. Sarah Smith', 
-    specialization: 'Cardiology Specialist', 
-    qualification: 'DVM, PhD Cardiology',
-    registrationId: 'VET-TX-99881',
-    experience: '12 Years',
-    clinic: 'Green Valley Clinic', 
-    address: '123 Pawsome Way, Austin, TX',
-    contact: '555-0102' 
-  },
-  { 
-    id: 'DOC-WONG-99', 
-    name: 'Dr. Mike Wong', 
-    specialization: 'Dental Vet', 
-    qualification: 'DVM, DDSV',
-    registrationId: 'VET-TX-11223',
-    experience: '8 Years',
-    clinic: 'Smile Pet Center', 
-    address: '88 Bark Blvd, Austin, TX',
-    contact: '555-0199' 
-  }
-];
 
 const TimelineScreen: React.FC<TimelineProps> = ({ 
   timeline, 
@@ -46,76 +23,82 @@ const TimelineScreen: React.FC<TimelineProps> = ({
   reminders, 
   setReminders,
   petName = "Luna",
+  petId,
   readOnly = false
 }) => {
   const [showAdd, setShowAdd] = useState(false);
   const [showAddReminder, setShowAddReminder] = useState(false);
-  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
-  
-  // States for editing
   const [editingItem, setEditingItem] = useState<{ item: any, mode: 'journal' | 'planned' } | null>(null);
 
   const [newEntry, setNewEntry] = useState<Partial<TimelineEntry>>({ type: EntryType.Note, date: new Date().toISOString().split('T')[0], title: '' });
   const [newReminder, setNewReminder] = useState<Partial<Reminder>>({ type: 'Medication', date: new Date().toISOString().split('T')[0], title: '' });
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (newEntry.title && newEntry.date && newEntry.type && !readOnly) {
+      // Included petId for proper data grouping in backend
       const entry: TimelineEntry = {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         date: newEntry.date as string,
         type: newEntry.type as EntryType,
         title: newEntry.title as string,
         notes: newEntry.notes,
-        documentId: newEntry.documentId
+        documentId: newEntry.documentId,
+        petId
       };
+      
       setTimeline(prev => [entry, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      await supabase.from('timeline').insert(entry);
+      
       setShowAdd(false);
       setNewEntry({ type: EntryType.Note, date: new Date().toISOString().split('T')[0], title: '' });
     }
   };
 
-  const handleAddReminder = () => {
+  const handleAddReminder = async () => {
     if (newReminder.title && newReminder.date && newReminder.type && !readOnly) {
+      // Included petId for proper data grouping in backend
       const reminder: Reminder = {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         title: newReminder.title as string,
         date: newReminder.date as string,
         type: newReminder.type as any,
-        completed: false
+        completed: false,
+        petId
       };
+      
       setReminders(prev => [...prev, reminder].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+      await supabase.from('reminders').insert(reminder);
+      
       setShowAddReminder(false);
       setNewReminder({ type: 'Medication', date: new Date().toISOString().split('T')[0], title: '' });
     }
   };
 
-  const handleUpdateItem = () => {
+  const handleUpdateItem = async () => {
     if (!editingItem || readOnly) return;
     const { item, mode } = editingItem;
 
     if (mode === 'journal') {
-      setTimeline(prev => 
-        prev.map(e => e.id === item.id ? item : e)
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      );
+      setTimeline(prev => prev.map(e => e.id === item.id ? item : e).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      await supabase.from('timeline').upsert(item);
     } else {
-      setReminders(prev => 
-        prev.map(r => r.id === item.id ? item : r)
-            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      );
+      setReminders(prev => prev.map(r => r.id === item.id ? item : r).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+      await supabase.from('reminders').upsert(item);
     }
     setEditingItem(null);
   };
 
-  const handleDeleteItem = () => {
+  const handleDeleteItem = async () => {
     if (!editingItem || readOnly) return;
     const { item, mode } = editingItem;
 
     if (window.confirm(`Are you sure you want to delete this ${mode === 'journal' ? 'entry' : 'reminder'}?`)) {
       if (mode === 'journal') {
         setTimeline(prev => prev.filter(e => e.id !== item.id));
+        await supabase.from('timeline').delete().eq('id', item.id);
       } else {
         setReminders(prev => prev.filter(r => r.id !== item.id));
+        await supabase.from('reminders').delete().eq('id', item.id);
       }
       setEditingItem(null);
     }
@@ -342,81 +325,6 @@ const TimelineScreen: React.FC<TimelineProps> = ({
                 className="w-full py-4 bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl hover:brightness-110 active:scale-95 transition-all"
               >
                 Save Changes
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Doctors Consulted Section */}
-      <section className="space-y-8 pt-12 border-t border-zinc-100 dark:border-zinc-800 pb-20">
-        <div className="px-2">
-          <h2 className="text-4xl font-lobster text-indigo-600 dark:text-indigo-400 tracking-wide">Doctors Consulted</h2>
-          <p className="text-[11px] font-black uppercase text-zinc-500 tracking-widest mt-1">Medical professional access history</p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {MOCK_CONSULTED_DOCTORS.map(doc => (
-            <div 
-              key={doc.id}
-              onClick={() => setSelectedDoctor(doc)}
-              className="bg-white dark:bg-zinc-900 border-2 border-zinc-50 dark:border-zinc-800 p-6 rounded-[2.5rem] flex items-center gap-6 hover:border-indigo-200 dark:hover:border-indigo-900 cursor-pointer transition-all shadow-sm group active:scale-[0.98] animate-in fade-in"
-            >
-              <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center text-3xl group-hover:rotate-6 transition-transform shadow-sm">
-                <i className="fa-solid fa-user-md"></i>
-              </div>
-              <div className="flex-1">
-                <h5 className="text-lg font-bold text-zinc-900 dark:text-zinc-200">{doc.name}</h5>
-                <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-500 uppercase tracking-widest">{doc.specialization}</p>
-              </div>
-              <i className="fa-solid fa-chevron-right text-zinc-300 dark:text-zinc-700 group-hover:text-indigo-400 transition-colors"></i>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Doctor Modal - Frosted effect with High Contrast Text */}
-      {selectedDoctor && (
-        <div 
-          className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/30 animate-in fade-in duration-500"
-          onClick={() => setSelectedDoctor(null)}
-        >
-          <div 
-            className="bg-white/95 dark:bg-zinc-950/90 backdrop-blur-[40px] backdrop-saturate-150 w-full max-w-md rounded-[3rem] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.4)] border border-white dark:border-zinc-800 animate-in zoom-in-95 duration-300 relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Subtle light leak for glass effect */}
-            <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px]"></div>
-            
-            <div className="p-10 text-center space-y-6 relative z-10">
-              <div className="w-24 h-24 bg-indigo-500 text-white rounded-[2.5rem] flex items-center justify-center text-4xl mx-auto shadow-2xl rotate-3 border-4 border-white/20">
-                <i className="fa-solid fa-user-doctor"></i>
-              </div>
-              <div>
-                <h3 className="text-4xl font-lobster text-zinc-950 dark:text-zinc-50 leading-tight">{selectedDoctor.name}</h3>
-                <p className="text-[11px] font-black text-indigo-700 dark:text-indigo-400 uppercase tracking-[0.25em] mt-1">{selectedDoctor.specialization}</p>
-              </div>
-              
-              <div className="space-y-4 text-left border-t border-zinc-200 dark:border-zinc-800 pt-6">
-                 <div className="flex justify-between items-center">
-                   <span className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">Clinic</span>
-                   <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{selectedDoctor.clinic}</span>
-                 </div>
-                 <div className="flex justify-between items-center">
-                   <span className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">Experience</span>
-                   <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{selectedDoctor.experience}</span>
-                 </div>
-                 <div className="flex justify-between items-center">
-                   <span className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">Contact</span>
-                   <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{selectedDoctor.contact}</span>
-                 </div>
-              </div>
-              
-              <button 
-                onClick={() => setSelectedDoctor(null)}
-                className="w-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-black py-6 rounded-3xl shadow-2xl backdrop-blur-md uppercase tracking-[0.3em] hover:scale-[1.02] transition-all active:scale-95 border border-white/10"
-              >
-                Close Profile
               </button>
             </div>
           </div>

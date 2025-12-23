@@ -74,7 +74,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="p-5 md:p-10 space-y-10 animate-in fade-in duration-700 pb-44 no-scrollbar">
-      {/* Hero Card */}
+      {/* Hero Card - Removed Log Update Button */}
       <section className="bg-zinc-950 rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl relative overflow-hidden group border border-zinc-800">
         <div className="absolute -right-10 -top-10 w-96 h-96 bg-orange-500/10 rounded-full blur-[100px] transition-transform duration-1000 group-hover:scale-110"></div>
         
@@ -91,14 +91,6 @@ const Dashboard: React.FC<DashboardProps> = ({
               <p className="text-zinc-300 dark:text-zinc-400 mt-1 font-bold italic text-sm md:text-base">You've reached <span className="text-orange-400">{progressPercent}%</span> today.</p>
             </div>
           </div>
-          {!readOnly && (
-            <button 
-              onClick={() => setShowLogModal(true)}
-              className="bg-white/10 hover:bg-orange-500 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95 flex items-center gap-2 border border-white/20 backdrop-blur-md"
-            >
-              <i className="fa-solid fa-notes-medical"></i> Log Update
-            </button>
-          )}
         </div>
         
         <div className="mt-8 md:mt-12 relative z-10">

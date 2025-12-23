@@ -35,42 +35,45 @@ const DoctorPatientsScreen: React.FC<DoctorPatientsScreenProps> = ({ onViewRecor
         <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">Showing last 10 visits</p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
         {recentPatients.map((patient, idx) => (
           <div 
             key={patient.id}
             onClick={() => setSelectedPatient(patient)}
-            className="bg-white dark:bg-zinc-900 border-2 border-zinc-100 dark:border-zinc-800 p-5 rounded-[2.5rem] flex flex-col items-start gap-4 hover:border-orange-200 dark:hover:border-zinc-700 cursor-pointer transition-all shadow-[0_10px_30px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] group active:scale-[0.98] animate-in slide-in-from-bottom-2 duration-300 overflow-hidden relative"
+            className="bg-white dark:bg-zinc-900 border-4 border-white dark:border-black p-6 rounded-[3rem] flex flex-col items-start gap-4 cursor-pointer transition-all duration-500 shadow-[0_10px_30px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.4)] md:hover:scale-[1.03] md:hover:-translate-y-3 group active:scale-[0.98] animate-in slide-in-from-bottom-2 overflow-hidden relative"
             style={{ animationDelay: `${idx * 50}ms` }}
           >
-            {/* Background Blob */}
-            <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-orange-500/5 dark:bg-orange-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform"></div>
+            {/* Dynamic Background Glow Layer */}
+            <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-[0.02] dark:group-hover:opacity-[0.2] transition-opacity duration-500 pointer-events-none"></div>
             
-            <div className="flex items-center gap-4 w-full">
+            {/* Background Blob */}
+            <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-orange-500/5 dark:bg-orange-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+            
+            <div className="flex items-center gap-4 w-full relative z-10">
               <div className="relative">
                 <img 
                   src={patient.avatar} 
                   alt={patient.name} 
-                  className="w-16 h-16 rounded-2xl object-cover border-2 border-white dark:border-zinc-800 shadow-lg group-hover:rotate-3 transition-transform"
+                  className="w-16 h-16 rounded-2xl object-cover border-4 border-white dark:border-zinc-800 shadow-lg group-hover:rotate-3 transition-all duration-500"
                 />
                 <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white dark:border-zinc-800 flex items-center justify-center text-[8px] text-white shadow-sm ${patient.species === Species.Dog ? 'bg-orange-500' : 'bg-emerald-500'}`}>
                   <i className={`fa-solid ${patient.species === Species.Dog ? 'fa-dog' : 'fa-cat'}`}></i>
                 </div>
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-zinc-800 dark:text-zinc-100 text-lg leading-tight">{patient.name}</h4>
+                <h4 className="font-bold text-zinc-800 dark:text-zinc-100 text-lg leading-tight group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">{patient.name}</h4>
                 <p className="text-[9px] font-black text-orange-500 uppercase tracking-widest mt-0.5">{patient.id}</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-all shadow-inner">
+              <div className="w-10 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600 flex items-center justify-center group-hover:bg-zinc-950 dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-zinc-950 transition-all shadow-inner">
                 <i className="fa-solid fa-arrow-right-long text-sm"></i>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 mt-1">
-              <span className="px-3 py-1 bg-zinc-100/50 dark:bg-zinc-800/50 rounded-lg text-[8px] font-black text-zinc-400 uppercase tracking-widest">
+            <div className="flex items-center gap-3 mt-1 relative z-10">
+              <span className="px-3 py-1 bg-zinc-100/50 dark:bg-zinc-800/50 rounded-lg text-[8px] font-black text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 uppercase tracking-widest transition-colors">
                 {patient.breed}
               </span>
-              <span className="px-3 py-1 bg-zinc-100/50 dark:bg-zinc-800/50 rounded-lg text-[8px] font-black text-zinc-400 uppercase tracking-widest">
+              <span className="px-3 py-1 bg-zinc-100/50 dark:bg-zinc-800/50 rounded-lg text-[8px] font-black text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 uppercase tracking-widest transition-colors">
                 {patient.gender}
               </span>
             </div>

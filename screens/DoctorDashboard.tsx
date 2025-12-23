@@ -8,6 +8,7 @@ import ProfileScreen from './ProfileScreen';
 import DoctorProfileScreen from './DoctorProfileScreen';
 import DoctorPatientsScreen from './DoctorPatientsScreen';
 import DoctorSearchScreen from './DoctorSearchScreen';
+import { supabase } from '../lib/supabase';
 
 interface PriorityItemData {
   id: string;
@@ -41,7 +42,6 @@ interface DoctorDashboardProps {
 
 const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ 
   doctor, 
-  petData, 
   dailyLogs,
   darkMode, 
   setDarkMode,
@@ -53,48 +53,55 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   setPatientSubTab
 }) => {
   const [searchId, setSearchId] = useState('');
-  const [doctorProfile] = useState(doctor.doctorDetails!);
-  
-  const [visitedPatientIds, setVisitedPatientIds] = useState<Set<string>>(new Set());
+  const [activePatient, setActivePatient] = useState<any>(null);
   const [priorityItems, setPriorityItems] = useState<PriorityItemData[]>([]);
 
-  const handleSearch = (id?: string) => {
+  const handleSearch = async (id?: string) => {
     const targetId = (id || searchId).toUpperCase();
     
-    if (targetId === petData.pet.id || targetId.startsWith('PET-')) {
-      const isNewVisit = !visitedPatientIds.has(targetId);
-      setVisitedPatientIds(prev => new Set([...Array.from(prev), targetId]));
-      
-      if (targetId === petData.pet.id) {
-        const newItems: PriorityItemData[] = petData.reminders
-          .filter(r => !r.completed)
-          .map(r => ({
-            id: `p-${r.id}-${Date.now()}`,
-            title: `${petData.pet.name}'s ${r.type}`,
-            detail: `Due: ${r.title}`,
-            type: "Urgent",
-            color: "bg-rose-100 text-rose-600 border-rose-200",
-            targetId: targetId
-          }))
-          .filter(newItem => !priorityItems.some(existing => existing.title === newItem.title));
-        
-        setPriorityItems(prev => [...prev, ...newItems]);
-      } else if (isNewVisit) {
-        const mockItem: PriorityItemData = {
-          id: `p-${targetId}-${Date.now()}`,
-          title: `${targetId.split('-')[1]}'s Follow-up`,
-          detail: "Check recent lab reports",
-          type: "Review",
-          color: "bg-amber-100 text-amber-600 border-amber-200",
-          targetId: targetId
-        };
-        setPriorityItems(prev => [...prev, mockItem]);
-      }
+    // Fetch real patient data
+    const { data: pet, error } = await supabase
+      .from('pets')
+      .select('*')
+      .eq('id', targetId)
+      .single();
 
-      setIsViewingPatient(true);
-    } else {
-      alert("Pet ID not found. Try searching for: " + petData.pet.id);
+    if (error || !pet) {
+      alert("Pet ID not found.");
+      return;
     }
+
+    // Log Access
+    await supabase.from('medical_access_logs').insert({
+      doctorId: doctor.id,
+      petId: pet.id,
+      action: 'VIEW_RECORDS'
+    });
+
+    // Save to Doctor's Patients list
+    await supabase.from('doctor_patients').upsert({
+      doctorId: doctor.id,
+      petId: pet.id,
+      lastAccessed: new Date().toISOString()
+    });
+
+    // Fetch full patient records for the view
+    const [timelineRes, docsRes, remsRes] = await Promise.all([
+      supabase.from('timeline').select('*').eq('petId', pet.id).order('date', { ascending: false }),
+      supabase.from('documents').select('*').eq('petId', pet.id).order('date', { ascending: false }),
+      supabase.from('reminders').select('*').eq('petId', pet.id).order('date', { ascending: true })
+    ]);
+
+    setActivePatient({
+      pet,
+      timeline: timelineRes.data || [],
+      documents: docsRes.data || [],
+      reminders: remsRes.data || [],
+      checklist: { food: false, water: false, walk: false, medication: false, lastReset: '' },
+      routine: []
+    });
+
+    setIsViewingPatient(true);
   };
 
   const removePriorityItem = (id: string, e: React.MouseEvent) => {
@@ -102,114 +109,99 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
     setPriorityItems(prev => prev.filter(item => item.id !== id));
   };
 
-  const renderPetView = () => (
-    <div className="flex flex-col h-full bg-[#FFFAF3] dark:bg-zinc-950 animate-in fade-in duration-500 relative overflow-hidden">
-      {/* Mobile-Only Header */}
-      <div className="md:hidden p-4 bg-orange-500 text-white flex items-center justify-between sticky top-0 z-[50] shadow-md shrink-0">
-        <div className="flex items-center gap-3">
-          <button onClick={() => setIsViewingPatient(false)} className="w-10 h-10 flex items-center justify-center hover:bg-white/20 rounded-2xl transition-all">
-            <i className="fa-solid fa-arrow-left"></i>
-          </button>
-          <span className="font-bold text-sm tracking-tight">{petData.pet.name}</span>
-        </div>
-        <div className="bg-white/20 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest">Medical Access</div>
-      </div>
+  const renderPetView = () => {
+    if (!activePatient) return null;
 
-      <div className="flex-1 overflow-y-auto no-scrollbar relative h-full">
-        {/* Desktop Title Bar for Patient View */}
-        <div className="hidden md:flex items-center justify-between p-8 border-b border-zinc-100 dark:border-zinc-800 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl">
-           <div className="flex items-center gap-4">
-              <img src={petData.pet.avatar} className="w-16 h-16 rounded-2xl border-4 border-white dark:border-zinc-800 shadow-lg" alt="avatar" />
-              <div>
-                 <h2 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide">{petData.pet.name}</h2>
-                 <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">{petData.pet.id} • Medical File</p>
-              </div>
-           </div>
-           <button 
-             onClick={() => setIsViewingPatient(false)}
-             className="px-6 py-3 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all"
-           >
-             Exit Record
-           </button>
+    return (
+      <div className="flex flex-col h-full bg-[#FFFAF3] dark:bg-zinc-950 animate-in fade-in duration-500 relative overflow-hidden">
+        <div className="md:hidden p-4 bg-orange-500 text-white flex items-center justify-between sticky top-0 z-[50] shadow-md shrink-0">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setIsViewingPatient(false)} className="w-10 h-10 flex items-center justify-center hover:bg-white/20 rounded-2xl transition-all">
+              <i className="fa-solid fa-arrow-left"></i>
+            </button>
+            <span className="font-bold text-sm tracking-tight">{activePatient.pet.name}</span>
+          </div>
+          <div className="bg-white/20 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest">Medical Access</div>
         </div>
 
-        <div className="relative md:p-10 pb-44 md:pb-12">
-          {patientSubTab === 'profile' && (
-            <Dashboard 
-              pet={petData.pet} 
-              reminders={petData.reminders} 
-              checklist={petData.checklist} 
-              setChecklist={() => {}} 
-              routine={petData.routine} 
-              setRoutine={() => {}} 
-              onCompleteReminder={() => {}} 
-              timeline={petData.timeline} 
-              dailyLogs={dailyLogs} 
-              onUpdateLog={() => {}} 
-              readOnly={true}
-            />
-          )}
-          {patientSubTab === 'timeline' && (
-            <TimelineScreen 
-              timeline={petData.timeline} 
-              setTimeline={() => {}} 
-              documents={petData.documents} 
-              reminders={petData.reminders} 
-              setReminders={() => {}} 
-              dailyLogs={dailyLogs} 
-              onUpdateLog={() => {}} 
-              petName={petData.pet.name} 
-              readOnly={true}
-            />
-          )}
-          {patientSubTab === 'docs' && (
-            <DocumentsScreen 
-              documents={petData.documents} 
-              setDocuments={() => {}} 
-              petName={petData.pet.name} 
-              readOnly={true}
-            />
-          )}
-          {patientSubTab === 'identity' && (
-            <ProfileScreen 
-              pet={petData.pet} 
-              setPet={() => {}} 
-              reminders={petData.reminders} 
-              readOnly={true}
-            />
-          )}
+        <div className="flex-1 overflow-y-auto no-scrollbar relative h-full">
+          <div className="hidden md:flex items-center justify-between p-8 border-b border-zinc-100 dark:border-zinc-800 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl">
+             <div className="flex items-center gap-4">
+                <img src={activePatient.pet.avatar} className="w-16 h-16 rounded-2xl border-4 border-white dark:border-zinc-800 shadow-lg" alt="avatar" />
+                <div>
+                   <h2 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide">{activePatient.pet.name}</h2>
+                   <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">{activePatient.pet.id} • Medical File</p>
+                </div>
+             </div>
+             <button 
+               onClick={() => setIsViewingPatient(false)}
+               className="px-6 py-3 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all"
+             >
+               Exit Record
+             </button>
+          </div>
+
+          <div className="relative md:p-10 pb-44 md:pb-12">
+            {patientSubTab === 'profile' && (
+              <Dashboard 
+                pet={activePatient.pet} 
+                reminders={activePatient.reminders} 
+                checklist={activePatient.checklist} 
+                setChecklist={() => {}} 
+                routine={activePatient.routine} 
+                setRoutine={() => {}} 
+                onCompleteReminder={() => {}} 
+                timeline={activePatient.timeline} 
+                dailyLogs={dailyLogs} 
+                onUpdateLog={() => {}} 
+                readOnly={true}
+              />
+            )}
+            {patientSubTab === 'timeline' && (
+              <TimelineScreen 
+                timeline={activePatient.timeline} 
+                setTimeline={() => {}} 
+                documents={activePatient.documents} 
+                reminders={activePatient.reminders} 
+                setReminders={() => {}} 
+                dailyLogs={dailyLogs} 
+                onUpdateLog={() => {}} 
+                petName={activePatient.pet.name} 
+                readOnly={true}
+              />
+            )}
+            {patientSubTab === 'docs' && (
+              <DocumentsScreen 
+                documents={activePatient.documents} 
+                setDocuments={() => {}} 
+                petName={activePatient.pet.name} 
+                readOnly={true}
+              />
+            )}
+            {patientSubTab === 'identity' && (
+              <ProfileScreen 
+                pet={activePatient.pet} 
+                setPet={() => {}} 
+                reminders={activePatient.reminders} 
+                readOnly={true}
+              />
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderContent = () => {
     switch (activeTab) {
       case 'profile':
-        return <DoctorProfileScreen doctorProfile={doctorProfile} doctorId={doctor.doctorDetails?.id || ''} />;
+        return <DoctorProfileScreen doctorProfile={doctor.doctorDetails!} doctorId={doctor.id} />;
       case 'patients':
         return <DoctorPatientsScreen onViewRecords={(id) => handleSearch(id)} />;
       case 'discover':
       default:
         return (
           <div className="space-y-12 animate-in fade-in duration-500 pb-60 max-w-5xl mx-auto">
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <StatCard 
-                  label="Active Patients" 
-                  value={visitedPatientIds.size} 
-                  icon="users-medical" 
-                  color="bg-emerald-500" 
-                  glowColor="rgba(16,185,129,0.3)" 
-                />
-                <StatCard 
-                  label="Urgent Medical Alerts" 
-                  value={priorityItems.length} 
-                  icon="bolt-lightning" 
-                  color="bg-orange-500" 
-                  glowColor="rgba(249,115,22,0.3)" 
-                />
-             </div>
-
              <section className="space-y-6">
                 <h3 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide px-2">Practice Queue</h3>
                 {priorityItems.length === 0 ? (
@@ -230,7 +222,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
              </section>
 
              <div className="max-w-4xl mx-auto w-full pt-6">
-                <DoctorSearchScreen searchId={searchId} setSearchId={setSearchId} handleSearch={() => handleSearch()} />
+                <DoctorSearchScreen searchId={searchId} setSearchId={setSearchId} handleSearch={(id) => handleSearch(id)} />
              </div>
           </div>
         );
@@ -261,18 +253,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
     </div>
   );
 };
-
-const StatCard: React.FC<{ label: string, value: number, icon: string, color: string, suffix?: string, glowColor: string }> = ({ label, value, icon, color, suffix = "", glowColor }) => (
-  <div 
-    className={`${color} p-10 rounded-[3.5rem] text-white relative overflow-hidden group transition-all duration-700 hover:scale-[1.03] border-4 border-white dark:border-zinc-800 shadow-xl`}
-    style={{ boxShadow: `0 20px 40px -10px ${glowColor}` }}
-  >
-    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
-    <i className="fa-solid fa-${icon} text-3xl mb-4 opacity-50 group-hover:rotate-12 transition-transform"></i>
-    <p className="text-5xl font-black drop-shadow-md tracking-tighter">{value}{suffix}</p>
-    <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mt-2">{label}</p>
-  </div>
-);
 
 const PriorityItem: React.FC<{ 
   title: string, 

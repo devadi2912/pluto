@@ -26,8 +26,8 @@ export const getAIResponse = async (
     Timeline Entries:
     ${context.timeline.map(e => `- ${e.date}: ${e.type} - ${e.title} (${e.notes || ''})`).join('\n')}
 
-    Documents:
-    ${context.documents.map(d => `- ${d.name} (${d.type}) dated ${d.date}`).join('\n')}
+    Documents Available for Analysis:
+    ${context.documents.map(d => `- ${d.name} (${d.type}) dated ${d.date} [Has File Content: ${!!d.data}]`).join('\n')}
 
     Reminders:
     ${context.reminders.map(r => `- ${r.title} scheduled for ${r.date} (Type: ${r.type})`).join('\n')}
@@ -35,14 +35,17 @@ export const getAIResponse = async (
 
   const systemInstruction = `
     You are Pluto AI, a helpful assistant for pet owner ${context.pet.name}.
-    You have access to the pet's records provided in the context.
-    Your goal is to answer questions about the pet's history, upcoming tasks, and documents.
+    You have access to the pet's records and UPLOADED DOCUMENTS provided in the context.
+    
+    If the user asks about a specific document or details from a report, prescription, or bill, use the provided visual/file data to answer.
+    Your goal is to answer questions about the pet's history, upcoming tasks, and documents with high precision.
     
     STRICT RULES:
     1. Only use the provided data for medical history.
     2. DO NOT provide medical advice, diagnosis, or treatments.
     3. If asked about nearby vets, pet stores, pet daycares, grooming services, or hospitals, use your Google Maps tool to find relevant locations.
     4. Keep answers concise, warm, and professional.
+    5. If a document's content is requested and available, summarize or extract the requested detail precisely.
   `;
 
   try {
@@ -50,8 +53,9 @@ export const getAIResponse = async (
     const locationKeywords = ["vet", "clinic", "hospital", "nearby", "store", "shop", "daycare", "boarding", "grooming", "care center", "center"];
     const isLocationQuery = locationKeywords.some(keyword => query.includes(keyword));
 
-    // Use gemini-2.5-flash for Maps grounding, gemini-3-pro-preview for reasoning tasks
-    const model = isLocationQuery ? "gemini-2.5-flash" : "gemini-3-pro-preview";
+    // Use gemini-2.5-flash for Maps grounding and multimodal tasks (best for files)
+    // gemini-3-pro-preview for complex reasoning tasks
+    const model = isLocationQuery ? "gemini-2.5-flash" : (context.documents.some(d => d.data) ? "gemini-2.5-flash" : "gemini-3-pro-preview");
     
     const config: any = {
       systemInstruction,
@@ -71,16 +75,31 @@ export const getAIResponse = async (
       }
     }
 
+    // Build the contents with both text and file parts
+    const parts: any[] = [{ text: `Context: ${petContext}\n\nUser Question: ${prompt}` }];
+    
+    // Include the actual data of the most relevant documents if they exist
+    // For large collections, we'd filter by relevance, but here we pass available docs
+    context.documents.forEach(doc => {
+      if (doc.data && doc.mimeType) {
+        parts.push({
+          inlineData: {
+            data: doc.data,
+            mimeType: doc.mimeType
+          }
+        });
+      }
+    });
+
     const response = await ai.models.generateContent({
       model,
-      contents: `Context: ${petContext}\n\nUser Question: ${prompt}`,
+      contents: [{ parts }],
       config,
     });
 
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
 
     return {
-      // Use .text property directly instead of .text() method
       text: response.text || "I'm sorry, I couldn't process that request.",
       sources: groundingChunks?.map((chunk: any) => ({
         title: chunk.maps?.title || chunk.web?.title,
