@@ -15,6 +15,7 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
   const [isFetching, setIsFetching] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
   
   // Edit mode states
   const [isEditing, setIsEditing] = useState(false);
@@ -89,13 +90,13 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
     setIsEditing(false);
   };
 
-  const deleteDoc = () => {
-    if (!selectedDoc || readOnly) return;
-    // Functional deletion logic
-    const updatedDocs = documents.filter(d => d.id !== selectedDoc.id);
-    setDocuments(updatedDocs);
-    setSelectedDoc(null);
-    setIsEditing(false);
+  const handleDeleteDoc = (id: string) => {
+    if (readOnly) return;
+    if (window.confirm('Are you sure you want to delete this document permanently?')) {
+      const updatedDocs = documents.filter(d => d.id !== id);
+      setDocuments(updatedDocs);
+      if (selectedDoc?.id === id) setSelectedDoc(null);
+    }
   };
 
   const openInNewTab = (url: string) => {
@@ -103,7 +104,7 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
   };
 
   return (
-    <div className="p-5 md:p-10 space-y-8 animate-in fade-in duration-500 pb-24 relative min-h-full">
+    <div className="p-5 md:p-10 space-y-8 animate-in fade-in duration-500 pb-44 relative min-h-full">
       {/* Success Notification */}
       {showSuccess && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[10000] bg-emerald-500 text-white px-6 py-4 rounded-[1.5rem] shadow-[0_20px_50px_rgba(16,185,129,0.4)] font-black uppercase tracking-widest text-[10px] flex items-center gap-3 animate-in slide-in-from-top-10">
@@ -121,7 +122,7 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
           <p className="text-[10px] text-zinc-600 dark:text-zinc-400 font-black uppercase tracking-widest mt-1">Archive: {documents.length} Records</p>
         </div>
         {!readOnly && (
-          <label className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-tr from-amber-400 to-orange-500 text-white rounded-2xl flex items-center justify-center cursor-pointer transition-all hover:scale-110 active:scale-90 border-4 border-white dark:border-orange-500 shadow-[0_0_20px_rgba(255,255,255,0.4)] dark:shadow-[0_0_25px_rgba(249,115,22,0.5)]">
+          <label className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-tr from-amber-400 to-orange-500 text-white rounded-2xl flex items-center justify-center cursor-pointer transition-all hover:scale-110 active:scale-90 border-4 border-white dark:border-black shadow-[0_0_20px_rgba(255,255,255,0.4)] dark:shadow-[0_0_25px_rgba(0,0,0,0.5)]">
             <i className="fa-solid fa-file-circle-plus text-lg"></i>
             <input type="file" className="hidden" onChange={handleUpload} />
           </label>
@@ -149,28 +150,37 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
       <div className="space-y-3 md:space-y-4">
         {filteredDocs.length === 0 ? (
           <div className="py-24 flex flex-col items-center text-zinc-300 dark:text-zinc-800 animate-in zoom-in duration-500">
-             <i className="fa-solid fa-folder-open text-5xl mb-4 opacity-30"></i>
-             <p className="font-black uppercase tracking-[0.2em] text-[10px]">Vault is Empty</p>
+             <div className="w-20 h-20 bg-zinc-50 dark:bg-zinc-900/50 rounded-full flex items-center justify-center mb-6">
+                <i className="fa-solid fa-folder-open text-3xl opacity-30"></i>
+             </div>
+             <p className="font-black uppercase tracking-[0.2em] text-[10px]">No Documents Found</p>
+             {filter !== 'All' && <p className="text-[9px] text-zinc-400 font-bold mt-2">Try changing the filter</p>}
           </div>
         ) : (
           filteredDocs.map((doc, idx) => (
             <div 
               key={doc.id} 
-              onClick={() => setSelectedDoc(doc)}
-              className="bg-white dark:bg-zinc-900 border-2 border-zinc-50 dark:border-zinc-800 rounded-[1.75rem] p-4 flex items-center gap-4 hover:border-orange-200 dark:hover:border-zinc-700 transition-all group animate-in slide-in-from-bottom-4 duration-500 shadow-sm cursor-pointer active:scale-[0.98]"
+              onClick={() => isDeleteMode ? handleDeleteDoc(doc.id) : setSelectedDoc(doc)}
+              className={`bg-white dark:bg-zinc-900 border-2 rounded-[1.75rem] p-4 flex items-center gap-4 transition-all group animate-in slide-in-from-bottom-4 duration-500 shadow-sm cursor-pointer active:scale-[0.98] ${
+                isDeleteMode 
+                  ? 'border-rose-400/40 dark:border-rose-900/60 shadow-rose-100/50 dark:shadow-none hover:border-rose-500 active:rotate-1' 
+                  : 'border-zinc-50 dark:border-zinc-800 hover:border-orange-200 dark:hover:border-zinc-700'
+              }`}
               style={{ animationDelay: `${idx * 60}ms` }}
             >
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg transition-all group-hover:rotate-6 ${
+                isDeleteMode ? 'bg-rose-50 text-rose-500 dark:bg-rose-950/40' :
                 doc.type === 'Prescription' ? 'bg-rose-50 text-rose-500 dark:bg-rose-950/30' :
                 doc.type === 'Bill' ? 'bg-amber-50 text-amber-500 dark:bg-amber-950/30' : 'bg-emerald-50 text-emerald-500 dark:bg-emerald-950/30'
               }`}>
                 <i className={`fa-solid ${
+                  isDeleteMode ? 'fa-trash-can' :
                   doc.type === 'Prescription' ? 'fa-prescription-bottle-medical' :
                   doc.type === 'Bill' ? 'fa-file-invoice-dollar' : 'fa-file-medical'
                 }`}></i>
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-zinc-900 dark:text-zinc-100 truncate text-[14px] md:text-base">{doc.name}</h4>
+                <h4 className={`font-bold truncate text-[14px] md:text-base transition-colors ${isDeleteMode ? 'text-rose-600 dark:text-rose-400' : 'text-zinc-900 dark:text-zinc-100'}`}>{doc.name}</h4>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className={`text-[9px] font-black uppercase tracking-widest ${
                      doc.type === 'Prescription' ? 'text-rose-600' :
@@ -180,13 +190,34 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
                   <span className="text-[9px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">{doc.date}</span>
                 </div>
               </div>
-              <div className="w-8 h-8 rounded-lg bg-zinc-50 dark:bg-zinc-800 text-zinc-400 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-all">
-                <i className="fa-solid fa-eye text-[9px]"></i>
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                isDeleteMode 
+                  ? 'bg-rose-100 text-rose-600 dark:bg-rose-900 dark:text-rose-200 hover:bg-rose-500 hover:text-white' 
+                  : 'bg-zinc-50 dark:bg-zinc-800 text-zinc-400 group-hover:bg-orange-500 group-hover:text-white'
+              }`}>
+                <i className={`fa-solid ${isDeleteMode ? 'fa-trash-can text-[10px]' : 'fa-eye text-[9px]'}`}></i>
               </div>
             </div>
           ))
         )}
       </div>
+
+      {/* Delete Management Button - Smaller, Dynamic Borders, Pink Glow */}
+      {!readOnly && documents.length > 0 && (
+        <div className="pt-10 flex justify-center sticky bottom-24 z-30 pointer-events-none">
+          <button 
+            onClick={() => setIsDeleteMode(!isDeleteMode)}
+            className={`pointer-events-auto flex items-center gap-2.5 px-6 py-2.5 rounded-[1.25rem] font-black text-[8px] uppercase tracking-[0.2em] transition-all shadow-xl border-2 active:scale-95 ${
+              isDeleteMode 
+                ? 'bg-rose-500 text-white border-white dark:border-black shadow-[0_0_20px_rgba(236,72,153,0.7)] animate-party' 
+                : 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 border-white dark:border-black shadow-lg hover:translate-y-[-2px]'
+            }`}
+          >
+            <i className={`fa-solid ${isDeleteMode ? 'fa-check-circle' : 'fa-trash-can'}`}></i>
+            {isDeleteMode ? 'Finish Cleanup' : 'Manage Records'}
+          </button>
+        </div>
+      )}
 
       {/* Modal Preview - Consistent Frosted Glass Style */}
       {selectedDoc && (
@@ -271,11 +302,7 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
                     </div>
                   </div>
                   <button 
-                    onClick={() => {
-                      if (window.confirm('This action cannot be undone. Permanently delete this file?')) {
-                        deleteDoc();
-                      }
-                    }}
+                    onClick={() => handleDeleteDoc(selectedDoc.id)}
                     className="w-full flex items-center justify-center gap-2 py-5 bg-rose-50 text-rose-700 dark:bg-rose-950/20 rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] border-2 border-rose-200 dark:border-rose-900/50 hover:bg-rose-600 hover:text-white transition-all shadow-md active:scale-[0.98]"
                   >
                     <i className="fa-solid fa-trash-can"></i>

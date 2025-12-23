@@ -131,18 +131,24 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
               </div>
            </div>
 
-           <div className="backdrop-blur-xl bg-zinc-950/80 rounded-[2.5rem] p-8 text-white border border-zinc-800/50 shadow-2xl overflow-hidden relative group">
+           <button 
+              onClick={() => onNavigate?.('dashboard')}
+              className="w-full text-left backdrop-blur-xl bg-zinc-950/80 rounded-[2.5rem] p-8 text-white border border-zinc-800/50 shadow-2xl overflow-hidden relative group hover:scale-[1.02] transition-all active:scale-[0.98]"
+           >
               <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-transparent opacity-40"></div>
               <div className="relative z-10 flex items-center justify-between">
                 <div>
                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Care Optimization</p>
                    <p className="text-2xl font-bold font-lobster tracking-wider mt-1">{isExcellent ? 'Fully Synchronized' : 'Attention Required'}</p>
+                   <p className="text-[9px] font-black text-orange-400 uppercase tracking-widest mt-2 flex items-center gap-1.5 group-hover:translate-x-1 transition-transform">
+                      View Tasks <i className="fa-solid fa-arrow-right"></i>
+                   </p>
                 </div>
-                <div className={`w-14 h-14 rounded-3xl flex items-center justify-center text-2xl shadow-xl transition-all ${isExcellent ? 'bg-emerald-500 shadow-emerald-500/30 animate-pulse' : 'bg-rose-500 shadow-rose-500/30 animate-alert'}`}>
+                <div className={`w-14 h-14 rounded-3xl flex items-center justify-center text-2xl shadow-xl transition-all ${isExcellent ? 'bg-emerald-500 shadow-emerald-500/30 animate-pulse' : 'bg-orange-500 shadow-orange-500/30 animate-alert'}`}>
                    <i className={`fa-solid ${isExcellent ? 'fa-heart-pulse' : 'fa-triangle-exclamation'}`}></i>
                 </div>
               </div>
-           </div>
+           </button>
         </div>
 
         {/* Right Column: Frosted Details Card */}

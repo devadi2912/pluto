@@ -112,13 +112,13 @@ const AIScreen: React.FC<AIProps> = ({ pet, timeline, documents, reminders }) =>
       {/* Input & Suggestions */}
       <div className="px-5 pb-32 pt-4 md:px-12 md:pb-12 bg-white/40 dark:bg-zinc-950/40 backdrop-blur-3xl border-t border-white/40 dark:border-zinc-800/40 sticky bottom-0 z-20">
         <div className="max-w-4xl mx-auto space-y-6">
-          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 px-1 -mx-1">
+          <div className="flex gap-4 overflow-x-auto no-scrollbar py-4 px-2 -mx-2">
             <SuggestionChip text="Last Vaccine?" onClick={() => handleSend("When was Luna's last vaccination?")} icon="syringe" />
             <SuggestionChip text="Nearby Vets" onClick={() => handleSend("Find some highly rated vet clinics nearby.")} icon="stethoscope" />
             <SuggestionChip text="History" onClick={() => handleSend("Can you summarize Luna's recent health history?")} icon="scroll" />
           </div>
           
-          <div className="relative group/input">
+          <div className="relative group/input pb-2">
             <input 
               type="text" 
               placeholder={randomFact}
@@ -130,7 +130,7 @@ const AIScreen: React.FC<AIProps> = ({ pet, timeline, documents, reminders }) =>
             <button 
               onClick={() => handleSend()}
               disabled={!input.trim() || isLoading}
-              className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+              className={`absolute right-2.5 top-[calc(50%-4px)] -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center transition-all ${
                 input.trim() && !isLoading 
                   ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30 active:scale-90 hover:scale-110' 
                   : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400'
@@ -148,7 +148,7 @@ const AIScreen: React.FC<AIProps> = ({ pet, timeline, documents, reminders }) =>
 const SuggestionChip: React.FC<{ text: string, onClick: () => void, icon: string }> = ({ text, onClick, icon }) => (
   <button 
     onClick={onClick}
-    className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-zinc-900 border-2 border-zinc-200 dark:border-orange-500/50 rounded-full text-[10px] font-black uppercase tracking-widest text-zinc-700 dark:text-zinc-300 hover:bg-orange-500 hover:text-white hover:border-white transition-all shadow-md active:scale-95 hover:scale-105 whitespace-nowrap group/chip dark:animate-glow-pulse"
+    className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-zinc-900 border-2 border-zinc-200 dark:border-orange-500/30 rounded-full text-[10px] font-black uppercase tracking-widest text-zinc-700 dark:text-zinc-300 transition-all shadow-sm active:scale-95 hover:scale-105 hover:animate-glow-pulse whitespace-nowrap group/chip shrink-0"
   >
     <i className={`fa-solid fa-${icon} text-[10px] opacity-100 group-hover/chip:scale-110 transition-transform`}></i>
     {text}
