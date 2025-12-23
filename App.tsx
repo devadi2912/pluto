@@ -29,7 +29,8 @@ const MOCK_PET: PetProfile = {
   breed: 'Golden Retriever',
   dateOfBirth: '2021-06-15',
   gender: Gender.Female,
-  avatar: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=400&h=400'
+  avatar: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=400&h=400',
+  weight: '28'
 };
 
 const MOCK_TIMELINE: TimelineEntry[] = [
@@ -180,7 +181,8 @@ const App: React.FC = () => {
       case 'timeline': 
         return <TimelineScreen timeline={timeline} setTimeline={setTimeline} documents={documents} reminders={reminders} setReminders={setReminders} dailyLogs={dailyLogs} onUpdateLog={handleUpdateDailyLog} petName={pet.name} />;
       case 'documents': 
-        return <DocumentsScreen documents={documents} setDocuments={setDocuments} />;
+        // Pass petName prop to DocumentsScreen
+        return <DocumentsScreen documents={documents} setDocuments={setDocuments} petName={pet.name} />;
       case 'ai': 
         return <AIScreen pet={pet} timeline={timeline} documents={documents} reminders={reminders} />;
       default: 

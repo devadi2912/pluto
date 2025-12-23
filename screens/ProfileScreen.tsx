@@ -48,8 +48,14 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
     }, 650);
   };
 
+  const petAge = useMemo(() => {
+    const diff = Date.now() - new Date(pet.dateOfBirth).getTime();
+    const ageDate = new Date(diff);
+    return Math.abs(ageDate.getUTCFullYear() - 1970);
+  }, [pet.dateOfBirth]);
+
   return (
-    <div className="p-4 md:p-12 space-y-8 md:space-y-10 pb-32 animate-in slide-in-from-bottom-10 duration-700">
+    <div className="p-4 md:p-12 space-y-8 md:space-y-10 pb-44 animate-in slide-in-from-bottom-10 duration-700">
       <div className="flex items-center justify-between px-2">
         <h2 className="text-3xl md:text-4xl font-bold font-lobster text-zinc-900 dark:text-zinc-50">Pet Identity</h2>
         <button 
@@ -87,9 +93,8 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
           </div>
         </div>
 
-        {/* Action Cards - White Borders & Glowing Shadows */}
+        {/* Action Cards */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mb-8 md:mb-10">
-          {/* Party Birthday Button */}
           <div 
             onClick={handleBirthdayClick}
             className={`
@@ -114,7 +119,6 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
             <p className="text-[10px] md:text-[11px] mt-0.5 opacity-80">{pet.name}'s Party is loading... 🎈</p>
           </div>
 
-          {/* Smart Vitality Button */}
           <div 
             onClick={handleVitalityClick}
             className={`
@@ -151,9 +155,23 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
             <InputField label="Name" value={formData.name} onChange={v => setFormData({...formData, name: v})} disabled={!isEditing} />
             <SelectField label="Species" value={formData.species} options={Object.values(Species)} onChange={v => setFormData({...formData, species: v as any})} disabled={!isEditing} />
             <InputField label="Breed" value={formData.breed} onChange={v => setFormData({...formData, breed: v})} disabled={!isEditing} />
+            <div className="space-y-1">
+              <label className="text-[8px] md:text-[9px] font-black uppercase text-orange-600 dark:text-orange-400 tracking-widest ml-1">Current Weight (kg)</label>
+              <input 
+                type="number" value={formData.weight || ''} onChange={e => setFormData({...formData, weight: e.target.value})} disabled={!isEditing}
+                placeholder="25"
+                className={`w-full p-3 md:p-4 rounded-xl border-2 transition-all font-bold text-sm md:text-base ${!isEditing ? 'bg-zinc-50/50 dark:bg-zinc-800/30 border-transparent text-zinc-500' : 'bg-white dark:bg-zinc-900 border-orange-100 dark:border-zinc-800 focus:border-orange-500 dark:text-white shadow-lg'}`}
+              />
+            </div>
           </div>
           <div className="space-y-4 md:space-y-6">
             <InputField label="Birthday" type="date" value={formData.dateOfBirth} onChange={v => setFormData({...formData, dateOfBirth: v})} disabled={!isEditing} />
+            <div className="space-y-1">
+              <label className="text-[8px] md:text-[9px] font-black uppercase text-orange-600 dark:text-orange-400 tracking-widest ml-1">Calculated Age</label>
+              <div className="w-full p-3 md:p-4 rounded-xl border-2 bg-zinc-50/50 dark:bg-zinc-800/30 border-transparent text-zinc-500 font-bold text-sm md:text-base">
+                {petAge} years old
+              </div>
+            </div>
             <SelectField label="Gender" value={formData.gender} options={Object.values(Gender)} onChange={v => setFormData({...formData, gender: v as any})} disabled={!isEditing} />
             <div className="p-4 md:p-6 bg-zinc-50 dark:bg-zinc-800/50 rounded-[1.5rem] md:rounded-[2rem] border border-zinc-100 dark:border-zinc-800 shadow-inner">
                <p className="text-[8px] md:text-[9px] font-black uppercase text-zinc-400 tracking-widest mb-2 text-center">Certified Pluto Health ID</p>

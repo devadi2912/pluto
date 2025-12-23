@@ -98,9 +98,9 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   };
 
   const renderPetView = () => (
-    <div className="flex flex-col h-full bg-[#FFFAF3] dark:bg-zinc-950 animate-in fade-in duration-500 overflow-hidden">
-      {/* Patient Header */}
-      <div className="p-4 bg-orange-500 text-white flex items-center justify-between sticky top-0 z-[70] shadow-md">
+    <div className="flex flex-col h-full bg-[#FFFAF3] dark:bg-zinc-950 animate-in fade-in duration-500 relative">
+      {/* Patient Header - Lowered Z-index slightly to ensure modal dominance */}
+      <div className="p-4 bg-orange-500 text-white flex items-center justify-between sticky top-0 z-[50] shadow-md shrink-0">
         <div className="flex items-center gap-3">
           <button onClick={() => setViewingPet(false)} className="w-10 h-10 flex items-center justify-center hover:bg-white/20 rounded-2xl transition-all active:scale-90">
             <i className="fa-solid fa-arrow-left"></i>
@@ -110,19 +110,20 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
             <span className="font-bold text-sm tracking-tight">{petData.pet.name}</span>
           </div>
         </div>
-        <div className="bg-white/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em]">Medical Access</div>
+        <div className="bg-white/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border border-white/20">Medical Access</div>
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-60 no-scrollbar">
-        {/* Context Navigation for Doctor */}
-        <div className="flex bg-white dark:bg-zinc-900 border-b dark:border-zinc-800 sticky top-0 z-[60] overflow-x-auto no-scrollbar shadow-sm">
+      <div className="flex-1 overflow-y-auto pb-60 no-scrollbar relative">
+        {/* Context Navigation - Lowered Z-index */}
+        <div className="flex bg-white dark:bg-zinc-900 border-b dark:border-zinc-800 sticky top-0 z-[40] overflow-x-auto no-scrollbar shadow-sm">
            <SubNavTab label="Pulse" active={activeSubTab === 'profile'} onClick={() => setActiveSubTab('profile')} icon="heart-pulse" />
            <SubNavTab label="Journal" active={activeSubTab === 'timeline'} onClick={() => setActiveSubTab('timeline')} icon="calendar-days" />
            <SubNavTab label="Files" active={activeSubTab === 'docs'} onClick={() => setActiveSubTab('docs')} icon="folder-open" />
            <SubNavTab label="Profile" active={activeSubTab === 'identity'} onClick={() => setActiveSubTab('identity')} icon="id-badge" />
         </div>
 
-        <div className="relative z-10">
+        {/* Content Area - No restrictive Z-index wrapper */}
+        <div className="relative">
           {activeSubTab === 'profile' && (
             <div className="space-y-6">
               <Dashboard 
@@ -152,7 +153,8 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
             />
           )}
           {activeSubTab === 'docs' && (
-            <DocumentsScreen documents={petData.documents} setDocuments={() => {}} />
+            // Pass petName prop to DocumentsScreen
+            <DocumentsScreen documents={petData.documents} setDocuments={() => {}} petName={petData.pet.name} />
           )}
           {activeSubTab === 'identity' && (
             <ProfileScreen 
@@ -212,8 +214,10 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
     }
   };
 
+  const currentActiveTab = activeTab;
+
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-transparent relative no-scrollbar">
+    <div className="flex-1 flex flex-col h-full bg-transparent relative no-scrollbar">
       {viewingPet ? renderPetView() : (
         <div className="flex-1 p-6 space-y-10 overflow-y-auto no-scrollbar">
           <div className="flex items-center justify-between">
@@ -297,8 +301,8 @@ const PriorityItem: React.FC<{
 );
 
 const SubNavTab: React.FC<{ label: string, active: boolean, onClick: () => void, icon: string }> = ({ label, active, onClick, icon }) => (
-  <button onClick={onClick} className={`flex-1 flex flex-col items-center gap-2 py-4 px-6 border-b-4 transition-all ${active ? 'border-orange-500 text-orange-600' : 'border-transparent text-zinc-400'}`}>
-    <i className={`fa-solid fa-${icon} text-lg`}></i>
+  <button onClick={onClick} className={`flex-1 flex flex-col items-center gap-2 py-4 px-6 border-b-4 transition-all ${active ? 'border-orange-500 text-orange-600 bg-zinc-50/50 dark:bg-white/5' : 'border-transparent text-zinc-400'}`}>
+    <i className={`fa-solid fa-${icon} text-lg ${active ? 'animate-pulse' : ''}`}></i>
     <span className="text-[9px] font-black uppercase tracking-widest whitespace-nowrap">{label}</span>
   </button>
 );

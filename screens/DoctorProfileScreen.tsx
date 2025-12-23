@@ -16,7 +16,7 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-44">
       <div className="flex items-center justify-between px-2">
         <h3 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50">Professional Identity</h3>
         <button 
@@ -40,6 +40,7 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
           icon="users-viewfinder" 
           color="bg-gradient-to-br from-blue-600 to-indigo-800"
           suffix="+"
+          isBlurred
         />
         <AnimatedStatButton 
           label="Years Dedicated" 
@@ -164,8 +165,9 @@ const AnimatedStatButton: React.FC<{
   value: number, 
   icon: string, 
   color: string, 
-  suffix?: string
-}> = ({ label, value, icon, color, suffix = "" }) => {
+  suffix?: string,
+  isBlurred?: boolean
+}> = ({ label, value, icon, color, suffix = "", isBlurred }) => {
   const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
@@ -189,15 +191,15 @@ const AnimatedStatButton: React.FC<{
   }, [value]);
 
   return (
-    <div className={`relative overflow-hidden p-6 rounded-[2.5rem] shadow-xl group transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl text-left border-2 border-white/20 ${color} flex-1`}>
+    <div className={`relative overflow-hidden p-6 rounded-[2.5rem] shadow-[0_15px_40px_rgba(0,0,0,0.15)] group transition-all duration-500 hover:scale-[1.05] hover:shadow-[0_25px_60px_rgba(0,0,0,0.3)] text-left border-4 border-white dark:border-zinc-950 ${color} flex-1 ${isBlurred ? 'backdrop-blur-md shadow-indigo-500/30' : 'shadow-amber-500/30'}`}>
       <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
       <div className="flex flex-col gap-2 relative z-10">
         <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center border border-white/30 backdrop-blur-md transition-transform duration-300 group-hover:rotate-6">
           <i className={`fa-solid fa-${icon} text-white`}></i>
         </div>
         <div>
-          <p className="text-2xl font-black text-white tracking-tighter">{displayValue}{suffix}</p>
-          <p className="text-[9px] font-black uppercase tracking-widest text-white/70 mt-0.5">{label}</p>
+          <p className="text-2xl font-black text-white tracking-tighter drop-shadow-md">{displayValue}{suffix}</p>
+          <p className="text-[9px] font-black uppercase tracking-widest text-white/90 mt-0.5">{label}</p>
         </div>
       </div>
       <div className="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg] group-hover:left-[200%] transition-all duration-1000"></div>

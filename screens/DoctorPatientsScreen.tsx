@@ -29,44 +29,67 @@ const DoctorPatientsScreen: React.FC<DoctorPatientsScreenProps> = ({ onViewRecor
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-in fade-in duration-300 pb-44 px-1">
       <div className="px-2">
         <h3 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50">Recent Cases</h3>
         <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">Showing last 10 visits</p>
       </div>
       
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {recentPatients.map((patient, idx) => (
           <div 
             key={patient.id}
             onClick={() => setSelectedPatient(patient)}
-            className="bg-white dark:bg-zinc-900 border-2 border-zinc-50 dark:border-zinc-800 p-4 rounded-[2rem] flex items-center gap-4 hover:border-orange-200 dark:hover:border-zinc-700 cursor-pointer transition-all shadow-sm group active:scale-[0.98] animate-in slide-in-from-bottom-2 duration-300"
+            className="bg-white dark:bg-zinc-900 border-2 border-zinc-100 dark:border-zinc-800 p-5 rounded-[2.5rem] flex flex-col items-start gap-4 hover:border-orange-200 dark:hover:border-zinc-700 cursor-pointer transition-all shadow-[0_10px_30px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] group active:scale-[0.98] animate-in slide-in-from-bottom-2 duration-300 overflow-hidden relative"
             style={{ animationDelay: `${idx * 50}ms` }}
           >
-            <img 
-              src={patient.avatar} 
-              alt={patient.name} 
-              className="w-14 h-14 rounded-2xl object-cover border-2 border-zinc-100 dark:border-zinc-800 group-hover:rotate-3 transition-transform"
-            />
-            <div className="flex-1">
-              <h4 className="font-bold text-zinc-800 dark:text-zinc-100">{patient.name}</h4>
-              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">{patient.breed} • {patient.id}</p>
+            {/* Background Blob */}
+            <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-orange-500/5 dark:bg-orange-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform"></div>
+            
+            <div className="flex items-center gap-4 w-full">
+              <div className="relative">
+                <img 
+                  src={patient.avatar} 
+                  alt={patient.name} 
+                  className="w-16 h-16 rounded-2xl object-cover border-2 border-white dark:border-zinc-800 shadow-lg group-hover:rotate-3 transition-transform"
+                />
+                <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white dark:border-zinc-800 flex items-center justify-center text-[8px] text-white shadow-sm ${patient.species === Species.Dog ? 'bg-orange-500' : 'bg-emerald-500'}`}>
+                  <i className={`fa-solid ${patient.species === Species.Dog ? 'fa-dog' : 'fa-cat'}`}></i>
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-bold text-zinc-800 dark:text-zinc-100 text-lg leading-tight">{patient.name}</h4>
+                <p className="text-[9px] font-black text-orange-500 uppercase tracking-widest mt-0.5">{patient.id}</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-all shadow-inner">
+                <i className="fa-solid fa-arrow-right-long text-sm"></i>
+              </div>
             </div>
-            <div className="w-10 h-10 rounded-full bg-zinc-50 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-all">
-              <i className="fa-solid fa-chevron-right text-xs"></i>
+
+            <div className="flex items-center gap-3 mt-1">
+              <span className="px-3 py-1 bg-zinc-100/50 dark:bg-zinc-800/50 rounded-lg text-[8px] font-black text-zinc-400 uppercase tracking-widest">
+                {patient.breed}
+              </span>
+              <span className="px-3 py-1 bg-zinc-100/50 dark:bg-zinc-800/50 rounded-lg text-[8px] font-black text-zinc-400 uppercase tracking-widest">
+                {patient.gender}
+              </span>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="text-center py-6 mt-4">
-        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">End of Record History</p>
+      <div className="text-center py-10">
+        <p className="text-[10px] font-black text-zinc-300 dark:text-zinc-700 uppercase tracking-widest flex items-center justify-center gap-3">
+          <span className="h-[1px] w-8 bg-zinc-100 dark:bg-zinc-800"></span>
+          End of Archive
+          <span className="h-[1px] w-8 bg-zinc-100 dark:bg-zinc-800"></span>
+        </p>
       </div>
 
       {/* REFINED Frosted Glass Patient Detail Modal */}
       {selectedPatient && (
         <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/10 backdrop-blur-md animate-in fade-in duration-300"
+          className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/10 backdrop-blur-md animate-in fade-in duration-300"
           onClick={() => setSelectedPatient(null)}
         >
           <div 
@@ -92,7 +115,7 @@ const DoctorPatientsScreen: React.FC<DoctorPatientsScreenProps> = ({ onViewRecor
               <div className="grid grid-cols-2 gap-4 pt-4">
                 <button 
                   onClick={() => setSelectedPatient(null)}
-                  className="py-4 rounded-2xl bg-zinc-100/50 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-widest text-[10px] hover:bg-zinc-200 transition-all active:scale-95 border border-white/20 dark:border-zinc-700/30"
+                  className="py-4 rounded-2xl bg-white dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-widest text-[10px] hover:bg-zinc-200 transition-all active:scale-95 border border-zinc-100 dark:border-zinc-700"
                 >
                   Back
                 </button>

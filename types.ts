@@ -19,6 +19,7 @@ export interface PetProfile {
   dateOfBirth: string;
   gender: Gender;
   avatar?: string;
+  weight?: string; // e.g., "25kg"
 }
 
 export enum EntryType {

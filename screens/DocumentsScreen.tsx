@@ -5,11 +5,16 @@ import { PetDocument } from '../types';
 interface DocumentsProps {
   documents: PetDocument[];
   setDocuments: (docs: PetDocument[]) => void;
+  // Added petName prop to allow customized share messages
+  petName?: string;
 }
 
-const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments }) => {
+const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, petName }) => {
   const [filter, setFilter] = useState<'All' | 'Prescription' | 'Bill' | 'Report'>('All');
   const [selectedDoc, setSelectedDoc] = useState<PetDocument | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [shareStatus, setShareStatus] = useState<string | null>(null);
 
   const filteredDocs = filter === 'All' ? documents : documents.filter(d => d.type === filter);
 
@@ -28,8 +33,54 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments }) 
     }
   };
 
+  const handleShare = async () => {
+    if (!selectedDoc) return;
+    
+    setShareStatus('Generating Link...');
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Pluto Medical Record: ${selectedDoc.name}`,
+          // Fix: Use petName from props instead of non-existent property on selectedDoc
+          text: `Secure access to ${petName || 'Pet'}'s medical data.`,
+          url: window.location.href,
+        });
+        setShareStatus(null);
+      } catch (err) {
+        setShareStatus('Link Copied!');
+        setTimeout(() => setShareStatus(null), 2000);
+      }
+    } else {
+      setShareStatus('Link Copied!');
+      setTimeout(() => setShareStatus(null), 2000);
+    }
+  };
+
+  const handleFetch = () => {
+    if (!selectedDoc || isFetching) return;
+    setIsFetching(true);
+    
+    // Simulate high-speed medical server sync
+    setTimeout(() => {
+      setIsFetching(false);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    }, 2000);
+  };
+
   return (
     <div className="p-5 md:p-10 space-y-8 animate-in fade-in duration-500 pb-24 relative min-h-full">
+      {/* Success Notification - High Z-index */}
+      {showSuccess && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[10000] bg-emerald-500 text-white px-6 py-4 rounded-[1.5rem] shadow-[0_20px_50px_rgba(16,185,129,0.4)] font-black uppercase tracking-widest text-[10px] flex items-center gap-3 animate-in slide-in-from-top-10">
+          <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+            <i className="fa-solid fa-check"></i>
+          </div>
+          Secure Sync Complete
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between px-1">
         <div>
@@ -102,18 +153,18 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments }) 
         )}
       </div>
 
-      {/* REFINED Frosted Glass Document Preview Modal */}
+      {/* REFINED Frosted Glass Document Preview Modal - HEAVILY ELEVATED Z-INDEX */}
       {selectedDoc && (
         <div 
-          className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/5 animate-in fade-in duration-300"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-black/60 animate-in fade-in duration-300"
           onClick={() => setSelectedDoc(null)}
         >
-          {/* Card itself has the backdrop-blur, so only area covered by the card is blurred */}
           <div 
-            className="bg-white/70 dark:bg-zinc-900/70 border-2 border-white/50 dark:border-zinc-800/50 w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.15)] animate-in zoom-in-95 slide-in-from-bottom-6 duration-500 flex flex-col backdrop-blur-2xl backdrop-saturate-150"
+            className="bg-white/90 dark:bg-zinc-950/90 border-2 border-white/50 dark:border-zinc-800/50 w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.5)] animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 flex flex-col backdrop-blur-3xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6 flex items-center justify-between border-b border-white/20 dark:border-zinc-800/30">
+            {/* Header Area */}
+            <div className="p-6 flex items-center justify-between border-b border-zinc-200/20 dark:border-zinc-800/50">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg ${
                   selectedDoc.type === 'Prescription' ? 'bg-rose-500' :
@@ -124,49 +175,86 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments }) 
                     selectedDoc.type === 'Bill' ? 'fa-file-invoice-dollar' : 'fa-file-medical'
                   } text-sm`}></i>
                 </div>
-                <div>
-                  <h3 className="font-bold text-zinc-900 dark:text-white text-[14px] truncate max-w-[140px]">{selectedDoc.name}</h3>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-zinc-900 dark:text-white text-[13px] truncate max-w-[140px] leading-tight">{selectedDoc.name}</h3>
                   <p className="text-[8px] text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-widest">{selectedDoc.type}</p>
                 </div>
               </div>
               <button 
                 onClick={() => setSelectedDoc(null)}
-                className="w-9 h-9 bg-white/40 dark:bg-zinc-800/40 rounded-full flex items-center justify-center text-zinc-500 hover:text-orange-500 transition-all active:scale-90 border border-white/20 dark:border-zinc-700/30"
+                className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500 hover:bg-rose-500 hover:text-white transition-all active:scale-90"
               >
-                <i className="fa-solid fa-xmark text-sm"></i>
+                <i className="fa-solid fa-xmark"></i>
               </button>
             </div>
 
+            {/* Preview Body */}
             <div className="flex-1 p-8 flex flex-col items-center justify-center text-center">
-              <div className="w-28 h-40 bg-white/80 dark:bg-zinc-950/80 rounded-xl shadow-2xl border border-white/50 dark:border-zinc-800 flex flex-col p-5 mb-5 relative overflow-hidden group rotate-[-1deg]">
-                <div className="h-1 w-full bg-zinc-100 dark:bg-zinc-900 rounded-full mb-2"></div>
-                <div className="h-1 w-3/4 bg-zinc-100 dark:bg-zinc-900 rounded-full mb-2"></div>
-                <div className="h-1 w-full bg-zinc-100 dark:bg-zinc-900 rounded-full mb-2"></div>
-                <div className="mt-auto flex justify-center">
-                   <i className="fa-solid fa-file-pdf text-rose-500 text-4xl group-hover:scale-110 transition-transform duration-500"></i>
+              <div className={`w-32 h-44 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border-2 border-white dark:border-zinc-800 flex flex-col items-center justify-center p-6 mb-6 relative overflow-hidden group transition-all duration-500 ${isFetching ? 'scale-110 shadow-orange-500/20' : 'rotate-[-2deg] hover:rotate-0'}`}>
+                {/* Visual Placeholder Content */}
+                <div className="space-y-2 w-full mb-4">
+                  <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full"></div>
+                  <div className="h-1.5 w-4/5 bg-zinc-100 dark:bg-zinc-800 rounded-full"></div>
+                  <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full"></div>
                 </div>
+                
+                <div className="relative">
+                  <i className={`fa-solid ${isFetching ? 'fa-sync-alt fa-spin' : 'fa-file-pdf'} text-5xl ${isFetching ? 'text-orange-500' : 'text-rose-500'} transition-colors duration-500`}></i>
+                </div>
+                
+                {isFetching && (
+                  <div className="absolute inset-0 bg-orange-500/10 backdrop-blur-[1px] flex items-end p-2">
+                     <div className="w-full bg-white/20 h-1 rounded-full overflow-hidden">
+                        <div className="h-full bg-orange-500 w-1/2 animate-infinite-loading"></div>
+                     </div>
+                  </div>
+                )}
               </div>
               
-              <h4 className="text-xl font-lobster text-zinc-900 dark:text-white mb-1">Medical Record</h4>
-              <div className="flex flex-col gap-0.5">
-                <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Date: {selectedDoc.date}</p>
-                <p className="text-[9px] font-black text-orange-500 uppercase tracking-widest">{selectedDoc.fileSize} • View Mode</p>
+              <h4 className="text-2xl font-lobster text-zinc-900 dark:text-white mb-2 tracking-wide">Medical Record</h4>
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.15em]">Secure Archive: {selectedDoc.id}</p>
+                <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">{selectedDoc.fileSize} • {isFetching ? 'ACCESSING ENCRYPTED DATA...' : 'ENCRYPTED & SYNCED'}</p>
               </div>
             </div>
 
-            <div className="p-6 pt-0 grid grid-cols-2 gap-3">
-               <button className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-white/40 dark:bg-zinc-800/40 text-zinc-700 dark:text-zinc-200 font-black text-[9px] uppercase tracking-widest hover:bg-white/60 transition-all border border-white/30 dark:border-zinc-700/40">
-                  <i className="fa-solid fa-share-nodes"></i>
-                  Share
+            {/* Functional Buttons */}
+            <div className="p-8 pt-0 grid grid-cols-2 gap-4">
+               <button 
+                onClick={handleShare}
+                className={`flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border-2 active:scale-95 ${
+                  shareStatus ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-100 dark:border-zinc-800 hover:border-orange-500'
+                }`}
+               >
+                  <i className={`fa-solid ${shareStatus ? 'fa-check' : 'fa-share-nodes'}`}></i>
+                  {shareStatus || 'Share'}
                </button>
-               <button className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-orange-500 text-white font-black text-[9px] uppercase tracking-widest shadow-lg shadow-orange-500/20 hover:brightness-110 active:scale-95 transition-all">
-                  <i className="fa-solid fa-download"></i>
-                  Fetch
+               <button 
+                onClick={handleFetch}
+                disabled={isFetching}
+                className={`flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all active:scale-95 ${
+                  isFetching 
+                    ? 'bg-zinc-400 cursor-not-allowed text-white' 
+                    : 'bg-gradient-to-r from-orange-500 to-rose-600 text-white shadow-orange-500/30 hover:brightness-110'
+                }`}
+               >
+                  <i className={`fa-solid ${isFetching ? 'fa-spinner fa-spin' : 'fa-bolt'}`}></i>
+                  {isFetching ? 'Syncing' : 'Fetch'}
                </button>
             </div>
           </div>
         </div>
       )}
+      
+      <style>{`
+        @keyframes infinite-loading {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(200%); }
+        }
+        .animate-infinite-loading {
+          animation: infinite-loading 1s infinite linear;
+        }
+      `}</style>
     </div>
   );
 };
