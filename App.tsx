@@ -193,17 +193,17 @@ const App: React.FC = () => {
   const currentActiveTab = user.role === 'DOCTOR' ? doctorActiveTab : activeTab;
 
   return (
-    <div className="h-screen bg-[#FFFAF3] dark:bg-zinc-950 flex flex-col md:flex-row max-w-7xl mx-auto md:p-6 transition-colors duration-500 overflow-hidden no-scrollbar">
-      {/* Sidebar for Desktop */}
-      <aside className="hidden md:flex flex-col w-64 lg:w-72 h-full sticky top-0 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl rounded-[3rem] border border-white/40 dark:border-zinc-800/40 shadow-2xl p-8 mr-8 no-scrollbar overflow-y-auto">
+    <div className="h-screen bg-[#FFFAF3] dark:bg-zinc-950 flex flex-col md:flex-row transition-colors duration-500 overflow-hidden no-scrollbar">
+      {/* Sidebar for Desktop - Expanded to full height and edge */}
+      <aside className="hidden md:flex flex-col w-64 lg:w-72 h-full bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl border-r border-white/40 dark:border-zinc-800/40 shadow-xl p-8 no-scrollbar overflow-y-auto shrink-0">
         <div className="flex items-center gap-3 mb-16 group cursor-pointer justify-center">
-          <div className="w-14 h-14 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-xl group-hover:rotate-12 transition-transform duration-300">
-            <i className="fa-solid fa-paw text-2xl"></i>
+          <div className="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:rotate-12 transition-transform duration-300">
+            <i className="fa-solid fa-paw text-xl"></i>
           </div>
-          <h1 className="text-4xl font-lobster text-zinc-900 dark:text-zinc-50 group-hover:scale-105 transition-transform">Pluto</h1>
+          <h1 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50 group-hover:scale-105 transition-transform">Pluto</h1>
         </div>
 
-        <nav className="flex-1 space-y-6">
+        <nav className="flex-1 space-y-4">
           {currentNavItems.map(item => {
             const isActive = currentActiveTab === item.id;
             return (
@@ -213,48 +213,53 @@ const App: React.FC = () => {
                   if (user.role === 'DOCTOR') setDoctorActiveTab(item.id as any);
                   else setActiveTab(item.id as any);
                 }}
-                className={`w-full flex items-center gap-4 px-6 py-5 rounded-[2rem] transition-all duration-300 group relative border-4 ${
+                className={`w-full flex items-center gap-4 px-5 py-4 rounded-[1.75rem] transition-all duration-500 group relative border-4 ${
                   isActive
-                    ? 'bg-orange-500 text-white border-white dark:border-zinc-950 shadow-[0_15px_35px_rgba(249,115,22,0.4)] scale-[1.05]' 
+                    ? 'bg-orange-500 text-white border-white dark:border-zinc-950 shadow-[0_8px_20px_rgba(249,115,22,0.15)] scale-[0.98]' 
                     : 'text-zinc-500 dark:text-zinc-400 border-transparent hover:bg-white/50 dark:hover:bg-zinc-800/50'
                 }`}
               >
                 {item.id === 'profile' && pet.avatar ? (
                   <img src={pet.avatar} className={`w-6 h-6 rounded-full border-2 ${isActive ? 'border-white' : 'border-zinc-300 dark:border-zinc-700'}`} />
                 ) : (
-                  <i className={`fa-solid fa-${item.icon} text-lg group-hover:scale-110 transition-transform ${isActive ? 'animate-pulse' : ''}`}></i>
+                  <i className={`fa-solid fa-${item.icon} text-base group-hover:scale-110 transition-transform ${isActive ? 'animate-pulse' : ''}`}></i>
                 )}
-                <span className="font-black text-[11px] uppercase tracking-widest">{item.label}</span>
+                <span className="font-black text-[10px] uppercase tracking-widest">{item.label}</span>
                 
                 {isActive && (
-                  <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-8 bg-white dark:bg-zinc-950 rounded-l-full animate-in slide-in-from-right-2"></div>
+                  <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-white dark:bg-zinc-950 rounded-r-full animate-in fade-in"></div>
                 )}
               </button>
             );
           })}
         </nav>
 
+        {/* Bottom Sidebar Section - Redesigned side-by-side buttons */}
         <div className="pt-8 border-t border-zinc-200 dark:border-zinc-800 flex flex-col gap-4 mt-8">
-          <button onClick={() => setDarkMode(!darkMode)} className="flex items-center gap-4 px-6 py-4 rounded-2xl text-zinc-500 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-all group">
-            <i className={`fa-solid ${darkMode ? 'fa-sun text-yellow-500 animate-spin-slow' : 'fa-moon text-indigo-400'} text-lg group-hover:scale-125 transition-transform`}></i>
-            <span className="font-black text-[10px] uppercase tracking-widest">{darkMode ? 'Light' : 'Dark'}</span>
-          </button>
-          <button onClick={handleLogout} className="flex items-center gap-4 px-6 py-4 rounded-2xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all group">
-            <i className="fa-solid fa-power-off text-lg group-hover:scale-125 transition-transform"></i>
-            <span className="font-black text-[10px] uppercase tracking-widest">Sign Out</span>
-          </button>
-          <div className="flex items-center gap-3 px-2 pt-2">
-            <img src={pet.avatar} className="w-10 h-10 rounded-full border-2 border-orange-500 shadow-md" alt="Pet" />
-            <div className="min-w-0">
-              <p className="text-sm font-bold truncate dark:text-zinc-50">{user.username}</p>
-              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-tighter">{user.role}</p>
-            </div>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setDarkMode(!darkMode)} 
+              className="flex-1 flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl text-zinc-500 dark:text-zinc-400 bg-white/30 dark:bg-zinc-800/30 hover:bg-white/60 dark:hover:bg-zinc-800/60 transition-all group"
+              title={darkMode ? 'Light Mode' : 'Dark Mode'}
+            >
+              <i className={`fa-solid ${darkMode ? 'fa-sun text-yellow-500' : 'fa-moon text-indigo-400'} text-base group-hover:scale-110 transition-transform`}></i>
+              <span className="font-black text-[8px] uppercase tracking-widest">Theme</span>
+            </button>
+            <button 
+              onClick={handleLogout} 
+              className="flex-1 flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl text-rose-500 bg-rose-50/50 dark:bg-rose-950/10 hover:bg-rose-100 dark:hover:bg-rose-950/30 transition-all group"
+              title="Sign Out"
+            >
+              <i className="fa-solid fa-power-off text-base group-hover:scale-110 transition-transform"></i>
+              <span className="font-black text-[8px] uppercase tracking-widest">Exit</span>
+            </button>
           </div>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col bg-white dark:bg-zinc-900 md:rounded-[4rem] shadow-2xl overflow-hidden relative border border-white/20 dark:border-zinc-800/50 no-scrollbar">
+      {/* Main Content Area - Full screen width expansion */}
+      <main className="flex-1 flex flex-col bg-white dark:bg-zinc-900 overflow-hidden relative border-l border-white/20 dark:border-zinc-800/50 no-scrollbar">
+        {/* Mobile Header - only visible on small screens */}
         <div className="md:hidden p-2 px-3 flex items-center justify-between border-b border-white/20 dark:border-zinc-800/40 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-3xl sticky top-0 z-[60] shadow-sm">
           <div className="flex items-center gap-2 group">
             <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white shadow-md transition-transform group-active:rotate-12">
@@ -272,13 +277,13 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto no-scrollbar relative">
+        <div className="flex-1 overflow-y-auto no-scrollbar relative h-full">
           <div className="max-w-4xl mx-auto min-h-full">
             {renderContent()}
           </div>
         </div>
 
-        {/* Mobile Navigation Footer */}
+        {/* Mobile Navigation Footer - Fixed bottom for small screens */}
         <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[88%] bg-white/10 dark:bg-zinc-900/10 backdrop-blur-3xl backdrop-saturate-[1.8] border border-white/30 dark:border-zinc-800/30 rounded-full flex justify-around items-center py-1.5 px-2 z-[150] shadow-[0_20px_60px_rgba(0,0,0,0.25)] ring-1 ring-white/10">
           {currentNavItems.map(item => (
             <NavButton 
