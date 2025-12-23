@@ -313,7 +313,7 @@ const CheckTile: React.FC<{
       onClick={onClick}
       className={`flex flex-col items-center justify-center gap-3 p-6 rounded-[2rem] transition-all duration-500 relative overflow-hidden group border-4 ${
         active 
-          ? `${bgMap[color]} ${intenseShadowMap[color]} text-white border-white dark:border-zinc-950 scale-[0.98] animate-pulse` 
+          ? `${bgMap[color]} ${intenseShadowMap[color]} text-white border-white dark:border-zinc-950 scale-[0.98]` 
           : 'bg-white dark:bg-zinc-900 border-zinc-50 dark:border-zinc-800 shadow-sm hover:scale-[1.03] hover:border-white'
       }`}
     >
