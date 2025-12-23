@@ -14,6 +14,7 @@ interface DashboardProps {
   timeline: TimelineEntry[];
   dailyLogs: Record<string, DailyLog>;
   onUpdateLog: (date: string, data: Partial<DailyLog>) => void;
+  readOnly?: boolean;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ 
@@ -26,7 +27,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   onCompleteReminder,
   timeline,
   dailyLogs,
-  onUpdateLog
+  onUpdateLog,
+  readOnly = false
 }) => {
   const [showAddRoutine, setShowAddRoutine] = useState(false);
   const [showLogModal, setShowLogModal] = useState(false);
@@ -43,15 +45,17 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [today, dailyLogs]);
 
   const toggleCheck = (key: keyof Omit<DailyChecklist, 'lastReset'>) => {
+    if (readOnly) return;
     setChecklist({ ...checklist, [key]: !checklist[key] });
   };
 
   const toggleRoutine = (id: string) => {
+    if (readOnly) return;
     setRoutine(prev => prev.map(item => item.id === id ? { ...item, completed: !item.completed } : item));
   };
 
   const handleAddRoutine = () => {
-    if (!newRoutine.title) return;
+    if (!newRoutine.title || readOnly) return;
     const item: RoutineItem = {
       id: Date.now().toString(),
       ...newRoutine,
@@ -87,12 +91,14 @@ const Dashboard: React.FC<DashboardProps> = ({
               <p className="text-zinc-400 mt-1 font-bold italic text-sm md:text-base">You've reached <span className="text-orange-400">{progressPercent}%</span> today.</p>
             </div>
           </div>
-          <button 
-            onClick={() => setShowLogModal(true)}
-            className="bg-white/10 hover:bg-orange-500 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95 flex items-center gap-2 border border-white/20 backdrop-blur-md"
-          >
-            <i className="fa-solid fa-notes-medical"></i> Log Update
-          </button>
+          {!readOnly && (
+            <button 
+              onClick={() => setShowLogModal(true)}
+              className="bg-white/10 hover:bg-orange-500 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95 flex items-center gap-2 border border-white/20 backdrop-blur-md"
+            >
+              <i className="fa-solid fa-notes-medical"></i> Log Update
+            </button>
+          )}
         </div>
         
         <div className="mt-8 md:mt-12 relative z-10">
@@ -113,35 +119,37 @@ const Dashboard: React.FC<DashboardProps> = ({
       <section className="space-y-4">
         <div className="flex items-center justify-between px-2">
           <h3 className="text-2xl font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide">Recorded Trends</h3>
-          <button 
-            onClick={() => setShowLogModal(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[9px] font-black uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all active:scale-95 border border-orange-500/20"
-          >
-            <i className="fa-solid fa-plus-circle"></i> Log Today
-          </button>
+          {!readOnly && (
+            <button 
+              onClick={() => setShowLogModal(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[9px] font-black uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all active:scale-95 border border-orange-500/20"
+            >
+              <i className="fa-solid fa-plus-circle"></i> Log Today
+            </button>
+          )}
         </div>
         <HealthTrends petName={pet.name} dailyLogs={dailyLogs} color="orange" />
       </section>
 
-      {/* Daily Update Modal (3 Fields) */}
-      {showLogModal && (
-        <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center p-0 md:p-6 bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={() => setShowLogModal(false)}>
-           <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-t-[3rem] md:rounded-[3rem] p-8 shadow-2xl animate-in slide-in-from-bottom-10" onClick={e => e.stopPropagation()}>
+      {/* Daily Update Modal - Frosted Glass Window */}
+      {showLogModal && !readOnly && (
+        <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center p-0 md:p-6 bg-black/20 animate-in fade-in" onClick={() => setShowLogModal(false)}>
+           <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-3xl backdrop-saturate-150 w-full max-w-sm rounded-t-[3rem] md:rounded-[3rem] p-8 shadow-2xl animate-in slide-in-from-bottom-10 border border-white/40 dark:border-zinc-800/40" onClick={e => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-8">
                  <div>
                     <h4 className="font-lobster text-3xl text-zinc-800 dark:text-zinc-100">Daily Log</h4>
                     <p className="text-[9px] font-black text-orange-500 uppercase tracking-widest mt-1">Optional fields for today</p>
                  </div>
-                 <button onClick={() => setShowLogModal(false)} className="w-12 h-12 rounded-2xl bg-zinc-50 dark:bg-zinc-800 text-zinc-400 flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"><i className="fa-solid fa-xmark"></i></button>
+                 <button onClick={() => setShowLogModal(false)} className="w-12 h-12 rounded-2xl bg-zinc-50/50 dark:bg-zinc-800/50 text-zinc-400 flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"><i className="fa-solid fa-xmark"></i></button>
               </div>
               
               <div className="space-y-8 pb-4">
                  <div className="space-y-3">
                     <label className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.15em] ml-1">Daily Activity (Min)</label>
-                    <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-2xl border-2 border-transparent focus-within:border-orange-100 transition-all">
-                       <button onClick={() => onUpdateLog(today, { activityMinutes: Math.max(0, (currentLogData?.activityMinutes || 0) - 10) })} className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-800 shadow-sm flex items-center justify-center text-zinc-400 hover:text-orange-500"><i className="fa-solid fa-minus"></i></button>
+                    <div className="flex items-center gap-4 bg-zinc-50/30 dark:bg-zinc-800/30 p-4 rounded-2xl border-2 border-transparent focus-within:border-orange-100 transition-all">
+                       <button onClick={() => onUpdateLog(today, { activityMinutes: Math.max(0, (currentLogData?.activityMinutes || 0) - 10) })} className="w-10 h-10 rounded-xl bg-white/80 dark:bg-zinc-800 shadow-sm flex items-center justify-center text-zinc-400 hover:text-orange-500"><i className="fa-solid fa-minus"></i></button>
                        <span className="flex-1 text-center text-3xl font-black text-zinc-900 dark:text-zinc-50">{currentLogData?.activityMinutes || 0}</span>
-                       <button onClick={() => onUpdateLog(today, { activityMinutes: (currentLogData?.activityMinutes || 0) + 10 })} className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-800 shadow-sm flex items-center justify-center text-zinc-400 hover:text-orange-500"><i className="fa-solid fa-plus"></i></button>
+                       <button onClick={() => onUpdateLog(today, { activityMinutes: (currentLogData?.activityMinutes || 0) + 10 })} className="w-10 h-10 rounded-xl bg-white/80 dark:bg-zinc-800 shadow-sm flex items-center justify-center text-zinc-400 hover:text-orange-500"><i className="fa-solid fa-plus"></i></button>
                     </div>
                  </div>
 
@@ -155,7 +163,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                            className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-all border-2 ${
                              currentLogData?.moodRating === v 
                                ? 'bg-orange-500 border-white text-white shadow-lg scale-110' 
-                               : 'bg-zinc-50 dark:bg-zinc-800/50 border-transparent text-zinc-300'
+                               : 'bg-zinc-50/50 dark:bg-zinc-800/50 border-transparent text-zinc-300'
                            }`}
                          >
                            {['😢', '😕', '😐', '🙂', '🤩'][v-1]}
@@ -166,7 +174,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
                  <div className="space-y-3">
                     <label className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.15em] ml-1">Daily Feeding Count</label>
-                    <div className="flex justify-between gap-2 bg-zinc-50 dark:bg-zinc-800/50 p-2 rounded-2xl">
+                    <div className="flex justify-between gap-2 bg-zinc-50/30 dark:bg-zinc-800/30 p-2 rounded-2xl">
                        {[1, 2, 3, 4].map(v => (
                          <button 
                            key={v}
@@ -185,7 +193,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
                  <button 
                   onClick={() => setShowLogModal(false)} 
-                  className="w-full py-5 bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 rounded-[2.2rem] font-black uppercase tracking-[0.25em] text-[10px] shadow-xl hover:brightness-110 active:scale-95 transition-all"
+                  className="w-full py-5 bg-zinc-950/90 dark:bg-zinc-50/90 text-white dark:text-zinc-950 rounded-[2.2rem] font-black uppercase tracking-[0.25em] text-[10px] shadow-xl hover:brightness-110 active:scale-95 transition-all border border-white/10"
                  >
                    Save Update
                  </button>
@@ -199,27 +207,32 @@ const Dashboard: React.FC<DashboardProps> = ({
         <section className="space-y-6">
           <div className="flex items-center justify-between px-2">
             <h3 className="text-2xl md:text-3xl font-lobster text-zinc-900 dark:text-zinc-50">Daily Routine</h3>
-            <button 
-              onClick={() => setShowAddRoutine(!showAddRoutine)}
-              className="w-12 h-12 rounded-xl bg-orange-500 text-white flex items-center justify-center hover:scale-110 shadow-lg active:rotate-12 transition-all"
-            >
-              <i className={`fa-solid ${showAddRoutine ? 'fa-xmark' : 'fa-plus'} text-lg`}></i>
-            </button>
+            {!readOnly && (
+              <button 
+                onClick={() => setShowAddRoutine(!showAddRoutine)}
+                className="w-12 h-12 rounded-xl bg-orange-500 text-white flex items-center justify-center hover:scale-110 shadow-lg active:rotate-12 transition-all"
+              >
+                <i className={`fa-solid ${showAddRoutine ? 'fa-xmark' : 'fa-plus'} text-lg`}></i>
+              </button>
+            )}
           </div>
           <div className="space-y-4">
             {routine.map((item, idx) => (
               <div key={item.id} className="animate-in slide-in-from-left-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
-                <div className={`flex items-center gap-4 md:gap-6 p-5 md:p-6 rounded-[2rem] border-2 transition-all duration-300 ${item.completed ? 'bg-zinc-50/50 dark:bg-zinc-900/50 border-transparent opacity-60' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 shadow-lg'}`}>
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${item.category === 'Food' ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                <div 
+                  onClick={() => toggleRoutine(item.id)}
+                  className={`flex items-center gap-4 md:gap-6 p-5 md:p-6 rounded-[2rem] border-2 transition-all duration-300 group ${item.completed ? 'bg-zinc-50/50 dark:bg-zinc-900/50 border-transparent opacity-60' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 shadow-lg'} ${!readOnly ? 'cursor-pointer' : 'cursor-default'}`}
+                >
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform ${item.category === 'Food' ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'}`}>
                     <i className={`fa-solid ${item.category === 'Food' ? 'fa-bowl-food' : 'fa-dog'}`}></i>
                   </div>
                   <div className="flex-1">
                     <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">{item.time}</p>
                     <h4 className={`text-lg font-bold ${item.completed ? 'line-through text-zinc-400' : 'text-zinc-900 dark:text-zinc-100'}`}>{item.title}</h4>
                   </div>
-                  <button onClick={() => toggleRoutine(item.id)} className={`w-10 h-10 rounded-full flex items-center justify-center transition-all border-4 ${item.completed ? 'bg-emerald-500 border-white text-white rotate-[360deg]' : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 text-transparent'}`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all border-4 ${item.completed ? 'bg-emerald-500 border-white text-white rotate-[360deg]' : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 text-transparent'}`}>
                     <i className="fa-solid fa-check text-sm"></i>
-                  </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -229,38 +242,38 @@ const Dashboard: React.FC<DashboardProps> = ({
         <section className="space-y-6">
           <h3 className="text-2xl md:text-3xl font-lobster text-zinc-900 dark:text-zinc-50 px-2">Quick Checks</h3>
           <div className="grid grid-cols-2 gap-4">
-            <CheckTile active={checklist.food} icon="bowl-food" label="Full Tummy" onClick={() => toggleCheck('food')} color="orange" />
-            <CheckTile active={checklist.water} icon="faucet-drip" label="Hydrated" onClick={() => toggleCheck('water')} color="blue" />
-            <CheckTile active={checklist.walk} icon="dog" label="Adventures" onClick={() => toggleCheck('walk')} color="emerald" />
-            <CheckTile active={checklist.medication} icon="pills" label="Healthy Meds" onClick={() => toggleCheck('medication')} color="purple" />
+            <CheckTile active={checklist.food} icon="bowl-food" label="Full Tummy" onClick={() => toggleCheck('food')} color="orange" readOnly={readOnly} />
+            <CheckTile active={checklist.water} icon="faucet-drip" label="Hydrated" onClick={() => toggleCheck('water')} color="blue" readOnly={readOnly} />
+            <CheckTile active={checklist.walk} icon="dog" label="Adventures" onClick={() => toggleCheck('walk')} color="emerald" readOnly={readOnly} />
+            <CheckTile active={checklist.medication} icon="pills" label="Healthy Meds" onClick={() => toggleCheck('medication')} color="purple" readOnly={readOnly} />
           </div>
         </section>
       </div>
 
-      {/* Routine Creation Modal */}
-      {showAddRoutine && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white/90 dark:bg-zinc-900/90 border border-white/20 w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-xl animate-in zoom-in-95 space-y-6">
+      {/* Routine Creation Modal - Frosted Glass Style */}
+      {showAddRoutine && !readOnly && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/20 animate-in fade-in">
+          <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-3xl backdrop-saturate-150 border border-white/40 dark:border-zinc-800/40 w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 space-y-6">
             <div className="flex items-center justify-between">
               <h4 className="font-lobster text-3xl text-orange-600">New Task</h4>
-              <button onClick={() => setShowAddRoutine(false)} className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500"><i className="fa-solid fa-xmark"></i></button>
+              <button onClick={() => setShowAddRoutine(false)} className="w-10 h-10 bg-zinc-100/50 dark:bg-zinc-800/50 rounded-full flex items-center justify-center text-zinc-500"><i className="fa-solid fa-xmark"></i></button>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <input type="time" className="w-full p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none outline-none font-bold" value={newRoutine.time} onChange={e => setNewRoutine({...newRoutine, time: e.target.value})} />
-              <select className="w-full p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none outline-none font-bold" value={newRoutine.category} onChange={e => setNewRoutine({...newRoutine, category: e.target.value as any})}>
+              <input type="time" className="w-full p-4 rounded-xl bg-zinc-50/50 dark:bg-zinc-800/50 border-none outline-none font-bold" value={newRoutine.time} onChange={e => setNewRoutine({...newRoutine, time: e.target.value})} />
+              <select className="w-full p-4 rounded-xl bg-zinc-50/50 dark:bg-zinc-800/50 border-none outline-none font-bold" value={newRoutine.category} onChange={e => setNewRoutine({...newRoutine, category: e.target.value as any})}>
                 <option value="Food">Food 🍖</option>
                 <option value="Walk">Walk 🦮</option>
                 <option value="Medication">Meds 💊</option>
                 <option value="Play">Play 🎾</option>
               </select>
             </div>
-            <input type="text" placeholder="What's the goal?" className="w-full p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none outline-none font-bold shadow-inner" value={newRoutine.title} onChange={e => setNewRoutine({...newRoutine, title: e.target.value})} />
+            <input type="text" placeholder="What's the goal?" className="w-full p-4 rounded-xl bg-zinc-50/50 dark:bg-zinc-800/50 border-none outline-none font-bold shadow-inner" value={newRoutine.title} onChange={e => setNewRoutine({...newRoutine, title: e.target.value})} />
             <button onClick={handleAddRoutine} className="w-full bg-orange-500 text-white py-4 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:brightness-110 active:scale-95 transition-all">Create Goal</button>
           </div>
         </div>
       )}
 
-      {/* Upcoming Reminders - Enhanced Animation & Glow */}
+      {/* Upcoming Reminders */}
       <section className="space-y-6 pb-20">
         <h3 className="text-2xl md:text-3xl font-lobster text-zinc-900 dark:text-zinc-50 px-2">Coming Up</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -277,12 +290,14 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <h4 className="font-bold text-zinc-900 dark:text-zinc-50 truncate">{reminder.title}</h4>
                 <p className="text-[9px] text-zinc-400 font-black uppercase tracking-widest mt-1">{new Date(reminder.date).toLocaleDateString()}</p>
               </div>
-              <button 
-                onClick={() => onCompleteReminder(reminder.id)}
-                className="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 px-3 py-2 rounded-lg font-black text-[8px] uppercase tracking-widest border border-zinc-100 dark:border-zinc-700 hover:bg-orange-500 hover:text-white hover:shadow-[0_0_15px_rgba(249,115,22,0.6)] transition-all active:scale-90"
-              >
-                Done
-              </button>
+              {!readOnly && (
+                <button 
+                  onClick={() => onCompleteReminder(reminder.id)}
+                  className="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 px-3 py-2 rounded-lg font-black text-[8px] uppercase tracking-widest border border-zinc-100 dark:border-zinc-700 hover:bg-orange-500 hover:text-white hover:shadow-[0_0_15px_rgba(249,115,22,0.6)] transition-all active:scale-90"
+                >
+                  Done
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -292,8 +307,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 };
 
 const CheckTile: React.FC<{ 
-  active: boolean, icon: string, label: string, onClick: () => void, color: string
-}> = ({ active, icon, label, onClick, color }) => {
+  active: boolean, icon: string, label: string, onClick: () => void, color: string, readOnly?: boolean
+}> = ({ active, icon, label, onClick, color, readOnly }) => {
   const intenseShadowMap: any = {
     orange: 'shadow-[0_25px_60px_rgba(249,115,22,0.6)]',
     blue: 'shadow-[0_25px_60px_rgba(59,130,246,0.6)]',
@@ -310,12 +325,12 @@ const CheckTile: React.FC<{
 
   return (
     <button 
-      onClick={onClick}
+      onClick={() => !readOnly && onClick()}
       className={`flex flex-col items-center justify-center gap-3 p-6 rounded-[2rem] transition-all duration-500 relative overflow-hidden group border-4 ${
         active 
           ? `${bgMap[color]} ${intenseShadowMap[color]} text-white border-white dark:border-zinc-950 scale-[0.98]` 
-          : 'bg-white dark:bg-zinc-900 border-zinc-50 dark:border-zinc-800 shadow-sm hover:scale-[1.03] hover:border-white'
-      }`}
+          : 'bg-white dark:bg-zinc-900 border-zinc-50 dark:border-zinc-800 shadow-sm'
+      } hover:scale-[1.03] ${readOnly ? 'cursor-default' : 'hover:border-white'}`}
     >
       <div className={`text-4xl transition-all ${active ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]' : 'text-zinc-200 dark:text-zinc-800'}`}>
         <i className={`fa-solid fa-${icon}`}></i>

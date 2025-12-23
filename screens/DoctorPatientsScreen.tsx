@@ -86,18 +86,18 @@ const DoctorPatientsScreen: React.FC<DoctorPatientsScreenProps> = ({ onViewRecor
         </p>
       </div>
 
-      {/* REFINED Frosted Glass Patient Detail Modal */}
+      {/* Patient Detail Modal - Consistent Frosted Glass Style */}
       {selectedPatient && (
         <div 
-          className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/10 backdrop-blur-md animate-in fade-in duration-300"
+          className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/20 animate-in fade-in duration-300"
           onClick={() => setSelectedPatient(null)}
         >
           <div 
-            className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-3xl backdrop-saturate-150 border-2 border-white/50 dark:border-zinc-800/50 w-full max-w-sm rounded-[3rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col"
+            className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-[40px] backdrop-saturate-150 border-2 border-white/40 dark:border-zinc-800/40 w-full max-w-sm rounded-[3rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-8 text-center space-y-4 max-h-[85vh] overflow-y-auto no-scrollbar">
-              <div className="w-24 h-24 rounded-[2.5rem] overflow-hidden border-4 border-white dark:border-zinc-800 shadow-xl mx-auto group">
+              <div className="w-24 h-24 rounded-[2.5rem] overflow-hidden border-4 border-white/80 dark:border-zinc-800/80 shadow-xl mx-auto group">
                 <img src={selectedPatient.avatar} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={selectedPatient.name} />
               </div>
               <div>
@@ -105,7 +105,7 @@ const DoctorPatientsScreen: React.FC<DoctorPatientsScreenProps> = ({ onViewRecor
                 <p className="text-[11px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-widest">{selectedPatient.id}</p>
               </div>
               
-              <div className="pt-6 space-y-3 text-left border-t border-zinc-100 dark:border-zinc-800">
+              <div className="pt-6 space-y-3 text-left border-t border-zinc-100/40 dark:border-zinc-800/40">
                 <PatientDetailRow label="Species" value={selectedPatient.species} />
                 <PatientDetailRow label="Breed" value={selectedPatient.breed} />
                 <PatientDetailRow label="Gender" value={selectedPatient.gender} />
@@ -115,7 +115,7 @@ const DoctorPatientsScreen: React.FC<DoctorPatientsScreenProps> = ({ onViewRecor
               <div className="grid grid-cols-2 gap-4 pt-4">
                 <button 
                   onClick={() => setSelectedPatient(null)}
-                  className="py-4 rounded-2xl bg-white dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-widest text-[10px] hover:bg-zinc-200 transition-all active:scale-95 border border-zinc-100 dark:border-zinc-700"
+                  className="py-4 rounded-2xl bg-white/60 dark:bg-zinc-800/60 text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-widest text-[10px] hover:bg-white transition-all active:scale-95 border border-white/40 dark:border-zinc-700/40"
                 >
                   Back
                 </button>

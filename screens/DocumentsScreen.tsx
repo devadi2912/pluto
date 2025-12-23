@@ -5,11 +5,11 @@ import { PetDocument } from '../types';
 interface DocumentsProps {
   documents: PetDocument[];
   setDocuments: (docs: PetDocument[]) => void;
-  // Added petName prop to allow customized share messages
   petName?: string;
+  readOnly?: boolean;
 }
 
-const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, petName }) => {
+const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, petName, readOnly = false }) => {
   const [filter, setFilter] = useState<'All' | 'Prescription' | 'Bill' | 'Report'>('All');
   const [selectedDoc, setSelectedDoc] = useState<PetDocument | null>(null);
   const [isFetching, setIsFetching] = useState(false);
@@ -24,14 +24,15 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
   const filteredDocs = filter === 'All' ? documents : documents.filter(d => d.type === filter);
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (readOnly) return;
     const file = e.target.files?.[0];
     if (file) {
       const newDoc: PetDocument = {
-        id: Date.now().toString(),
-        name: file.name,
+        id: `DOC-${Date.now()}`,
+        name: file.name.split('.')[0],
         type: 'Report',
         date: new Date().toISOString().split('T')[0],
-        fileUrl: '#',
+        fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', // Using a placeholder for demo
         fileSize: `${(file.size / 1024).toFixed(0)} KB`
       };
       setDocuments([newDoc, ...documents]);
@@ -74,13 +75,14 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
   };
 
   const startEdit = (doc: PetDocument) => {
+    if (readOnly) return;
     setEditName(doc.name);
     setEditType(doc.type);
     setIsEditing(true);
   };
 
   const saveEdit = () => {
-    if (!selectedDoc) return;
+    if (!selectedDoc || readOnly) return;
     const updated = documents.map(d => d.id === selectedDoc.id ? { ...d, name: editName, type: editType } : d);
     setDocuments(updated);
     setSelectedDoc({ ...selectedDoc, name: editName, type: editType });
@@ -88,16 +90,21 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
   };
 
   const deleteDoc = () => {
-    if (!selectedDoc) return;
-    if (confirm(`Remove ${selectedDoc.name} permanently?`)) {
-      setDocuments(documents.filter(d => d.id !== selectedDoc.id));
-      setSelectedDoc(null);
-    }
+    if (!selectedDoc || readOnly) return;
+    // Ensure we are updating the actual documents array passed from props
+    const updatedDocs = documents.filter(d => d.id !== selectedDoc.id);
+    setDocuments(updatedDocs);
+    setSelectedDoc(null);
+    setIsEditing(false);
+  };
+
+  const openInNewTab = (url: string) => {
+    window.open(url, '_blank');
   };
 
   return (
     <div className="p-5 md:p-10 space-y-8 animate-in fade-in duration-500 pb-24 relative min-h-full">
-      {/* Success Notification - High Z-index */}
+      {/* Success Notification */}
       {showSuccess && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[10000] bg-emerald-500 text-white px-6 py-4 rounded-[1.5rem] shadow-[0_20px_50px_rgba(16,185,129,0.4)] font-black uppercase tracking-widest text-[10px] flex items-center gap-3 animate-in slide-in-from-top-10">
           <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
@@ -113,10 +120,12 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
           <h2 className="text-2xl md:text-3xl font-bold font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide">Document Safe</h2>
           <p className="text-[9px] text-zinc-500 font-black uppercase tracking-widest mt-1">Archive: {documents.length} Records</p>
         </div>
-        <label className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-tr from-amber-400 to-orange-500 text-white rounded-2xl shadow-xl flex items-center justify-center cursor-pointer transition-all hover:scale-110 active:scale-90 border-2 border-white/20">
-          <i className="fa-solid fa-file-circle-plus text-lg"></i>
-          <input type="file" className="hidden" onChange={handleUpload} />
-        </label>
+        {!readOnly && (
+          <label className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-tr from-amber-400 to-orange-500 text-white rounded-2xl shadow-xl flex items-center justify-center cursor-pointer transition-all hover:scale-110 active:scale-90 border-2 border-white/20">
+            <i className="fa-solid fa-file-circle-plus text-lg"></i>
+            <input type="file" className="hidden" onChange={handleUpload} />
+          </label>
+        )}
       </div>
 
       {/* Filter Tabs */}
@@ -179,76 +188,79 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
         )}
       </div>
 
-      {/* REFINED Frosted Glass Document Preview Modal - HEAVILY ELEVATED Z-INDEX */}
+      {/* Modal Preview - Consistent Frosted Glass Style */}
       {selectedDoc && (
         <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-black/60 animate-in fade-in duration-300"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-black/20 animate-in fade-in duration-300"
           onClick={() => {
             setSelectedDoc(null);
             setIsEditing(false);
           }}
         >
           <div 
-            className="bg-white/90 dark:bg-zinc-950/90 border-2 border-white/50 dark:border-zinc-800/50 w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.5)] animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 flex flex-col backdrop-blur-3xl"
+            className="bg-white/70 dark:bg-zinc-950/70 backdrop-blur-[40px] backdrop-saturate-150 border-2 border-white/50 dark:border-zinc-800/50 w-full max-w-md rounded-[3rem] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.5)] animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header Area */}
-            <div className="p-6 flex items-center justify-between border-b border-zinc-200/20 dark:border-zinc-800/50">
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg ${
+            {/* Fully Covered Top Part with Refined Header */}
+            <div className="p-7 flex items-center justify-between bg-white/40 dark:bg-zinc-900/40 border-b border-zinc-200/20 dark:border-zinc-800/50 backdrop-blur-md">
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xl ${
                   selectedDoc.type === 'Prescription' ? 'bg-rose-500' :
                   selectedDoc.type === 'Bill' ? 'bg-amber-500' : 'bg-emerald-500'
                 }`}>
                   <i className={`fa-solid ${
                     selectedDoc.type === 'Prescription' ? 'fa-prescription-bottle-medical' :
                     selectedDoc.type === 'Bill' ? 'fa-file-invoice-dollar' : 'fa-file-medical'
-                  } text-sm`}></i>
+                  } text-lg`}></i>
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-bold text-zinc-900 dark:text-white text-[13px] truncate max-w-[140px] leading-tight">{selectedDoc.name}</h3>
-                  <p className="text-[8px] text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-widest">{selectedDoc.type}</p>
+                  <h3 className="font-bold text-zinc-900 dark:text-white text-base truncate max-w-[200px] leading-tight">{selectedDoc.name}</h3>
+                  <p className="text-[9px] text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-[0.2em] mt-0.5">{selectedDoc.type}</p>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => isEditing ? saveEdit() : startEdit(selectedDoc)}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90 border border-zinc-100 dark:border-zinc-700/30 ${
-                    isEditing ? 'bg-emerald-500 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-orange-500'
-                  }`}
-                >
-                  <i className={`fa-solid ${isEditing ? 'fa-check' : 'fa-pen'} text-xs`}></i>
-                </button>
+              <div className="flex gap-2.5">
+                {!readOnly && (
+                  <button 
+                    onClick={() => isEditing ? saveEdit() : startEdit(selectedDoc)}
+                    className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all active:scale-90 border-2 ${
+                      isEditing 
+                        ? 'bg-emerald-500 text-white border-white/20' 
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-orange-500 border-transparent'
+                    }`}
+                  >
+                    <i className={`fa-solid ${isEditing ? 'fa-check' : 'fa-pen'} text-sm`}></i>
+                  </button>
+                )}
                 <button 
                   onClick={() => {
                     setSelectedDoc(null);
                     setIsEditing(false);
                   }}
-                  className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500 hover:bg-rose-500 hover:text-white transition-all active:scale-90"
+                  className="w-11 h-11 bg-zinc-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center text-zinc-500 hover:bg-rose-500 hover:text-white transition-all active:scale-90 border-2 border-transparent"
                 >
-                  <i className="fa-solid fa-xmark"></i>
+                  <i className="fa-solid fa-xmark text-lg"></i>
                 </button>
               </div>
             </div>
 
-            {/* Preview Body / Edit Body */}
-            <div className="flex-1 p-8 flex flex-col items-center justify-center text-center">
-              {isEditing ? (
-                <div className="w-full space-y-4 animate-in fade-in zoom-in-95">
-                  <div className="space-y-1 text-left">
-                    <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest ml-1">Document Name</label>
+            <div className="flex-1 p-8 flex flex-col items-center justify-center text-center bg-white/10">
+              {isEditing && !readOnly ? (
+                <div className="w-full space-y-6 animate-in fade-in zoom-in-95">
+                  <div className="space-y-1.5 text-left">
+                    <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Document Name</label>
                     <input 
                       type="text" 
                       value={editName}
                       onChange={e => setEditName(e.target.value)}
-                      className="w-full p-4 bg-white dark:bg-zinc-900 border-2 border-orange-100 dark:border-zinc-800 rounded-2xl font-bold text-sm outline-none focus:border-orange-500 dark:text-white"
+                      className="w-full p-5 bg-white/90 dark:bg-zinc-900 border-2 border-orange-100 dark:border-zinc-800 rounded-2xl font-bold text-sm outline-none focus:border-orange-500 dark:text-white shadow-inner"
                     />
                   </div>
-                  <div className="space-y-1 text-left">
-                    <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest ml-1">Category</label>
+                  <div className="space-y-1.5 text-left">
+                    <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Category</label>
                     <select 
                       value={editType}
                       onChange={e => setEditType(e.target.value as any)}
-                      className="w-full p-4 bg-white dark:bg-zinc-900 border-2 border-orange-100 dark:border-zinc-800 rounded-2xl font-bold text-sm outline-none focus:border-orange-500 dark:text-white"
+                      className="w-full p-5 bg-white/90 dark:bg-zinc-900 border-2 border-orange-100 dark:border-zinc-800 rounded-2xl font-bold text-sm outline-none focus:border-orange-500 dark:text-white shadow-inner appearance-none"
                     >
                       <option value="Prescription">Prescription</option>
                       <option value="Bill">Bill</option>
@@ -256,52 +268,80 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
                     </select>
                   </div>
                   <button 
-                    onClick={deleteDoc}
-                    className="w-full flex items-center justify-center gap-2 py-4 bg-rose-50 text-rose-500 dark:bg-rose-950/20 rounded-2xl font-black text-[10px] uppercase tracking-widest border-2 border-rose-100 dark:border-rose-900/50 hover:bg-rose-500 hover:text-white transition-all"
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to permanently delete this record?')) {
+                        deleteDoc();
+                      }
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-5 bg-rose-50 text-rose-600 dark:bg-rose-950/20 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] border-2 border-rose-100 dark:border-rose-900/50 hover:bg-rose-500 hover:text-white transition-all"
                   >
                     <i className="fa-solid fa-trash-can"></i>
                     Permanently Delete
                   </button>
                 </div>
               ) : (
-                <>
-                  <div className={`w-32 h-44 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border-2 border-white dark:border-zinc-800 flex flex-col items-center justify-center p-6 mb-6 relative overflow-hidden group transition-all duration-500 ${isFetching ? 'scale-110 shadow-orange-500/20' : 'rotate-[-2deg] hover:rotate-0'}`}>
-                    {/* Visual Placeholder Content */}
-                    <div className="space-y-2 w-full mb-4">
-                      <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full"></div>
-                      <div className="h-1.5 w-4/5 bg-zinc-100 dark:bg-zinc-800 rounded-full"></div>
-                      <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full"></div>
-                    </div>
+                <div className="w-full space-y-8">
+                  {/* Enhanced Interactive Document Preview */}
+                  <div className={`w-full h-64 bg-white/90 dark:bg-zinc-900 rounded-[2rem] shadow-2xl border-2 border-white dark:border-zinc-800 flex flex-col items-center justify-center relative overflow-hidden group transition-all duration-700 ${isFetching ? 'scale-[1.02] shadow-orange-500/20' : 'hover:scale-[1.01]'}`}>
                     
-                    <div className="relative">
-                      <i className={`fa-solid ${isFetching ? 'fa-sync-alt fa-spin' : 'fa-file-pdf'} text-5xl ${isFetching ? 'text-orange-500' : 'text-rose-500'} transition-colors duration-500`}></i>
-                    </div>
+                    {isFetching ? (
+                      <div className="flex flex-col items-center gap-6 animate-pulse">
+                         <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/40 rounded-full flex items-center justify-center">
+                            <i className="fa-solid fa-sync-alt fa-spin text-3xl text-orange-500"></i>
+                         </div>
+                         <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest animate-bounce">Secure Link Synchronizing...</p>
+                      </div>
+                    ) : (
+                      <div className="absolute inset-0 flex flex-col p-6 text-left opacity-30 group-hover:opacity-40 transition-opacity">
+                         <div className="h-4 w-3/4 bg-zinc-200 dark:bg-zinc-800 rounded-full mb-4"></div>
+                         <div className="h-2.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full mb-2"></div>
+                         <div className="h-2.5 w-5/6 bg-zinc-100 dark:bg-zinc-800 rounded-full mb-2"></div>
+                         <div className="h-2.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full mb-2"></div>
+                         <div className="mt-8 h-12 w-12 bg-zinc-200 dark:bg-zinc-800 rounded-lg"></div>
+                         <div className="mt-4 h-2.5 w-1/2 bg-zinc-200 dark:bg-zinc-800 rounded-full"></div>
+                      </div>
+                    )}
+
+                    {!isFetching && (
+                      <div className="relative z-10 flex flex-col items-center gap-4">
+                        <div className="w-20 h-20 bg-rose-50 dark:bg-rose-950/20 rounded-3xl flex items-center justify-center text-rose-500 shadow-xl group-hover:scale-110 transition-transform">
+                          <i className="fa-solid fa-file-pdf text-4xl"></i>
+                        </div>
+                        <button 
+                          onClick={() => openInNewTab(selectedDoc.fileUrl)}
+                          className="px-6 py-2.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full text-[9px] font-black uppercase tracking-[0.2em] shadow-lg hover:scale-105 transition-all"
+                        >
+                          Expand View <i className="fa-solid fa-arrow-up-right-from-square ml-1.5"></i>
+                        </button>
+                      </div>
+                    )}
                     
                     {isFetching && (
-                      <div className="absolute inset-0 bg-orange-500/10 backdrop-blur-[1px] flex items-end p-2">
-                        <div className="w-full bg-white/20 h-1 rounded-full overflow-hidden">
-                            <div className="h-full bg-orange-500 w-1/2 animate-infinite-loading"></div>
-                        </div>
+                      <div className="absolute inset-x-0 bottom-0 h-1.5 bg-orange-500/10 overflow-hidden">
+                        <div className="h-full bg-orange-500 w-1/2 animate-infinite-loading"></div>
                       </div>
                     )}
                   </div>
                   
-                  <h4 className="text-2xl font-lobster text-zinc-900 dark:text-white mb-2 tracking-wide">Medical Record</h4>
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.15em]">Secure Archive: {selectedDoc.id}</p>
-                    <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">{selectedDoc.fileSize} • {isFetching ? 'ACCESSING ENCRYPTED DATA...' : 'ENCRYPTED & SYNCED'}</p>
+                  <div className="space-y-2">
+                    <h4 className="text-3xl font-lobster text-zinc-900 dark:text-white tracking-wide">Secure File Preview</h4>
+                    <p className="text-[11px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em]">ID: {selectedDoc.id} • {selectedDoc.fileSize}</p>
+                    <p className={`text-[11px] font-black uppercase tracking-[0.25em] transition-colors duration-500 ${isFetching ? 'text-orange-500' : 'text-emerald-500'}`}>
+                       {isFetching ? 'DECRYPTING DATA...' : 'VERIFIED PLUTO ENCRYPTION'}
+                    </p>
                   </div>
-                </>
+                </div>
               )}
             </div>
 
-            {/* Functional Buttons */}
             {!isEditing && (
-              <div className="p-8 pt-0 grid grid-cols-2 gap-4">
+              <div className="p-8 pt-0 grid grid-cols-2 gap-5">
                 <button 
                   onClick={handleShare}
-                  className={`flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border-2 active:scale-95 ${
-                    shareStatus ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-100 dark:border-zinc-800 hover:border-orange-500'
+                  className={`flex items-center justify-center gap-3 py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] transition-all border-2 active:scale-95 shadow-xl ${
+                    shareStatus 
+                      ? 'bg-emerald-500 text-white border-emerald-500' 
+                      : 'bg-white/50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-100 dark:border-zinc-800 hover:border-orange-500'
                   }`}
                 >
                   <i className={`fa-solid ${shareStatus ? 'fa-check' : 'fa-share-nodes'}`}></i>
@@ -310,10 +350,10 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
                 <button 
                   onClick={handleFetch}
                   disabled={isFetching}
-                  className={`flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all active:scale-95 ${
+                  className={`flex items-center justify-center gap-3 py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl transition-all active:scale-95 border-b-4 ${
                     isFetching 
-                      ? 'bg-zinc-400 cursor-not-allowed text-white' 
-                      : 'bg-gradient-to-r from-orange-500 to-rose-600 text-white shadow-orange-500/30 hover:brightness-110'
+                      ? 'bg-zinc-400 border-zinc-500 cursor-not-allowed text-white' 
+                      : 'bg-orange-500 text-white border-orange-700 shadow-orange-500/30 hover:brightness-110'
                   }`}
                 >
                   <i className={`fa-solid ${isFetching ? 'fa-spinner fa-spin' : 'fa-bolt'}`}></i>
@@ -331,7 +371,7 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
           100% { transform: translateX(200%); }
         }
         .animate-infinite-loading {
-          animation: infinite-loading 1s infinite linear;
+          animation: infinite-loading 1.2s infinite ease-in-out;
         }
       `}</style>
     </div>

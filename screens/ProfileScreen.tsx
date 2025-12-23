@@ -7,18 +7,17 @@ interface ProfileProps {
   setPet: (pet: PetProfile) => void;
   reminders: Reminder[];
   onNavigate?: (tab: 'dashboard' | 'profile' | 'timeline' | 'documents' | 'ai') => void;
+  readOnly?: boolean;
 }
 
-const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavigate }) => {
+const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavigate, readOnly = false }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<PetProfile>(pet);
   const [copied, setCopied] = useState(false);
   
-  // States for organic jump animation
+  // Animation states
   const [isBirthdayJumping, setIsBirthdayJumping] = useState(false);
-  const [isVitalityJumping, setIsVitalityJumping] = useState(false);
 
-  // Logic for Vitality Button
   const pendingTasks = useMemo(() => reminders.filter(r => !r.completed).length, [reminders]);
   const isExcellent = pendingTasks === 0;
 
@@ -33,180 +32,185 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleBirthdayClick = () => {
-    if (isBirthdayJumping) return;
-    setIsBirthdayJumping(true);
-    setTimeout(() => setIsBirthdayJumping(false), 650);
-  };
-
-  const handleVitalityClick = () => {
-    if (isVitalityJumping) return;
-    setIsVitalityJumping(true);
-    setTimeout(() => {
-      setIsVitalityJumping(false);
-      if (onNavigate) onNavigate('dashboard');
-    }, 650);
-  };
-
   const petAge = useMemo(() => {
     const diff = Date.now() - new Date(pet.dateOfBirth).getTime();
     const ageDate = new Date(diff);
     return Math.abs(ageDate.getUTCFullYear() - 1970);
   }, [pet.dateOfBirth]);
 
+  const triggerBirthdayJump = () => {
+    setIsBirthdayJumping(true);
+    setTimeout(() => setIsBirthdayJumping(false), 800);
+  };
+
   return (
-    <div className="p-4 md:p-12 space-y-8 md:space-y-10 pb-44 animate-in slide-in-from-bottom-10 duration-700">
+    <div className="p-4 md:p-12 space-y-8 md:space-y-12 pb-44 md:pb-12 animate-in slide-in-from-bottom-10 duration-700 max-w-6xl mx-auto">
+      {/* Header Area */}
       <div className="flex items-center justify-between px-2">
-        <h2 className="text-3xl md:text-4xl font-bold font-lobster text-zinc-900 dark:text-zinc-50">Pet Identity</h2>
-        <button 
-          onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-          className={`px-5 md:px-8 py-2 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black tracking-widest uppercase transition-all shadow-xl active:scale-95 ${
-            isEditing ? 'bg-emerald-500 text-white' : 'bg-gradient-to-r from-orange-500 to-rose-500 text-white hover:scale-105'
-          }`}
-        >
-          <i className={`fa-solid ${isEditing ? 'fa-check' : 'fa-pen-to-square'} mr-2`}></i>
-          {isEditing ? 'Save' : 'Edit Info'}
-        </button>
+        <div className="animate-in slide-in-from-left duration-500">
+          <h2 className="text-3xl md:text-5xl font-bold font-lobster text-zinc-900 dark:text-zinc-50 leading-tight">My Identity</h2>
+          <p className="hidden md:block text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] mt-2">Personal Medical Vault</p>
+        </div>
+        {!readOnly && (
+          <button 
+            onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+            className={`px-6 md:px-10 py-3 md:py-4 rounded-[1.75rem] text-[10px] font-black tracking-widest uppercase transition-all shadow-xl active:scale-95 border-b-4 ${
+              isEditing 
+                ? 'bg-emerald-500 text-white border-emerald-700' 
+                : 'bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 border-zinc-700 dark:border-zinc-300 hover:scale-[1.03]'
+            }`}
+          >
+            {isEditing ? (
+              <span className="flex items-center gap-2"><i className="fa-solid fa-check-circle text-sm"></i> Commit Changes</span>
+            ) : (
+              <span className="flex items-center gap-2"><i className="fa-solid fa-pen-nib text-sm"></i> Modify Record</span>
+            )}
+          </button>
+        )}
       </div>
 
-      {/* Identity Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] md:rounded-[3rem] border-4 border-zinc-50 dark:border-zinc-800 p-6 md:p-16 shadow-2xl relative overflow-hidden">
-        <div className="flex flex-col md:flex-row items-center gap-6 md:gap-12 mb-8 md:mb-10">
-          <div className="relative group">
-            <div className="p-1.5 bg-gradient-to-tr from-orange-400 to-purple-600 rounded-[2.2rem] shadow-2xl transition-transform group-hover:rotate-3 duration-500">
-              <img src={pet.avatar} className="w-32 h-32 md:w-56 md:h-56 rounded-[1.75rem] object-cover border-4 border-white dark:border-zinc-900 shadow-inner" alt="Avatar" />
-            </div>
-            {isEditing && (
-              <button className="absolute bottom-1 right-1 md:bottom-2 md:right-2 w-10 h-10 md:w-12 md:h-12 bg-white dark:bg-zinc-800 text-orange-600 rounded-xl shadow-2xl flex items-center justify-center border-2 border-orange-50 dark:border-zinc-700 hover:scale-110 transition-transform">
-                <i className="fa-solid fa-camera text-lg md:text-xl"></i>
-              </button>
-            )}
-          </div>
-          <div className="text-center md:text-left space-y-2 md:space-y-3 min-w-0 flex-1">
-             <h3 className="text-4xl md:text-6xl font-lobster text-zinc-900 dark:text-zinc-50 truncate">{pet.name}</h3>
-             <div className="flex items-center justify-center md:justify-start gap-3">
-               <span className="px-3 py-1 bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 rounded-lg font-black text-[8px] md:text-[9px] uppercase tracking-widest border border-orange-100/50 dark:border-orange-900/50">{pet.id}</span>
-               <button onClick={copyId} className={`w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center transition-all ${copied ? 'bg-emerald-500 text-white' : 'bg-zinc-50 dark:bg-zinc-800 text-zinc-400 hover:text-orange-500 border border-zinc-100 dark:border-zinc-800'}`}>
-                 <i className={`fa-solid ${copied ? 'fa-check' : 'fa-copy'} text-[10px]`}></i>
-               </button>
-             </div>
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        {/* Left Column: Frosted Avatar Card with Organic Jump Animation */}
+        <div className="lg:col-span-5 space-y-8">
+           <div className={`backdrop-blur-2xl bg-white/40 dark:bg-zinc-900/40 p-8 rounded-[4rem] border-4 border-white/60 dark:border-zinc-800/50 shadow-2xl relative group flex flex-col items-center transition-all duration-700 ${isBirthdayJumping ? 'animate-spring-jump' : ''}`}>
+              <div className="relative mb-6">
+                <div className="w-48 h-48 md:w-64 md:h-64 rounded-[3.5rem] overflow-hidden border-8 border-white dark:border-zinc-800 shadow-inner group-hover:rotate-1 transition-transform duration-500">
+                  <img src={pet.avatar} className="w-full h-full object-cover" alt="Pet Avatar" />
+                </div>
+                {!readOnly && isEditing ? (
+                   <button className="absolute -bottom-2 -right-2 w-16 h-16 bg-orange-500 text-white rounded-[1.5rem] shadow-2xl flex items-center justify-center hover:scale-110 active:rotate-12 transition-all border-4 border-white dark:border-zinc-900">
+                      <i className="fa-solid fa-camera-retro text-2xl"></i>
+                   </button>
+                ) : (
+                  <button 
+                    onClick={triggerBirthdayJump}
+                    className="absolute -bottom-2 -right-2 w-14 h-14 bg-indigo-500 text-white rounded-2xl shadow-2xl flex items-center justify-center hover:scale-110 active:rotate-45 transition-all border-4 border-white dark:border-zinc-900"
+                  >
+                    <i className="fa-solid fa-cake-candles text-lg"></i>
+                  </button>
+                )}
+              </div>
+              
+              <div className="text-center space-y-2">
+                <h3 className="text-5xl font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide">{pet.name}</h3>
+                <div className="flex items-center justify-center gap-3 bg-white/50 dark:bg-zinc-800/50 px-5 py-2 rounded-full border border-white/40 dark:border-zinc-700 shadow-sm backdrop-blur-md">
+                   <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">{pet.id}</span>
+                   <button onClick={copyId} className={`text-xs transition-all ${copied ? 'text-emerald-500' : 'text-zinc-300 hover:text-orange-500 hover:scale-110'}`}>
+                      <i className={`fa-solid ${copied ? 'fa-check-circle' : 'fa-copy'}`}></i>
+                   </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 w-full mt-10">
+                <VitalCard label="Weight" value={pet.weight} unit="KG" icon="weight-scale" color="orange" />
+                <VitalCard label="Age" value={petAge} unit="YR" icon="clock-rotate-left" color="indigo" />
+              </div>
+           </div>
+
+           <div className="backdrop-blur-xl bg-zinc-950/80 rounded-[2.5rem] p-8 text-white border border-zinc-800/50 shadow-2xl overflow-hidden relative group">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-transparent opacity-40"></div>
+              <div className="relative z-10 flex items-center justify-between">
+                <div>
+                   <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500">Care Optimization</p>
+                   <p className="text-2xl font-bold font-lobster tracking-wider mt-1">{isExcellent ? 'Fully Synchronized' : 'Attention Required'}</p>
+                </div>
+                <div className={`w-14 h-14 rounded-3xl flex items-center justify-center text-2xl shadow-xl transition-all ${isExcellent ? 'bg-emerald-500 shadow-emerald-500/30 animate-pulse' : 'bg-rose-500 shadow-rose-500/30 animate-alert'}`}>
+                   <i className={`fa-solid ${isExcellent ? 'fa-heart-pulse' : 'fa-triangle-exclamation'}`}></i>
+                </div>
+              </div>
+           </div>
         </div>
 
-        {/* Action Cards */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mb-8 md:mb-10">
-          <div 
-            onClick={handleBirthdayClick}
-            className={`
-              bg-gradient-to-br from-indigo-500 to-purple-800 p-5 md:p-6 rounded-[2rem] text-white relative overflow-hidden group cursor-pointer transition-all 
-              border-4 border-white dark:border-zinc-950
-              shadow-[0_15px_40px_rgba(99,102,241,0.25)] hover:shadow-[0_20px_50px_rgba(99,102,241,0.45)] dark:shadow-[0_15px_40px_rgba(0,0,0,0.5)]
-              ${isBirthdayJumping ? 'animate-spring-jump z-50' : 'hover:scale-[1.03] active:scale-95'}
-            `}
-          >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-white/20 rounded-2xl flex items-center justify-center border border-white/20 backdrop-blur-md animate-party">
-                <i className="fa-solid fa-cake-candles text-lg md:text-xl"></i>
-              </div>
-              <div className="flex gap-1.5">
-                <i className="fa-solid fa-sparkles text-amber-300 animate-pulse text-xs md:text-sm"></i>
-                <i className="fa-solid fa-confetti text-pink-300 animate-bounce delay-100 text-xs md:text-sm"></i>
-              </div>
-            </div>
-            <p className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-indigo-100">Birthday Countdown</p>
-            <p className="text-xl md:text-2xl font-bold mt-1 font-lobster">June 15th</p>
-            <p className="text-[10px] md:text-[11px] mt-0.5 opacity-80">{pet.name}'s Party is loading... 🎈</p>
-          </div>
+        {/* Right Column: Frosted Details Card */}
+        <div className="lg:col-span-7 space-y-8">
+           <div className="backdrop-blur-2xl bg-white/40 dark:bg-zinc-900/40 p-8 md:p-12 rounded-[4rem] border-4 border-white/60 dark:border-zinc-800/50 shadow-2xl space-y-12">
+              <section className="space-y-8 animate-in slide-in-from-right duration-700 delay-150">
+                 <div className="flex items-center gap-4">
+                    <div className="w-3 h-10 bg-orange-500 rounded-full shadow-[0_0_15px_rgba(249,115,22,0.5)]"></div>
+                    <h4 className="text-2xl font-black tracking-wide text-zinc-800 dark:text-zinc-100">My Companion</h4>
+                 </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <InputField label="Name" value={formData.name} onChange={v => setFormData({...formData, name: v})} disabled={!isEditing || readOnly} />
+                    <SelectField label="Species" value={formData.species} options={Object.values(Species)} onChange={v => setFormData({...formData, species: v as any})} disabled={!isEditing || readOnly} />
+                    <InputField label="Breed" value={formData.breed} onChange={v => setFormData({...formData, breed: v})} disabled={!isEditing || readOnly} />
+                    <SelectField label="Gender" value={formData.gender} options={Object.values(Gender)} onChange={v => setFormData({...formData, gender: v as any})} disabled={!isEditing || readOnly} />
+                 </div>
+              </section>
 
-          <div 
-            onClick={handleVitalityClick}
-            className={`
-              p-5 md:p-6 rounded-[2rem] text-white relative overflow-hidden group cursor-pointer transition-all duration-500 
-              border-4 border-white dark:border-zinc-950
-              ${isExcellent 
-                ? 'bg-gradient-to-br from-emerald-500 to-teal-800 shadow-[0_15px_40px_rgba(16,185,129,0.25)] hover:shadow-[0_20px_50px_rgba(16,185,129,0.45)]' 
-                : 'bg-gradient-to-br from-rose-500 to-orange-700 shadow-[0_15px_40px_rgba(244,63,94,0.25)] hover:shadow-[0_20px_50px_rgba(244,63,94,0.45)]'
-              }
-              dark:shadow-[0_15px_40px_rgba(0,0,0,0.5)]
-              ${isVitalityJumping ? 'animate-spring-jump z-50' : 'hover:scale-[1.03] active:scale-95'}
-            `}
-          >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-            <div className={`w-10 h-10 md:w-12 md:h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-4 border border-white/20 backdrop-blur-md transition-all duration-500 ${
-              isExcellent ? 'animate-pulse' : 'animate-alert'
-            }`}>
-              <i className={`fa-solid ${isExcellent ? 'fa-heart-pulse' : 'fa-triangle-exclamation'} text-lg md:text-xl`}></i>
-            </div>
-            <p className="text-[8px] md:text-[9px] font-black uppercase tracking-widest opacity-80">Health Vitality</p>
-            <p className="text-xl md:text-2xl font-bold mt-1 font-lobster">
-              {isExcellent ? 'Excellent' : 'Needs Care'}
-            </p>
-            <p className="text-[10px] md:text-[11px] mt-0.5 opacity-80">
-              {isExcellent 
-                ? `${pet.name} is in peak form! ✨` 
-                : `${pendingTasks} alerts require attention! ⚠️`}
-            </p>
-          </div>
-        </section>
+              <section className="space-y-8 animate-in slide-in-from-right duration-700 delay-300">
+                 <div className="flex items-center gap-4">
+                    <div className="w-3 h-10 bg-indigo-500 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)]"></div>
+                    <h4 className="text-2xl font-black tracking-wide text-zinc-800 dark:text-zinc-100">Care Metadata</h4>
+                 </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <InputField label="Birth Date" type="date" value={formData.dateOfBirth} onChange={v => setFormData({...formData, dateOfBirth: v})} disabled={!isEditing || readOnly} />
+                    <div className="space-y-3">
+                       <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Current Weight (kg)</label>
+                       <input 
+                         type="number" value={formData.weight || ''} onChange={e => setFormData({...formData, weight: e.target.value})} disabled={!isEditing || readOnly}
+                         className={`w-full p-5 rounded-[2rem] border-2 transition-all font-bold text-sm ${(!isEditing || readOnly) ? 'bg-white/30 dark:bg-zinc-800/30 border-transparent text-zinc-500 cursor-default' : 'bg-white dark:bg-zinc-900 border-orange-100 dark:border-zinc-700 focus:border-orange-500 dark:text-white shadow-xl'}`}
+                       />
+                    </div>
+                 </div>
+              </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
-          <div className="space-y-4 md:space-y-6">
-            <InputField label="Name" value={formData.name} onChange={v => setFormData({...formData, name: v})} disabled={!isEditing} />
-            <SelectField label="Species" value={formData.species} options={Object.values(Species)} onChange={v => setFormData({...formData, species: v as any})} disabled={!isEditing} />
-            <InputField label="Breed" value={formData.breed} onChange={v => setFormData({...formData, breed: v})} disabled={!isEditing} />
-            <div className="space-y-1">
-              <label className="text-[8px] md:text-[9px] font-black uppercase text-orange-600 dark:text-orange-400 tracking-widest ml-1">Current Weight (kg)</label>
-              <input 
-                type="number" value={formData.weight || ''} onChange={e => setFormData({...formData, weight: e.target.value})} disabled={!isEditing}
-                placeholder="25"
-                className={`w-full p-3 md:p-4 rounded-xl border-2 transition-all font-bold text-sm md:text-base ${!isEditing ? 'bg-zinc-50/50 dark:bg-zinc-800/30 border-transparent text-zinc-500' : 'bg-white dark:bg-zinc-900 border-orange-100 dark:border-zinc-800 focus:border-orange-500 dark:text-white shadow-lg'}`}
-              />
-            </div>
-          </div>
-          <div className="space-y-4 md:space-y-6">
-            <InputField label="Birthday" type="date" value={formData.dateOfBirth} onChange={v => setFormData({...formData, dateOfBirth: v})} disabled={!isEditing} />
-            <div className="space-y-1">
-              <label className="text-[8px] md:text-[9px] font-black uppercase text-orange-600 dark:text-orange-400 tracking-widest ml-1">Calculated Age</label>
-              <div className="w-full p-3 md:p-4 rounded-xl border-2 bg-zinc-50/50 dark:bg-zinc-800/30 border-transparent text-zinc-500 font-bold text-sm md:text-base">
-                {petAge} years old
+              <div className="p-10 bg-white/20 dark:bg-zinc-800/30 rounded-[3rem] border-2 border-dashed border-white/50 dark:border-zinc-700/50 flex flex-col items-center gap-5 text-center transition-all hover:bg-white/40 dark:hover:bg-zinc-800/50">
+                 <div className="flex -space-x-3">
+                    {[1,2,3,4].map(i => (
+                       <div key={i} className="w-10 h-10 rounded-2xl border-4 border-white dark:border-zinc-900 bg-orange-100 dark:bg-orange-950/50 flex items-center justify-center text-orange-500 text-xs shadow-xl transition-all hover:-translate-y-1">
+                          <i className="fa-solid fa-shield-dog"></i>
+                       </div>
+                    ))}
+                 </div>
+                 <p className="text-[10px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-[0.4em]">Secure Ledger Record</p>
               </div>
-            </div>
-            <SelectField label="Gender" value={formData.gender} options={Object.values(Gender)} onChange={v => setFormData({...formData, gender: v as any})} disabled={!isEditing} />
-            <div className="p-4 md:p-6 bg-zinc-50 dark:bg-zinc-800/50 rounded-[1.5rem] md:rounded-[2rem] border border-zinc-100 dark:border-zinc-800 shadow-inner">
-               <p className="text-[8px] md:text-[9px] font-black uppercase text-zinc-400 tracking-widest mb-2 text-center">Certified Pluto Health ID</p>
-               <div className="flex justify-center gap-2">
-                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-emerald-500 animate-pulse delay-75"></div>
-                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-emerald-500 animate-pulse delay-150"></div>
-               </div>
-            </div>
-          </div>
+           </div>
         </div>
       </div>
     </div>
   );
 };
 
+const VitalCard: React.FC<{ label: string, value: string | number | undefined, unit: string, icon: string, color: 'orange' | 'indigo' }> = ({ label, value, unit, icon, color }) => (
+  <div className={`p-6 rounded-[2.5rem] text-center border-2 transition-all group/vital hover:shadow-xl ${
+    color === 'orange' 
+      ? 'bg-white/50 dark:bg-orange-950/20 border-white/60 dark:border-orange-900/30' 
+      : 'bg-white/50 dark:bg-indigo-950/20 border-white/60 dark:border-indigo-900/30'
+  }`}>
+    <div className={`w-12 h-12 rounded-2xl mx-auto mb-4 flex items-center justify-center text-xl transition-all group-hover/vital:rotate-12 ${
+      color === 'orange' ? 'bg-orange-500 text-white shadow-orange-500/20' : 'bg-indigo-500 text-white shadow-indigo-500/20'
+    } shadow-lg`}>
+      <i className={`fa-solid fa-${icon}`}></i>
+    </div>
+    <p className="text-[8px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">{label}</p>
+    <p className={`text-3xl font-black ${color === 'orange' ? 'text-orange-600' : 'text-indigo-600'} dark:text-white`}>
+      {value}<span className="text-[12px] ml-1 font-black opacity-40 uppercase">{unit}</span>
+    </p>
+  </div>
+);
+
 const InputField: React.FC<{ label: string, value: string, onChange: (v: string) => void, disabled: boolean, type?: string }> = ({ label, value, onChange, disabled, type = "text" }) => (
-  <div className="space-y-1">
-    <label className="text-[8px] md:text-[9px] font-black uppercase text-orange-600 dark:text-orange-400 tracking-widest ml-1">{label}</label>
+  <div className="space-y-3">
+    <label className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] ml-2">{label}</label>
     <input 
       type={type} value={value} onChange={e => onChange(e.target.value)} disabled={disabled}
-      className={`w-full p-3 md:p-4 rounded-xl border-2 transition-all font-bold text-sm md:text-base ${disabled ? 'bg-zinc-50/50 dark:bg-zinc-800/30 border-transparent text-zinc-500' : 'bg-white dark:bg-zinc-900 border-orange-100 dark:border-zinc-800 focus:border-orange-500 dark:text-white shadow-lg'}`}
+      className={`w-full p-5 rounded-[2rem] border-2 transition-all font-bold text-sm ${disabled ? 'bg-white/30 dark:bg-zinc-800/30 border-transparent text-zinc-500 cursor-default' : 'bg-white dark:bg-zinc-900 border-white dark:border-zinc-700 focus:border-orange-500 dark:text-white shadow-xl'}`}
     />
   </div>
 );
 
 const SelectField: React.FC<{ label: string, value: string, options: string[], onChange: (v: string) => void, disabled: boolean }> = ({ label, value, options, onChange, disabled }) => (
-  <div className="space-y-1">
-    <label className="text-[8px] md:text-[9px] font-black uppercase text-orange-600 dark:text-orange-400 tracking-widest ml-1">{label}</label>
-    <select 
-      value={value} onChange={e => onChange(e.target.value)} disabled={disabled}
-      className={`w-full p-3 md:p-4 rounded-xl border-2 transition-all font-bold text-sm md:text-base appearance-none ${disabled ? 'bg-zinc-50/50 dark:bg-zinc-800/30 border-transparent text-zinc-500' : 'bg-white dark:bg-zinc-900 border-orange-100 dark:border-zinc-800 focus:border-orange-500 dark:text-white shadow-lg'}`}
-    >
-      {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-    </select>
+  <div className="space-y-3">
+    <label className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] ml-2">{label}</label>
+    <div className="relative">
+      <select 
+        value={value} onChange={e => onChange(e.target.value)} disabled={disabled}
+        className={`w-full p-5 rounded-[2rem] border-2 transition-all font-bold text-sm appearance-none ${disabled ? 'bg-white/30 dark:bg-zinc-800/30 border-transparent text-zinc-500 cursor-default' : 'bg-white dark:bg-zinc-900 border-white dark:border-zinc-700 focus:border-orange-500 dark:text-white shadow-xl'}`}
+      >
+        {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+      </select>
+      {!disabled && <i className="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-[10px]"></i>}
+    </div>
   </div>
 );
 
