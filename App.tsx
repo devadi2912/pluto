@@ -29,7 +29,7 @@ const MOCK_PET: PetProfile = {
   breed: 'Golden Retriever',
   dateOfBirth: '2021-06-15',
   gender: Gender.Female,
-  avatar: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=200&h=200'
+  avatar: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=400&h=400'
 };
 
 const MOCK_TIMELINE: TimelineEntry[] = [
@@ -44,74 +44,35 @@ const MOCK_DOCUMENTS: PetDocument[] = [
 ];
 
 const MOCK_REMINDERS: Reminder[] = [
-  { id: 'rem1', title: 'Heartworm Dose', date: '2024-02-05', type: 'Medication', repeat: 'Monthly', completed: false },
-  { id: 'rem2', title: 'Dental Cleaning', date: '2024-03-15', type: 'Vet follow-up', completed: false }
+  { id: 'rem1', title: 'Heartworm Dose', date: '2024-02-05', type: 'Medication', completed: false },
+  { id: 'rem2', title: 'Rabies Booster', date: '2024-11-20', type: 'Vaccination', completed: false }
 ];
 
 const MOCK_CHECKLIST: DailyChecklist = {
-  food: true,
+  food: false,
   water: true,
   walk: false,
   medication: false,
-  lastReset: new Date().toISOString().split('T')[0]
+  lastReset: new Date().toISOString()
 };
 
 const MOCK_ROUTINE: RoutineItem[] = [
-  { id: '1', title: 'Morning Kibble', time: '08:00', completed: true, category: 'Food' },
-  { id: '2', title: 'Garden Play', time: '10:30', completed: false, category: 'Play' },
-  { id: '3', title: 'Evening Walk', time: '18:00', completed: false, category: 'Walk' },
-];
-
-const MOCK_CONSULTED_DOCTORS: Doctor[] = [
-  { 
-    id: 'DOC-SMITH-45', 
-    name: 'Dr. Sarah Smith', 
-    specialization: 'Cardiology Specialist', 
-    qualification: 'DVM, PhD Cardiology',
-    registrationId: 'VET-TX-99881',
-    experience: '12 Years',
-    clinic: 'Green Valley Clinic', 
-    address: '123 Pawsome Way, Austin, TX',
-    contact: '555-0102' 
-  },
-  { 
-    id: 'DOC-WONG-99', 
-    name: 'Dr. Mike Wong', 
-    specialization: 'Dental Vet', 
-    qualification: 'DVM, DDSV',
-    registrationId: 'VET-TX-11223',
-    experience: '8 Years',
-    clinic: 'Smile Pet Center', 
-    address: '88 Bark Blvd, Austin, TX',
-    contact: '555-0199' 
-  }
+  { id: 'r1', title: 'Morning Walk', time: '07:30', completed: false, category: 'Walk' },
+  { id: 'r2', title: 'Breakfast', time: '08:30', completed: true, category: 'Food' },
+  { id: 'r3', title: 'Play Time', time: '17:30', completed: false, category: 'Play' }
 ];
 
 const App: React.FC = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'profile' | 'timeline' | 'documents' | 'ai'>('dashboard');
-  const [darkMode, setDarkMode] = useState(false);
   const [pet, setPet] = useState<PetProfile>(MOCK_PET);
   const [timeline, setTimeline] = useState<TimelineEntry[]>(MOCK_TIMELINE);
   const [documents, setDocuments] = useState<PetDocument[]>(MOCK_DOCUMENTS);
   const [reminders, setReminders] = useState<Reminder[]>(MOCK_REMINDERS);
   const [checklist, setChecklist] = useState<DailyChecklist>(MOCK_CHECKLIST);
   const [routine, setRoutine] = useState<RoutineItem[]>(MOCK_ROUTINE);
-  const [consultedDoctors] = useState<Doctor[]>(MOCK_CONSULTED_DOCTORS);
-
-  useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    if (checklist.lastReset !== today) {
-      setChecklist({
-        food: false,
-        water: false,
-        walk: false,
-        medication: false,
-        lastReset: today
-      });
-      setRoutine(prev => prev.map(item => ({ ...item, completed: false })));
-    }
-  }, [checklist.lastReset]);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'profile' | 'timeline' | 'documents' | 'ai'>('dashboard');
+  const [darkMode, setDarkMode] = useState(false);
+  const [doctorActiveTab, setDoctorActiveTab] = useState<'profile' | 'discover' | 'patients'>('discover');
 
   useEffect(() => {
     if (darkMode) {
@@ -121,144 +82,141 @@ const App: React.FC = () => {
     }
   }, [darkMode]);
 
-  const handleCompleteReminder = (reminderId: string) => {
-    const reminder = reminders.find(r => r.id === reminderId);
-    if (!reminder) return;
+  const handleLogin = (authUser: AuthUser) => setUser(authUser);
+  const handleLogout = () => setUser(null);
 
-    const newEntry: TimelineEntry = {
-      id: Date.now().toString(),
-      date: new Date().toISOString().split('T')[0],
-      type: reminder.type === 'Vaccination' ? EntryType.Vaccination : 
-            reminder.type === 'Medication' ? EntryType.Medication : EntryType.VetVisit,
-      title: `Completed: ${reminder.title}`,
-      notes: `Event completed and logged from home reminders.`
-    };
-
-    setTimeline(prev => [newEntry, ...prev]);
-    setReminders(prev => prev.filter(r => r.id !== reminderId));
-  };
-
-  const renderScreen = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return (
-          <Dashboard 
-            pet={pet} 
-            reminders={reminders} 
-            checklist={checklist} 
-            setChecklist={setChecklist}
-            routine={routine}
-            setRoutine={setRoutine}
-            onCompleteReminder={handleCompleteReminder}
-          />
-        );
-      case 'profile':
-        return <ProfileScreen pet={pet} setPet={setPet} reminders={reminders} onNavigate={setActiveTab} />;
-      case 'timeline':
-        return (
-          <TimelineScreen 
-            timeline={timeline} 
-            setTimeline={setTimeline} 
-            documents={documents} 
-            reminders={reminders}
-            setReminders={setReminders}
-            consultedDoctors={consultedDoctors}
-          />
-        );
-      case 'documents':
-        return <DocumentsScreen documents={documents} setDocuments={setDocuments} />;
-      case 'ai':
-        return <AIScreen pet={pet} timeline={timeline} documents={documents} reminders={reminders} />;
-      default:
-        return <Dashboard pet={pet} reminders={reminders} checklist={checklist} setChecklist={setChecklist} routine={routine} setRoutine={setRoutine} onCompleteReminder={handleCompleteReminder} />;
-    }
+  const handleCompleteReminder = (id: string) => {
+    setReminders(prev => prev.map(r => r.id === id ? { ...r, completed: true } : r));
   };
 
   if (!user) {
-    return <AuthScreen onLogin={setUser} darkMode={darkMode} setDarkMode={setDarkMode} />;
+    return <AuthScreen onLogin={handleLogin} darkMode={darkMode} setDarkMode={setDarkMode} />;
   }
 
-  if (user.role === 'DOCTOR') {
-    return (
-      <div className="flex flex-col h-screen max-w-lg mx-auto bg-white dark:bg-zinc-950 shadow-2xl overflow-hidden relative font-comic transition-colors">
-        <header className="p-4 flex items-center justify-between border-b border-zinc-200/40 dark:border-zinc-800/40 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-2xl sticky top-0 z-40 transition-all shadow-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-400 rounded-full flex items-center justify-center text-white shadow-md">
-              <i className="fa-solid fa-user-doctor text-lg"></i>
-            </div>
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 font-lobster tracking-tight">Pluto Doctor</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setDarkMode(!darkMode)}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-sm border-2 ${
-                darkMode 
-                  ? 'bg-zinc-900/50 text-amber-300 border-zinc-800/50' 
-                  : 'bg-indigo-50/50 text-indigo-600 border-indigo-100/50'
-              }`}
-            >
-              <i className={`fa-solid ${darkMode ? 'fa-moon' : 'fa-sun'}`}></i>
-            </button>
-            <button 
-              onClick={() => setUser(null)}
-              className="w-10 h-10 rounded-full flex items-center justify-center bg-rose-50 dark:bg-rose-950/20 text-rose-500 border-2 border-rose-100/50 dark:border-rose-900/30 hover:bg-rose-500 hover:text-white transition-all shadow-sm active:scale-90"
-              title="Sign Out"
-            >
-              <i className="fa-solid fa-power-off"></i>
-            </button>
-          </div>
-        </header>
+  const navigationItems = [
+    { id: 'dashboard', icon: 'house', label: 'Home', color: 'orange' as const },
+    { id: 'timeline', icon: 'calendar-days', label: 'Journal', color: 'emerald' as const },
+    { id: 'ai', icon: 'wand-magic-sparkles', label: 'AI', color: 'orange' as const, isAction: true },
+    { id: 'documents', icon: 'folder-open', label: 'Files', color: 'amber' as const },
+    { id: 'profile', icon: 'paw', label: pet.name, color: 'rose' as const }, // Named after pet
+  ];
+
+  const renderContent = () => {
+    if (user.role === 'DOCTOR') {
+      return (
         <DoctorDashboard 
           doctor={user} 
-          petData={{ pet, timeline, documents, checklist, routine, reminders }} 
+          petData={{ pet, timeline, documents, checklist, routine, reminders }}
           darkMode={darkMode}
           setDarkMode={setDarkMode}
+          activeTab={doctorActiveTab}
+          setActiveTab={setDoctorActiveTab}
         />
-      </div>
-    );
-  }
+      );
+    }
+
+    switch (activeTab) {
+      case 'dashboard': return <Dashboard pet={pet} reminders={reminders} checklist={checklist} setChecklist={setChecklist} routine={routine} setRoutine={setRoutine} onCompleteReminder={handleCompleteReminder} />;
+      case 'profile': return <ProfileScreen pet={pet} setPet={setPet} reminders={reminders} onNavigate={setActiveTab} />;
+      case 'timeline': return <TimelineScreen timeline={timeline} setTimeline={setTimeline} documents={documents} reminders={reminders} setReminders={setReminders} />;
+      case 'documents': return <DocumentsScreen documents={documents} setDocuments={setDocuments} />;
+      case 'ai': return <AIScreen pet={pet} timeline={timeline} documents={documents} reminders={reminders} />;
+      default: return null;
+    }
+  };
 
   return (
-    <div className="flex flex-col h-screen max-w-lg mx-auto bg-white dark:bg-zinc-950 shadow-2xl overflow-hidden relative font-comic transition-colors">
-      <header className="p-4 flex items-center justify-between border-b border-zinc-200/40 dark:border-zinc-800/40 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-2xl sticky top-0 z-40 transition-all shadow-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-400 rounded-full flex items-center justify-center text-black shadow-md hover:rotate-12 transition-transform cursor-pointer">
-            <i className="fa-solid fa-paw text-lg"></i>
+    <div className="min-h-screen bg-[#FFFAF3] dark:bg-zinc-950 flex flex-col md:flex-row max-w-7xl mx-auto md:p-6 transition-colors duration-500 overflow-hidden">
+      
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex flex-col w-64 lg:w-72 h-[calc(100vh-3rem)] sticky top-6 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl rounded-[3rem] border border-white/40 dark:border-zinc-800/40 shadow-2xl p-8 mr-8">
+        <div className="flex items-center gap-3 mb-12 group cursor-pointer">
+          <div className="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:rotate-12 transition-transform duration-300">
+            <i className="fa-solid fa-paw text-xl"></i>
           </div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 font-lobster tracking-tight">Pluto</h1>
+          <h1 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50 group-hover:scale-105 transition-transform">Pluto</h1>
         </div>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setDarkMode(!darkMode)}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-sm border-2 ${
-              darkMode 
-                ? 'bg-zinc-900/50 text-amber-300 border-zinc-800/50' 
-                : 'bg-orange-50/50 text-orange-600 border-orange-100/50'
-            }`}
-          >
-            <i className={`fa-solid ${darkMode ? 'fa-moon' : 'fa-sun'}`}></i>
-          </button>
-          <button 
-            onClick={() => setUser(null)}
-            className="w-10 h-10 rounded-full flex items-center justify-center bg-rose-50 dark:bg-rose-950/20 text-rose-500 border-2 border-rose-100/50 dark:border-rose-900/30 hover:bg-rose-500 hover:text-white transition-all shadow-sm active:scale-90"
-            title="Sign Out"
-          >
-            <i className="fa-solid fa-power-off"></i>
-          </button>
-        </div>
-      </header>
 
-      <main className="flex-1 overflow-y-auto custom-scrollbar pb-32 text-zinc-900 dark:text-zinc-100">
-        {renderScreen()}
+        <nav className="flex-1 space-y-4">
+          {navigationItems.map(item => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id as any)}
+              className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${
+                activeTab === item.id 
+                  ? 'bg-orange-500 text-white shadow-xl translate-x-2' 
+                  : 'text-zinc-500 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50'
+              }`}
+            >
+              <i className={`fa-solid fa-${item.id === 'ai' ? 'wand-magic-sparkles' : item.icon} text-lg group-hover:scale-110 transition-transform`}></i>
+              <span className="font-black text-[10px] uppercase tracking-widest">{item.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="pt-8 border-t border-zinc-200 dark:border-zinc-800 flex flex-col gap-4">
+          <button onClick={() => setDarkMode(!darkMode)} className="flex items-center gap-4 px-6 py-4 rounded-2xl text-zinc-500 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-all group">
+            <i className={`fa-solid ${darkMode ? 'fa-sun text-yellow-500 animate-spin-slow' : 'fa-moon text-indigo-400'} text-lg group-hover:scale-125 transition-transform`}></i>
+            <span className="font-black text-[10px] uppercase tracking-widest">{darkMode ? 'Light' : 'Dark'}</span>
+          </button>
+          <button onClick={handleLogout} className="flex items-center gap-4 px-6 py-4 rounded-2xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all group">
+            <i className="fa-solid fa-power-off text-lg group-hover:scale-125 transition-transform"></i>
+            <span className="font-black text-[10px] uppercase tracking-widest">Sign Out</span>
+          </button>
+          <div className="flex items-center gap-3 px-2">
+            <img src={pet.avatar} className="w-10 h-10 rounded-full border-2 border-orange-500 shadow-md" alt="Pet" />
+            <div className="min-w-0">
+              <p className="text-sm font-bold truncate dark:text-zinc-50">{pet.name}</p>
+              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-tighter">Connected</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col bg-white dark:bg-zinc-900 md:rounded-[4rem] shadow-2xl overflow-hidden relative border border-white/20 dark:border-zinc-800/50">
+        
+        {/* Mobile Header - More Compact & Spinning Sun */}
+        <div className="md:hidden p-2 px-3 flex items-center justify-between border-b border-white/20 dark:border-zinc-800/40 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-3xl sticky top-0 z-[60] shadow-sm">
+          <div className="flex items-center gap-2 group">
+            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white shadow-md transition-transform group-active:rotate-12">
+              <i className="fa-solid fa-paw text-[12px]"></i>
+            </div>
+            <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 font-lobster tracking-tight">Pluto</h1>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => setDarkMode(!darkMode)} className="w-8 h-8 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800/50 text-zinc-600 dark:text-amber-300 border border-zinc-200 dark:border-zinc-800 transition-all active:scale-90">
+              <i className={`fa-solid ${darkMode ? 'fa-sun animate-spin-slow' : 'fa-moon'} text-sm`}></i>
+            </button>
+            <button onClick={handleLogout} className="w-8 h-8 rounded-full flex items-center justify-center bg-rose-50 dark:bg-rose-950/20 text-rose-500 border border-rose-100/50 dark:border-rose-900/30 active:scale-90">
+              <i className="fa-solid fa-power-off text-xs"></i>
+            </button>
+          </div>
+        </div>
+
+        {/* Screen Content */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar no-scrollbar relative pb-24 md:pb-0">
+          <div className="max-w-4xl mx-auto">
+            {renderContent()}
+          </div>
+        </div>
+
+        {/* Mobile Bottom Nav - Thinner, Pinned Frosted Floating */}
+        <nav className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] bg-white/40 dark:bg-zinc-950/40 backdrop-blur-3xl border border-white/20 dark:border-zinc-800/30 rounded-[1.75rem] flex justify-around items-center p-1 pb-2 z-[70] shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition-all">
+          {navigationItems.map(item => (
+            <NavButton 
+              key={item.id} 
+              active={activeTab === item.id} 
+              onClick={() => setActiveTab(item.id as any)} 
+              icon={item.icon} 
+              label={item.label} 
+              color={item.color} 
+              isAction={item.isAction}
+              petAvatar={pet.avatar}
+            />
+          ))}
+        </nav>
       </main>
-
-      <nav className="absolute bottom-0 left-0 right-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-2xl border-t-2 border-zinc-200/40 dark:border-zinc-800/40 flex justify-around p-3 pb-10 z-50 transition-all shadow-[0_-15px_40px_rgba(0,0,0,0.1)]">
-        <NavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon="house" label="Home" color="orange" />
-        <NavButton active={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')} icon="calendar-days" label="Journal" color="emerald" />
-        <NavButton active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} icon="sparkles" label="Pluto AI" isAction petAvatar={pet.avatar} />
-        <NavButton active={activeTab === 'documents'} onClick={() => setActiveTab('documents')} icon="folder-open" label="Files" color="amber" />
-        <NavButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon="paw" label={pet.name} color="rose" />
-      </nav>
     </div>
   );
 };

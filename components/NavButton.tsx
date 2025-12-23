@@ -18,35 +18,32 @@ export const NavButton: React.FC<{
     indigo: 'text-indigo-600 dark:text-indigo-400',
   };
 
+  const isIdentity = icon === 'paw';
+
+  // The user requested to "push down the ai button to match the layout of the other buttons"
+  // So we treat isAction almost like a normal button but keep the dog icon/animation logic.
   if (isAction) {
     return (
       <button 
         onClick={onClick} 
-        className="flex flex-col items-center gap-1 transition-all relative -top-6 group z-50 outline-none focus:outline-none ring-0 focus:ring-0"
+        className="flex flex-col items-center gap-0.5 transition-all outline-none focus:outline-none"
       >
         <div className={`
-          w-[60px] h-[60px] flex items-center justify-center rounded-2xl transition-all duration-500 relative overflow-hidden border-2 group-hover:rotate-3
+          w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-300 relative overflow-hidden border-2
           ${active 
-            ? `bg-gradient-to-tr from-orange-500 to-amber-600 backdrop-blur-xl text-white scale-110 border-white/40 shadow-[0_12px_30px_rgba(249,115,22,0.4)]` 
-            : 'bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md text-zinc-500 dark:text-zinc-400 border-zinc-200/50 dark:border-zinc-800/50 shadow-xl group-hover:scale-105'
+            ? `bg-orange-500 text-white scale-110 border-orange-400 shadow-lg shadow-orange-500/20` 
+            : 'bg-transparent text-zinc-400 dark:text-zinc-600 border-transparent'
           }
         `}>
-          {active ? (
-             <i className="fa-solid fa-dog text-xl transition-transform group-hover:scale-110 group-hover:animate-bounce"></i>
-          ) : (
-            <div className="relative flex items-center justify-center w-full h-full">
-               {/* Just the Pup icon as requested, no overlapping home icon */}
-               <i className={`fa-solid fa-dog text-2xl transition-all duration-700 group-hover:scale-110 ${active ? 'text-white' : 'text-zinc-400 dark:text-zinc-600'}`}></i>
-               {petAvatar && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-                    <img src={petAvatar} className="w-8 h-8 rounded-full border-2 border-white/80 dark:border-zinc-800 shadow-md" alt="pet" />
-                  </div>
-               )}
+          <i className={`fa-solid fa-dog ${active ? 'animate-bounce text-base' : 'text-sm'}`}></i>
+          {active && (
+            <div className="absolute inset-0 pointer-events-none">
+              <i className="fa-solid fa-sparkle absolute top-1 left-1 text-[6px] animate-pulse"></i>
             </div>
           )}
         </div>
-        <span className={`text-[11px] font-black uppercase tracking-widest transition-all duration-300 relative z-10 mt-1
-          ${active ? 'text-zinc-900 dark:text-zinc-50 translate-y-0.5' : 'text-zinc-500 dark:text-zinc-500'}
+        <span className={`text-[8px] font-black uppercase tracking-widest transition-all duration-300
+          ${active ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-600'}
         `}>
           {label}
         </span>
@@ -57,18 +54,26 @@ export const NavButton: React.FC<{
   return (
     <button 
       onClick={onClick} 
-      className="flex flex-col items-center gap-1 transition-all hover:scale-105 active:scale-95 outline-none focus:outline-none ring-0 focus:ring-0"
+      className="flex flex-col items-center gap-0.5 transition-all hover:scale-110 active:scale-90 outline-none"
     >
       <div className={`
-        w-14 h-14 flex items-center justify-center rounded-2xl transition-all border-2
+        w-10 h-10 flex items-center justify-center rounded-xl transition-all border-2 overflow-hidden
         ${active 
-          ? `bg-zinc-100/30 dark:bg-zinc-900/30 border-zinc-200/30 dark:border-zinc-800/30 shadow-sm ${colorMap[color]}` 
+          ? `bg-zinc-100/40 dark:bg-zinc-900/40 border-zinc-200/30 dark:border-zinc-800/30 shadow-inner ${colorMap[color]}` 
           : 'bg-transparent border-transparent text-zinc-400 dark:text-zinc-600'
         }
       `}>
-        <i className={`fa-solid fa-${icon} text-xl`}></i>
+        {isIdentity && petAvatar ? (
+          <img 
+            src={petAvatar} 
+            className={`w-full h-full object-cover transition-all duration-300 ${active ? 'scale-110' : 'grayscale-[60%] opacity-50'}`} 
+            alt="pet" 
+          />
+        ) : (
+          <i className={`fa-solid fa-${icon} text-sm transition-transform ${active ? 'scale-110' : ''}`}></i>
+        )}
       </div>
-      <span className={`text-[11px] font-black uppercase tracking-widest ${active ? 'text-zinc-900 dark:text-zinc-50' : 'text-zinc-400 dark:text-zinc-600'} truncate max-w-[64px] transition-colors`}>
+      <span className={`text-[8px] font-black uppercase tracking-widest transition-colors ${active ? 'text-zinc-900 dark:text-zinc-50' : 'text-zinc-400 dark:text-zinc-600'} truncate max-w-[54px]`}>
         {label}
       </span>
     </button>

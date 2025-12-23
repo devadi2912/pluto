@@ -21,19 +21,12 @@ const PET_FACTS = [
   "Did you know? Dogs' sense of smell is 40 times better than ours.",
   "Luna might dream just like you do!",
   "A dog's nose print is as unique as a human fingerprint.",
-  "Cats can make over 100 different sounds.",
-  "Luna's whiskers help her 'see' in the dark.",
-  "Dog years aren't exactly 7 per human year—it varies by size!",
-  "A wagging tail doesn't always mean a dog is happy."
+  "Cats can make over 100 different sounds."
 ];
 
 const AIScreen: React.FC<AIProps> = ({ pet, timeline, documents, reminders }) => {
   const [messages, setMessages] = useState<Message[]>([
-    { 
-      role: 'ai', 
-      text: `Woof! I'm your Pluto AI. Ask me anything about ${pet.name}'s care history, or let me find nearby stores and daycares!`, 
-      timestamp: new Date() 
-    }
+    { role: 'ai', text: `Hi! I'm Pluto AI. Ask me anything about ${pet.name}'s care history or nearby services. ✨`, timestamp: new Date() }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -43,9 +36,7 @@ const AIScreen: React.FC<AIProps> = ({ pet, timeline, documents, reminders }) =>
   const randomFact = useMemo(() => PET_FACTS[Math.floor(Math.random() * PET_FACTS.length)], []);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
   useEffect(() => {
@@ -55,145 +46,113 @@ const AIScreen: React.FC<AIProps> = ({ pet, timeline, documents, reminders }) =>
     );
   }, []);
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
-
-    const userMsg: Message = { role: 'user', text: input, timestamp: new Date() };
+  const handleSend = async (customInput?: string) => {
+    const textToSend = customInput || input;
+    if (!textToSend.trim() || isLoading) return;
+    const userMsg: Message = { role: 'user', text: textToSend, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsLoading(true);
 
-    const response = await getAIResponse(input, {
-      pet,
-      timeline,
-      documents,
-      reminders,
-      location: userLocation
-    });
-
-    const aiMsg: Message = { 
-      role: 'ai', 
-      text: response.text, 
-      sources: response.sources,
-      timestamp: new Date() 
-    };
-    
-    setMessages(prev => [...prev, aiMsg]);
+    const response = await getAIResponse(textToSend, { pet, timeline, documents, reminders, location: userLocation });
+    setMessages(prev => [...prev, { role: 'ai', text: response.text, sources: response.sources, timestamp: new Date() }]);
     setIsLoading(false);
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-[#FFFAF3] dark:bg-zinc-950">
-      {/* Header */}
-      <div className="p-6 border-b-2 border-orange-50 dark:border-zinc-900 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl flex items-center justify-between sticky top-0 z-20 shadow-sm">
-        <div>
-          <h2 className="text-3xl font-bold font-lobster text-orange-600 dark:text-orange-400 tracking-wide">Pluto AI</h2>
-          <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-black uppercase tracking-[0.2em] mt-1">Intelligent Care Companion</p>
-        </div>
-        <div className="w-12 h-12 bg-gradient-to-tr from-orange-400 via-pink-500 to-purple-600 rounded-2xl flex items-center justify-center text-white shadow-lg animate-pulse border-2 border-white/20">
-          <i className="fa-solid fa-sparkles text-xl"></i>
-        </div>
-      </div>
-
-      {/* Chat Messages */}
-      <div className="flex-1 p-6 space-y-8">
-        {messages.map((msg, idx) => {
-          const isMapResult = msg.sources && msg.sources.length > 0;
-          
-          return (
-            <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
-              <div className={`max-w-[90%] p-5 rounded-[2rem] shadow-lg ${
-                msg.role === 'user' 
-                  ? 'bg-gradient-to-br from-orange-500 to-rose-600 text-white rounded-br-none' 
-                  : 'bg-white dark:bg-zinc-900 border-2 border-orange-50 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 rounded-bl-none'
-              }`}>
-                <p className="text-sm font-bold leading-relaxed whitespace-pre-wrap">{msg.text}</p>
-                
-                {isMapResult && (
-                  <div className="mt-4 pt-4 border-t border-orange-100 dark:border-zinc-800">
-                    <p className="text-[10px] font-black uppercase text-orange-600 dark:text-orange-400 mb-3 tracking-widest flex items-center gap-2">
-                      <i className="fa-solid fa-location-dot"></i>
-                      Nearby Care & Services
-                    </p>
-                    <div className="space-y-2">
-                      {msg.sources!.map((src, sIdx) => (
-                        <a 
-                          key={sIdx} 
-                          href={src.uri} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-between gap-3 bg-zinc-50 dark:bg-zinc-800 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-700 hover:border-orange-400 hover:shadow-md transition-all group"
-                        >
-                          <div className="flex items-center gap-3 overflow-hidden">
-                            <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                              <i className="fa-solid fa-shop text-[10px]"></i>
-                            </div>
-                            <span className="text-[11px] font-bold text-zinc-800 dark:text-zinc-200 truncate">{src.title}</span>
-                          </div>
-                          <i className="fa-solid fa-chevron-right text-[10px] text-zinc-400"></i>
-                        </a>
-                      ))}
-                    </div>
+    <div className="flex flex-col h-full bg-[#FFFAF3] dark:bg-zinc-950 relative">
+      {/* Messages List - Improved spacing and flow */}
+      <div className="flex-1 overflow-y-auto p-5 md:p-10 space-y-12 custom-scrollbar no-scrollbar">
+        {messages.map((msg, idx) => (
+          <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-6 duration-700`}>
+            <div className={`max-w-[88%] md:max-w-[75%] p-5 md:p-7 rounded-[2rem] shadow-xl transition-all hover:translate-y-[-2px] ${
+              msg.role === 'user' 
+                ? 'bg-gradient-to-br from-orange-500 to-rose-600 text-white rounded-br-none shadow-orange-500/10' 
+                : 'bg-white dark:bg-zinc-900 border border-orange-50/50 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-bl-none'
+            }`}>
+              <p className="text-[15px] md:text-[17px] font-bold leading-relaxed">{msg.text}</p>
+              
+              {msg.sources && msg.sources.length > 0 && (
+                <div className="mt-6 pt-5 border-t border-orange-100/50 dark:border-zinc-800 space-y-3">
+                  <p className="text-[9px] font-black uppercase text-orange-500 dark:text-orange-400 tracking-[0.2em] flex items-center gap-2">
+                    <i className="fa-solid fa-location-dot"></i> Grounding Results
+                  </p>
+                  <div className="grid grid-cols-1 gap-2">
+                    {msg.sources.map((src, sIdx) => (
+                      <a key={sIdx} href={src.uri} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between gap-4 bg-zinc-50 dark:bg-zinc-800/40 p-3 rounded-2xl border border-zinc-100 dark:border-zinc-700 hover:border-orange-400 hover:bg-orange-50/30 transition-all group/source">
+                        <span className="text-[11px] font-bold truncate dark:text-zinc-200">{src.title}</span>
+                        <i className="fa-solid fa-arrow-up-right-from-square text-[10px] text-zinc-400 group-hover/source:text-orange-500 transition-colors"></i>
+                      </a>
+                    ))}
                   </div>
-                )}
-              </div>
-              <span className="text-[9px] text-zinc-400 dark:text-zinc-600 font-black mt-2 px-2 uppercase tracking-widest">
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2 mt-2 px-3">
+              <span className="text-[9px] text-zinc-400 font-black uppercase tracking-widest">
                 {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
-            </div>
-          );
-        })}
-        {isLoading && (
-          <div className="flex flex-col items-start animate-pulse">
-            <div className="bg-white dark:bg-zinc-900 p-4 rounded-[1.5rem] rounded-bl-none shadow-md border border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
-               <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-bounce"></div>
-               <div className="w-1.5 h-1.5 bg-pink-500 rounded-full animate-bounce delay-75"></div>
-               <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-bounce delay-150"></div>
+              {msg.role === 'ai' && <i className="fa-solid fa-check-double text-[8px] text-emerald-500"></i>}
             </div>
           </div>
+        ))}
+        {isLoading && (
+          <div className="flex items-center gap-4 bg-white dark:bg-zinc-900 p-5 rounded-[1.5rem] rounded-bl-none shadow-lg border border-orange-50/50 dark:border-zinc-800 w-max animate-pulse">
+            <div className="flex gap-1.5">
+              <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+              <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+            </div>
+            <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Pluto is thinking...</span>
+          </div>
         )}
-        <div ref={scrollRef} />
+        <div ref={scrollRef} className="h-32 md:h-10" />
       </div>
 
-      {/* Input Section - Removed Sticky to avoid footer overlap */}
-      <div className="p-6 pt-2 pb-10">
-        <div className="flex gap-2 overflow-x-auto no-scrollbar mb-4">
-          <SuggestionChip text="Pet Stores" onClick={() => setInput("Find some top-rated pet stores nearby.")} color="bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400 border-orange-100 dark:border-orange-900/50" />
-          <SuggestionChip text="Daycares" onClick={() => setInput("Are there any pet daycares or boarding centers nearby?")} color="bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900/50" />
-          <SuggestionChip text="Nearby Vets" onClick={() => setInput("Find some nearby vet clinics for Luna.")} color="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50" />
-          <SuggestionChip text="Last Vaccine?" onClick={() => setInput("When was the last vaccination?")} color="bg-pink-50 text-pink-700 dark:bg-pink-950/30 dark:text-pink-400 border-pink-100 dark:border-pink-900/50" />
-        </div>
-        <div className="relative">
-          <input 
-            type="text" 
-            placeholder={randomFact}
-            className="w-full pl-6 pr-14 py-4 bg-white dark:bg-zinc-900 border-2 border-zinc-100 dark:border-zinc-800 focus:border-orange-400 dark:focus:border-orange-500 rounded-[2rem] outline-none transition-all font-bold dark:text-zinc-50 text-zinc-900 shadow-sm"
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyPress={e => e.key === 'Enter' && handleSend()}
-          />
-          <button 
-            onClick={handleSend}
-            disabled={!input.trim() || isLoading}
-            className={`absolute right-2 top-2 w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-              input.trim() && !isLoading 
-                ? 'bg-orange-500 text-white shadow-lg active:scale-90' 
-                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600'
-            }`}
-          >
-            <i className="fa-solid fa-paper-plane"></i>
-          </button>
+      {/* Input & Suggestions - Highly Frosted & Interactive */}
+      <div className="px-5 pb-8 pt-4 md:px-12 md:pb-12 bg-white/40 dark:bg-zinc-950/40 backdrop-blur-3xl border-t border-white/20 dark:border-zinc-800/40 sticky bottom-0 z-20">
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Suggestions - Restored & Animated */}
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 px-1 -mx-1">
+            <SuggestionChip text="Last Vaccine?" onClick={() => handleSend("When was Luna's last vaccination?")} icon="syringe" />
+            <SuggestionChip text="Nearby Vets" onClick={() => handleSend("Find some highly rated vet clinics nearby.")} icon="stethoscope" />
+            <SuggestionChip text="Pet Stores" onClick={() => handleSend("Where are the best pet stores near me?")} icon="shop" />
+            <SuggestionChip text="History" onClick={() => handleSend("Can you summarize Luna's recent health history?")} icon="scroll" />
+          </div>
+          
+          <div className="relative group/input">
+            <input 
+              type="text" 
+              placeholder={randomFact}
+              className="w-full pl-7 pr-16 py-5 bg-white/80 dark:bg-zinc-900/80 border-2 border-zinc-100/50 dark:border-zinc-800 focus:border-orange-400 dark:focus:border-orange-500 rounded-[2.2rem] outline-none transition-all font-bold text-base dark:text-zinc-50 shadow-xl group-focus-within/input:shadow-orange-500/5"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyPress={e => e.key === 'Enter' && handleSend()}
+            />
+            <button 
+              onClick={() => handleSend()}
+              disabled={!input.trim() || isLoading}
+              className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                input.trim() && !isLoading 
+                  ? 'bg-orange-500 text-white shadow-lg active:scale-90' 
+                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300'
+              }`}
+            >
+              <i className="fa-solid fa-paper-plane text-lg"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-const SuggestionChip: React.FC<{ text: string, onClick: () => void, color: string }> = ({ text, onClick, color }) => (
+const SuggestionChip: React.FC<{ text: string, onClick: () => void, icon: string }> = ({ text, onClick, icon }) => (
   <button 
     onClick={onClick}
-    className={`px-4 py-2 ${color} text-[10px] font-black rounded-xl whitespace-nowrap border active:scale-95 transition-all shadow-sm uppercase tracking-widest`}
+    className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-zinc-900/60 border border-zinc-100 dark:border-zinc-800 rounded-full text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all shadow-sm active:scale-95 whitespace-nowrap group/chip"
   >
+    <i className={`fa-solid fa-${icon} text-[10px] opacity-70 group-hover/chip:scale-110`}></i>
     {text}
   </button>
 );

@@ -26,12 +26,16 @@
             font-family: "Comic Neue", "Comic Sans MS", cursive;
             background-color: #fcfaf7;
             transition: background-color 0.3s ease;
+            font-size: 14px; /* Slightly smaller default for mobile */
+        }
+        @media (min-width: 768px) {
+            body { font-size: 16px; }
         }
         h1, h2, h3, h4, .font-heading {
             font-family: 'Lobster', cursive !important;
         }
         .dark body {
-            background-color: #1a1a1a;
+            background-color: #09090b;
         }
         .custom-scrollbar::-webkit-scrollbar {
             width: 4px;
@@ -44,16 +48,44 @@
             border-radius: 10px;
         }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #4a5568;
+            background: #27272a;
         }
-        /* Hide scrollbar for Chrome, Safari and Opera */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
-        /* Hide scrollbar for IE, Edge and Firefox */
         .no-scrollbar {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .animate-spin-slow {
+            animation: spin 6s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Party Animation */
+        @keyframes party {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.05) rotate(5deg); }
+            50% { transform: scale(1) rotate(-5deg); }
+            75% { transform: scale(1.05) rotate(5deg); }
+        }
+        .animate-party {
+            animation: party 0.6s ease-in-out infinite;
+        }
+
+        /* Alert Animation */
+        @keyframes alert-shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-3px); }
+            40% { transform: translateX(3px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(3px); }
+        }
+        .animate-alert {
+            animation: alert-shake 0.8s ease-in-out infinite;
         }
     </style>
 <script type="importmap">

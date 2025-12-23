@@ -60,30 +60,30 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
             {isEditing ? (
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-rose-500 uppercase tracking-widest ml-1">Full Name</label>
+                  <label className="text-[9px] font-black text-sky-500 uppercase tracking-widest ml-1">Full Name</label>
                   <input 
                     type="text"
                     value={formData.name}
                     placeholder="e.g. Dr. Sarah Smith"
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 border-2 border-rose-100 dark:border-zinc-700 rounded-xl font-bold text-base outline-none focus:border-rose-400 dark:text-white"
+                    className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 border-2 border-sky-100 dark:border-zinc-700 rounded-xl font-bold text-base outline-none focus:border-sky-400 dark:text-white"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-rose-500 uppercase tracking-widest ml-1">Specialization</label>
+                  <label className="text-[9px] font-black text-sky-500 uppercase tracking-widest ml-1">Specialization</label>
                   <input 
                     type="text"
                     value={formData.specialization}
                     placeholder="e.g. Cardiology Specialist"
                     onChange={(e) => setFormData({...formData, specialization: e.target.value})}
-                    className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 border-2 border-rose-100 dark:border-zinc-700 rounded-xl font-black text-[10px] uppercase tracking-widest outline-none focus:border-rose-400 dark:text-white truncate"
+                    className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 border-2 border-sky-100 dark:border-zinc-700 rounded-xl font-black text-[10px] uppercase tracking-widest outline-none focus:border-sky-400 dark:text-white truncate"
                   />
                 </div>
               </div>
             ) : (
               <>
                 <h3 className="text-3xl font-bold font-lobster text-zinc-800 dark:text-zinc-100 leading-tight break-words">{formData.name}</h3>
-                <p className="text-[11px] font-black text-rose-500 uppercase tracking-[0.15em] mt-1 break-words">{formData.specialization}</p>
+                <p className="text-[11px] font-black text-sky-500 uppercase tracking-[0.15em] mt-1 break-words">{formData.specialization}</p>
                 <div className="flex items-center gap-2 mt-2">
                    <span className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-full text-[9px] font-black text-zinc-500 uppercase tracking-widest truncate">{doctorId}</span>
                 </div>
@@ -109,7 +109,7 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
               label="Registration ID" 
               value={formData.registrationId} 
               isEditing={isEditing}
-              color="rose"
+              color="sky"
               placeholder="e.g. VET-TX-99881"
               onChange={(v) => setFormData({...formData, registrationId: v})}
             />
@@ -128,7 +128,7 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
             label="Phone Number" 
             value={formData.contact} 
             isEditing={isEditing}
-            color="pink"
+            color="sky"
             placeholder="e.g. +1 555-0102"
             onChange={(v) => setFormData({...formData, contact: v})}
           />
@@ -137,18 +137,18 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
         {/* Clinic Info */}
         <div className="space-y-6 pt-4 border-t dark:border-zinc-800">
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Clinic Name</label>
+            <label className="text-[10px] font-black text-sky-500 uppercase tracking-[0.2em]">Clinic Name</label>
             {isEditing ? (
               <input 
                 type="text"
                 value={formData.clinic}
                 placeholder="e.g. Green Valley Veterinary"
                 onChange={(e) => setFormData({...formData, clinic: e.target.value})}
-                className="w-full p-4 bg-zinc-50 dark:bg-zinc-800 border-2 border-rose-100 dark:border-zinc-700 rounded-xl font-bold outline-none focus:border-rose-400 dark:text-white"
+                className="w-full p-4 bg-zinc-50 dark:bg-zinc-800 border-2 border-sky-100 dark:border-zinc-700 rounded-xl font-bold outline-none focus:border-sky-400 dark:text-white"
               />
             ) : (
               <p className="text-lg font-bold text-zinc-800 dark:text-zinc-100 flex items-center gap-3 break-words">
-                 <i className="fa-solid fa-hospital text-rose-400 shrink-0"></i>
+                 <i className="fa-solid fa-hospital text-sky-400 shrink-0"></i>
                  {formData.clinic}
               </p>
             )}
@@ -210,23 +210,31 @@ const ProfileField: React.FC<{
   label: string, 
   value: string, 
   isEditing?: boolean,
-  color?: 'emerald' | 'rose' | 'pink',
+  color?: 'emerald' | 'sky' | 'rose' | 'pink',
   placeholder?: string,
   onChange?: (v: string) => void 
 }> = ({ icon, label, value, isEditing, color = 'emerald', placeholder, onChange }) => {
   const colorMap = {
     emerald: 'text-emerald-500',
+    sky: 'text-sky-400',
+    rose: 'text-rose-500',
+    pink: 'text-pink-500',
+  };
+
+  const labelColorMap = {
+    emerald: 'text-zinc-400',
+    sky: 'text-sky-500 dark:text-sky-400',
     rose: 'text-rose-500',
     pink: 'text-pink-500',
   };
 
   return (
     <div className="space-y-1 group min-w-0">
-      <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">{label}</label>
+      <label className={`text-[10px] font-black uppercase tracking-[0.2em] ml-1 transition-colors ${labelColorMap[color]}`}>{label}</label>
       <div className={`flex items-start gap-3 p-4 rounded-2xl border-2 transition-all overflow-hidden ${
-        isEditing ? 'bg-white dark:bg-zinc-900 border-rose-50 dark:border-zinc-800 shadow-lg' : 'bg-zinc-50 dark:bg-zinc-800/50 border-transparent group-hover:border-rose-100 dark:group-hover:border-zinc-800'
+        isEditing ? 'bg-white dark:bg-zinc-900 border-sky-50 dark:border-zinc-800 shadow-lg' : 'bg-zinc-50 dark:bg-zinc-800/50 border-transparent group-hover:border-sky-100 dark:group-hover:border-zinc-800'
       }`}>
-        <i className={`fa-solid fa-${icon} ${colorMap[color]} text-sm mt-0.5 shrink-0`}></i>
+        <i className={`fa-solid fa-${icon} ${colorMap[color]} text-sm mt-0.5 shrink-0 transition-transform group-hover:scale-110`}></i>
         {isEditing && onChange ? (
           <input 
             type="text"
