@@ -136,7 +136,6 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
               
               <div className="space-y-8 pb-4">
-                 {/* Activity */}
                  <div className="space-y-3">
                     <label className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.15em] ml-1">Daily Activity (Min)</label>
                     <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-2xl border-2 border-transparent focus-within:border-orange-100 transition-all">
@@ -146,7 +145,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                     </div>
                  </div>
 
-                 {/* Mood */}
                  <div className="space-y-3">
                     <label className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.15em] ml-1">Owner-Observed Mood</label>
                     <div className="flex justify-between gap-2">
@@ -166,7 +164,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                     </div>
                  </div>
 
-                 {/* Feeding */}
                  <div className="space-y-3">
                     <label className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.15em] ml-1">Daily Feeding Count</label>
                     <div className="flex justify-between gap-2 bg-zinc-50 dark:bg-zinc-800/50 p-2 rounded-2xl">
@@ -263,13 +260,17 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       )}
 
-      {/* Upcoming Reminders */}
+      {/* Upcoming Reminders - Enhanced Animation & Glow */}
       <section className="space-y-6 pb-20">
         <h3 className="text-2xl md:text-3xl font-lobster text-zinc-900 dark:text-zinc-50 px-2">Coming Up</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {reminders.filter(r => !r.completed).slice(0, 4).map(reminder => (
-            <div key={reminder.id} className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-5 rounded-[2rem] shadow-sm flex items-center gap-4 hover:border-orange-200 transition-all group">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl ${reminder.type === 'Vaccination' ? 'bg-orange-50 text-orange-600' : 'bg-purple-50 text-purple-600'}`}>
+          {reminders.filter(r => !r.completed).slice(0, 4).map((reminder, idx) => (
+            <div 
+              key={reminder.id} 
+              className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-5 rounded-[2rem] shadow-sm flex items-center gap-4 hover:border-orange-200 dark:hover:border-orange-500/50 hover:shadow-[0_10px_30px_rgba(249,115,22,0.15)] transition-all group animate-in slide-in-from-bottom-5"
+              style={{ animationDelay: `${idx * 150}ms` }}
+            >
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-transform group-hover:scale-110 ${reminder.type === 'Vaccination' ? 'bg-orange-50 text-orange-600 dark:bg-orange-950/40' : 'bg-purple-50 text-purple-600 dark:bg-purple-950/40'}`}>
                 <i className={`fa-solid ${reminder.type === 'Vaccination' ? 'fa-syringe' : 'fa-pills'}`}></i>
               </div>
               <div className="flex-1 min-w-0">
@@ -278,7 +279,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
               <button 
                 onClick={() => onCompleteReminder(reminder.id)}
-                className="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 px-3 py-2 rounded-lg font-black text-[8px] uppercase tracking-widest border border-zinc-100 hover:bg-orange-500 hover:text-white transition-all"
+                className="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 px-3 py-2 rounded-lg font-black text-[8px] uppercase tracking-widest border border-zinc-100 dark:border-zinc-700 hover:bg-orange-500 hover:text-white hover:shadow-[0_0_15px_rgba(249,115,22,0.6)] transition-all active:scale-90"
               >
                 Done
               </button>
@@ -293,11 +294,11 @@ const Dashboard: React.FC<DashboardProps> = ({
 const CheckTile: React.FC<{ 
   active: boolean, icon: string, label: string, onClick: () => void, color: string
 }> = ({ active, icon, label, onClick, color }) => {
-  const shadowMap: any = {
-    orange: 'shadow-[0_20px_50px_rgba(249,115,22,0.4)]',
-    blue: 'shadow-[0_20px_50px_rgba(59,130,246,0.4)]',
-    emerald: 'shadow-[0_20px_50px_rgba(16,185,129,0.4)]',
-    purple: 'shadow-[0_20px_50px_rgba(168,85,247,0.4)]',
+  const intenseShadowMap: any = {
+    orange: 'shadow-[0_25px_60px_rgba(249,115,22,0.6)]',
+    blue: 'shadow-[0_25px_60px_rgba(59,130,246,0.6)]',
+    emerald: 'shadow-[0_25px_60px_rgba(16,185,129,0.6)]',
+    purple: 'shadow-[0_25px_60px_rgba(168,85,247,0.6)]',
   };
 
   const bgMap: any = {
@@ -310,13 +311,13 @@ const CheckTile: React.FC<{
   return (
     <button 
       onClick={onClick}
-      className={`flex flex-col items-center justify-center gap-3 p-6 rounded-[2rem] transition-all duration-300 relative overflow-hidden group border-4 ${
+      className={`flex flex-col items-center justify-center gap-3 p-6 rounded-[2rem] transition-all duration-500 relative overflow-hidden group border-4 ${
         active 
-          ? `${bgMap[color]} ${shadowMap[color]} text-white border-white dark:border-zinc-950 scale-[0.98]` 
-          : 'bg-white dark:bg-zinc-900 border-zinc-50 dark:border-zinc-800 shadow-sm hover:scale-[1.03]'
+          ? `${bgMap[color]} ${intenseShadowMap[color]} text-white border-white dark:border-zinc-950 scale-[0.98] animate-pulse` 
+          : 'bg-white dark:bg-zinc-900 border-zinc-50 dark:border-zinc-800 shadow-sm hover:scale-[1.03] hover:border-white'
       }`}
     >
-      <div className={`text-4xl transition-all ${active ? 'text-white scale-110 drop-shadow-lg' : 'text-zinc-200 dark:text-zinc-800'}`}>
+      <div className={`text-4xl transition-all ${active ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]' : 'text-zinc-200 dark:text-zinc-800'}`}>
         <i className={`fa-solid fa-${icon}`}></i>
       </div>
       <span className={`font-black text-[9px] uppercase tracking-[0.1em] ${active ? 'text-white' : 'text-zinc-400'}`}>{label}</span>

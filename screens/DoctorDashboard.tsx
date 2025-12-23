@@ -97,13 +97,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
     setPriorityItems(prev => prev.filter(item => item.id !== id));
   };
 
-  const activityScore = useMemo(() => {
-    const { routine, checklist } = petData;
-    const totalItems = routine.length + 4;
-    const completedItems = routine.filter(r => r.completed).length + Object.values(checklist).filter(v => typeof v === 'boolean' && v).length;
-    return Math.round((completedItems / totalItems) * 100);
-  }, [petData]);
-
   const renderPetView = () => (
     <div className="flex flex-col h-full bg-[#FFFAF3] dark:bg-zinc-950 animate-in fade-in duration-500 overflow-hidden">
       {/* Patient Header */}
@@ -120,7 +113,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         <div className="bg-white/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em]">Medical Access</div>
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-44 no-scrollbar">
+      <div className="flex-1 overflow-y-auto pb-60 no-scrollbar">
         {/* Context Navigation for Doctor */}
         <div className="flex bg-white dark:bg-zinc-900 border-b dark:border-zinc-800 sticky top-0 z-[60] overflow-x-auto no-scrollbar shadow-sm">
            <SubNavTab label="Pulse" active={activeSubTab === 'profile'} onClick={() => setActiveSubTab('profile')} icon="heart-pulse" />
@@ -154,7 +147,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
               reminders={petData.reminders} 
               setReminders={() => {}} 
               dailyLogs={dailyLogs}
-              onUpdateLog={() => {}}
+              onUpdateLog={handleSearch as any}
               petName={petData.pet.name}
             />
           )}
@@ -182,7 +175,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
       case 'discover':
       default:
         return (
-          <div className="space-y-10 animate-in fade-in duration-500 pb-44">
+          <div className="space-y-10 animate-in fade-in duration-500 pb-60">
              <div className="grid grid-cols-2 gap-5">
                 <StatCard label="Total Patients" value={visitedPatientIds.size} icon="users" color="bg-emerald-500" />
                 <StatCard label="Pending Care" value={priorityItems.length} icon="bell" color="bg-orange-500" />
@@ -220,28 +213,26 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#FFFAF3] dark:bg-zinc-950 relative no-scrollbar">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-transparent relative no-scrollbar">
       {viewingPet ? renderPetView() : (
-        <>
-          <div className="flex-1 p-6 space-y-10 overflow-y-auto pb-44 no-scrollbar">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-4xl font-lobster text-zinc-900 dark:text-zinc-50 leading-tight">Practice Hub</h2>
-                <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.25em] mt-1">
-                   Medical Command Center
-                </p>
-              </div>
-              <button 
-                onClick={() => setActiveTab('profile')}
-                className="w-16 h-16 bg-white dark:bg-zinc-900 border-2 border-emerald-100 dark:border-zinc-800 rounded-[2rem] flex items-center justify-center text-emerald-600 shadow-xl transition-all hover:rotate-6 active:scale-90"
-              >
-                <i className="fa-solid fa-user-md text-2xl"></i>
-              </button>
+        <div className="flex-1 p-6 space-y-10 overflow-y-auto no-scrollbar">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-4xl font-lobster text-zinc-900 dark:text-zinc-50 leading-tight">Practice Hub</h2>
+              <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.25em] mt-1">
+                 Medical Command Center
+              </p>
             </div>
-
-            {renderContent()}
+            <button 
+              onClick={() => setActiveTab('profile')}
+              className="w-16 h-16 bg-white dark:bg-zinc-900 border-2 border-emerald-100 dark:border-zinc-800 rounded-[2rem] flex items-center justify-center text-emerald-600 shadow-xl transition-all hover:rotate-6 active:scale-90"
+            >
+              <i className="fa-solid fa-user-md text-2xl"></i>
+            </button>
           </div>
-        </>
+
+          {renderContent()}
+        </div>
       )}
     </div>
   );

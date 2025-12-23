@@ -60,14 +60,14 @@ const AIScreen: React.FC<AIProps> = ({ pet, timeline, documents, reminders }) =>
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#FFFAF3] dark:bg-zinc-950 relative">
-      {/* Messages List - Improved spacing and flow */}
-      <div className="flex-1 overflow-y-auto p-5 md:p-10 space-y-12 custom-scrollbar no-scrollbar">
+    <div className="flex flex-col h-full bg-transparent relative">
+      {/* Messages List - Scrollable behind footer */}
+      <div className="flex-1 overflow-y-auto p-5 md:p-10 space-y-12 no-scrollbar pb-60">
         {messages.map((msg, idx) => (
           <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-6 duration-700`}>
             <div className={`max-w-[88%] md:max-w-[75%] p-5 md:p-7 rounded-[2rem] shadow-xl transition-all hover:translate-y-[-2px] ${
               msg.role === 'user' 
-                ? 'bg-gradient-to-br from-orange-500 to-rose-600 text-white rounded-br-none shadow-orange-500/10' 
+                ? 'bg-gradient-to-br from-orange-500 to-rose-600 text-white rounded-br-none shadow-orange-500/20' 
                 : 'bg-white dark:bg-zinc-900 border border-orange-50/50 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-bl-none'
             }`}>
               <p className="text-[15px] md:text-[17px] font-bold leading-relaxed">{msg.text}</p>
@@ -106,17 +106,15 @@ const AIScreen: React.FC<AIProps> = ({ pet, timeline, documents, reminders }) =>
             <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Pluto is thinking...</span>
           </div>
         )}
-        <div ref={scrollRef} className="h-32 md:h-10" />
+        <div ref={scrollRef} className="h-10" />
       </div>
 
-      {/* Input & Suggestions - Highly Frosted & Interactive */}
-      <div className="px-5 pb-8 pt-4 md:px-12 md:pb-12 bg-white/40 dark:bg-zinc-950/40 backdrop-blur-3xl border-t border-white/20 dark:border-zinc-800/40 sticky bottom-0 z-20">
+      {/* Input & Suggestions - REFINED FROSTED STYLE */}
+      <div className="px-5 pb-32 pt-4 md:px-12 md:pb-12 bg-white/20 dark:bg-zinc-950/20 backdrop-blur-3xl border-t border-white/20 dark:border-zinc-800/40 sticky bottom-0 z-20">
         <div className="max-w-4xl mx-auto space-y-6">
-          {/* Suggestions - Restored & Animated */}
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 px-1 -mx-1">
             <SuggestionChip text="Last Vaccine?" onClick={() => handleSend("When was Luna's last vaccination?")} icon="syringe" />
             <SuggestionChip text="Nearby Vets" onClick={() => handleSend("Find some highly rated vet clinics nearby.")} icon="stethoscope" />
-            <SuggestionChip text="Pet Stores" onClick={() => handleSend("Where are the best pet stores near me?")} icon="shop" />
             <SuggestionChip text="History" onClick={() => handleSend("Can you summarize Luna's recent health history?")} icon="scroll" />
           </div>
           
@@ -124,7 +122,7 @@ const AIScreen: React.FC<AIProps> = ({ pet, timeline, documents, reminders }) =>
             <input 
               type="text" 
               placeholder={randomFact}
-              className="w-full pl-7 pr-16 py-5 bg-white/80 dark:bg-zinc-900/80 border-2 border-zinc-100/50 dark:border-zinc-800 focus:border-orange-400 dark:focus:border-orange-500 rounded-[2.2rem] outline-none transition-all font-bold text-base dark:text-zinc-50 shadow-xl group-focus-within/input:shadow-orange-500/5"
+              className="w-full pl-7 pr-16 py-5 bg-white/60 dark:bg-zinc-900/60 border-2 border-white/50 dark:border-zinc-800 focus:border-orange-500 dark:focus:border-orange-500 rounded-[2.2rem] outline-none transition-all font-bold text-base dark:text-zinc-50 shadow-2xl focus:shadow-orange-500/10"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyPress={e => e.key === 'Enter' && handleSend()}
@@ -134,8 +132,8 @@ const AIScreen: React.FC<AIProps> = ({ pet, timeline, documents, reminders }) =>
               disabled={!input.trim() || isLoading}
               className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center transition-all ${
                 input.trim() && !isLoading 
-                  ? 'bg-orange-500 text-white shadow-lg active:scale-90' 
-                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300'
+                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30 active:scale-90 hover:scale-110' 
+                  : 'bg-white/40 dark:bg-zinc-800 text-zinc-400'
               }`}
             >
               <i className="fa-solid fa-paper-plane text-lg"></i>
@@ -150,7 +148,7 @@ const AIScreen: React.FC<AIProps> = ({ pet, timeline, documents, reminders }) =>
 const SuggestionChip: React.FC<{ text: string, onClick: () => void, icon: string }> = ({ text, onClick, icon }) => (
   <button 
     onClick={onClick}
-    className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-zinc-900/60 border border-zinc-100 dark:border-zinc-800 rounded-full text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all shadow-sm active:scale-95 whitespace-nowrap group/chip"
+    className="flex items-center gap-2 px-4 py-2.5 bg-white/80 dark:bg-zinc-900/80 border-2 border-white/40 dark:border-zinc-800 rounded-full text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 hover:bg-orange-500 hover:text-white hover:border-white transition-all shadow-xl active:scale-95 whitespace-nowrap group/chip"
   >
     <i className={`fa-solid fa-${icon} text-[10px] opacity-70 group-hover/chip:scale-110`}></i>
     {text}

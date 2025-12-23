@@ -130,12 +130,18 @@ const App: React.FC = () => {
     return <AuthScreen onLogin={handleLogin} darkMode={darkMode} setDarkMode={setDarkMode} />;
   }
 
-  const navigationItems = [
+  const ownerNavItems = [
     { id: 'dashboard', icon: 'house', label: 'Home', color: 'orange' as const },
     { id: 'timeline', icon: 'calendar-days', label: 'Journal', color: 'emerald' as const },
     { id: 'ai', icon: 'wand-magic-sparkles', label: 'AI', color: 'orange' as const, isAction: true },
     { id: 'documents', icon: 'folder-open', label: 'Files', color: 'amber' as const },
     { id: 'profile', icon: 'paw', label: pet.name, color: 'rose' as const },
+  ];
+
+  const doctorNavItems = [
+    { id: 'patients', icon: 'hospital-user', label: 'Patients', color: 'orange' as const },
+    { id: 'discover', icon: 'house-medical', label: 'Hub', color: 'orange' as const, isAction: true },
+    { id: 'profile', icon: 'address-card', label: 'Identity', color: 'emerald' as const }
   ];
 
   const renderContent = () => {
@@ -182,8 +188,12 @@ const App: React.FC = () => {
     }
   };
 
+  const currentNavItems = user.role === 'DOCTOR' ? doctorNavItems : ownerNavItems;
+  const currentActiveTab = user.role === 'DOCTOR' ? doctorActiveTab : activeTab;
+
   return (
     <div className="h-screen bg-[#FFFAF3] dark:bg-zinc-950 flex flex-col md:flex-row max-w-7xl mx-auto md:p-6 transition-colors duration-500 overflow-hidden no-scrollbar">
+      {/* Sidebar for Desktop */}
       <aside className="hidden md:flex flex-col w-64 lg:w-72 h-full sticky top-0 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl rounded-[3rem] border border-white/40 dark:border-zinc-800/40 shadow-2xl p-8 mr-8 no-scrollbar overflow-y-auto">
         <div className="flex items-center gap-3 mb-12 group cursor-pointer">
           <div className="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:rotate-12 transition-transform duration-300">
@@ -193,11 +203,7 @@ const App: React.FC = () => {
         </div>
 
         <nav className="flex-1 space-y-4">
-          {(user.role === 'DOCTOR' ? [
-            { id: 'patients', icon: 'hospital-user', label: 'Patients', color: 'orange' as const },
-            { id: 'discover', icon: 'house-medical', label: 'Hub', color: 'orange' as const },
-            { id: 'profile', icon: 'address-card', label: 'Identity', color: 'emerald' as const }
-          ] : navigationItems).map(item => (
+          {currentNavItems.map(item => (
             <button
               key={item.id}
               onClick={() => {
@@ -205,7 +211,7 @@ const App: React.FC = () => {
                 else setActiveTab(item.id as any);
               }}
               className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${
-                (user.role === 'DOCTOR' ? doctorActiveTab === item.id : activeTab === item.id)
+                currentActiveTab === item.id
                   ? 'bg-orange-500 text-white shadow-xl translate-x-2' 
                   : 'text-zinc-500 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50'
               }`}
@@ -235,6 +241,7 @@ const App: React.FC = () => {
         </div>
       </aside>
 
+      {/* Main Content Area */}
       <main className="flex-1 flex flex-col bg-white dark:bg-zinc-900 md:rounded-[4rem] shadow-2xl overflow-hidden relative border border-white/20 dark:border-zinc-800/50 no-scrollbar">
         <div className="md:hidden p-2 px-3 flex items-center justify-between border-b border-white/20 dark:border-zinc-800/40 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-3xl sticky top-0 z-[60] shadow-sm">
           <div className="flex items-center gap-2 group">
@@ -253,21 +260,18 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto no-scrollbar relative pb-32 md:pb-0">
-          <div className="max-w-4xl mx-auto">
+        <div className="flex-1 overflow-y-auto no-scrollbar relative">
+          <div className="max-w-4xl mx-auto min-h-full">
             {renderContent()}
           </div>
         </div>
 
-        <nav className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl backdrop-saturate-150 border border-white/40 dark:border-zinc-800/40 rounded-[2rem] flex justify-around items-center p-1.5 pb-2.5 z-[80] shadow-[0_20px_50px_rgba(0,0,0,0.2)] transition-all">
-          {(user.role === 'DOCTOR' ? [
-            { id: 'patients', icon: 'hospital-user', label: 'Patients', color: 'orange' as const },
-            { id: 'discover', icon: 'house-medical', label: 'Hub', color: 'orange' as const, isAction: true },
-            { id: 'profile', icon: 'address-card', label: 'Identity', color: 'emerald' as const }
-          ] : navigationItems).map(item => (
+        {/* Mobile Navigation Footer - Floating & Transparent */}
+        <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[88%] bg-white/10 dark:bg-zinc-900/10 backdrop-blur-3xl backdrop-saturate-[1.8] border border-white/30 dark:border-zinc-800/30 rounded-full flex justify-around items-center py-1.5 px-2 z-[150] shadow-[0_20px_60px_rgba(0,0,0,0.25)] ring-1 ring-white/10">
+          {currentNavItems.map(item => (
             <NavButton 
               key={item.id} 
-              active={user.role === 'DOCTOR' ? doctorActiveTab === item.id : activeTab === item.id} 
+              active={currentActiveTab === item.id} 
               onClick={() => {
                 if (user.role === 'DOCTOR') setDoctorActiveTab(item.id as any);
                 else setActiveTab(item.id as any);
