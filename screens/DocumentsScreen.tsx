@@ -91,7 +91,7 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
 
   const deleteDoc = () => {
     if (!selectedDoc || readOnly) return;
-    // Ensure we are updating the actual documents array passed from props
+    // Functional deletion logic
     const updatedDocs = documents.filter(d => d.id !== selectedDoc.id);
     setDocuments(updatedDocs);
     setSelectedDoc(null);
@@ -118,10 +118,10 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
       <div className="flex items-center justify-between px-1">
         <div>
           <h2 className="text-2xl md:text-3xl font-bold font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide">Document Safe</h2>
-          <p className="text-[9px] text-zinc-500 font-black uppercase tracking-widest mt-1">Archive: {documents.length} Records</p>
+          <p className="text-[10px] text-zinc-600 dark:text-zinc-400 font-black uppercase tracking-widest mt-1">Archive: {documents.length} Records</p>
         </div>
         {!readOnly && (
-          <label className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-tr from-amber-400 to-orange-500 text-white rounded-2xl shadow-xl flex items-center justify-center cursor-pointer transition-all hover:scale-110 active:scale-90 border-2 border-white/20">
+          <label className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-tr from-amber-400 to-orange-500 text-white rounded-2xl flex items-center justify-center cursor-pointer transition-all hover:scale-110 active:scale-90 border-4 border-white dark:border-orange-500 shadow-[0_0_20px_rgba(255,255,255,0.4)] dark:shadow-[0_0_25px_rgba(249,115,22,0.5)]">
             <i className="fa-solid fa-file-circle-plus text-lg"></i>
             <input type="file" className="hidden" onChange={handleUpload} />
           </label>
@@ -134,10 +134,10 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
           <button
             key={f}
             onClick={() => setFilter(f as any)}
-            className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all border-2 ${
+            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border-2 ${
               filter === f 
                 ? 'bg-zinc-900 dark:bg-white border-zinc-900 dark:border-white text-white dark:text-zinc-900 shadow-md scale-105' 
-                : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 text-zinc-400 hover:border-orange-200'
+                : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-orange-200'
             }`}
           >
             {f}
@@ -172,12 +172,12 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
               <div className="flex-1 min-w-0">
                 <h4 className="font-bold text-zinc-900 dark:text-zinc-100 truncate text-[14px] md:text-base">{doc.name}</h4>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className={`text-[8px] font-black uppercase tracking-widest ${
-                     doc.type === 'Prescription' ? 'text-rose-500' :
-                     doc.type === 'Bill' ? 'text-amber-500' : 'text-emerald-500'
+                  <span className={`text-[9px] font-black uppercase tracking-widest ${
+                     doc.type === 'Prescription' ? 'text-rose-600' :
+                     doc.type === 'Bill' ? 'text-amber-600' : 'text-emerald-600'
                   }`}>{doc.type}</span>
                   <span className="w-1 h-1 rounded-full bg-zinc-200 dark:bg-zinc-700"></span>
-                  <span className="text-[8px] font-bold text-zinc-400 uppercase">{doc.date}</span>
+                  <span className="text-[9px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">{doc.date}</span>
                 </div>
               </div>
               <div className="w-8 h-8 rounded-lg bg-zinc-50 dark:bg-zinc-800 text-zinc-400 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-all">
@@ -191,17 +191,17 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
       {/* Modal Preview - Consistent Frosted Glass Style */}
       {selectedDoc && (
         <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-black/20 animate-in fade-in duration-300"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-black/30 animate-in fade-in duration-300"
           onClick={() => {
             setSelectedDoc(null);
             setIsEditing(false);
           }}
         >
           <div 
-            className="bg-white/70 dark:bg-zinc-950/70 backdrop-blur-[40px] backdrop-saturate-150 border-2 border-white/50 dark:border-zinc-800/50 w-full max-w-md rounded-[3rem] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.5)] animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 flex flex-col"
+            className="bg-white/95 dark:bg-zinc-950/90 backdrop-blur-[40px] backdrop-saturate-150 border-2 border-white/60 dark:border-zinc-800/50 w-full max-w-md rounded-[3rem] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.5)] animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Fully Covered Top Part with Refined Header */}
+            {/* Header section with fixed readability */}
             <div className="p-7 flex items-center justify-between bg-white/40 dark:bg-zinc-900/40 border-b border-zinc-200/20 dark:border-zinc-800/50 backdrop-blur-md">
               <div className="flex items-center gap-4">
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xl ${
@@ -214,8 +214,8 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
                   } text-lg`}></i>
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-bold text-zinc-900 dark:text-white text-base truncate max-w-[200px] leading-tight">{selectedDoc.name}</h3>
-                  <p className="text-[9px] text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-[0.2em] mt-0.5">{selectedDoc.type}</p>
+                  <h3 className="font-bold text-zinc-950 dark:text-white text-base truncate max-w-[200px] leading-tight">{selectedDoc.name}</h3>
+                  <p className="text-[10px] text-zinc-600 dark:text-zinc-400 font-black uppercase tracking-[0.2em] mt-0.5">{selectedDoc.type}</p>
                 </div>
               </div>
               <div className="flex gap-2.5">
@@ -225,7 +225,7 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
                     className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all active:scale-90 border-2 ${
                       isEditing 
                         ? 'bg-emerald-500 text-white border-white/20' 
-                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-orange-500 border-transparent'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 hover:text-orange-500 border-transparent'
                     }`}
                   >
                     <i className={`fa-solid ${isEditing ? 'fa-check' : 'fa-pen'} text-sm`}></i>
@@ -236,44 +236,47 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
                     setSelectedDoc(null);
                     setIsEditing(false);
                   }}
-                  className="w-11 h-11 bg-zinc-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center text-zinc-500 hover:bg-rose-500 hover:text-white transition-all active:scale-90 border-2 border-transparent"
+                  className="w-11 h-11 bg-zinc-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center text-zinc-600 hover:bg-rose-500 hover:text-white transition-all active:scale-90 border-2 border-transparent"
                 >
                   <i className="fa-solid fa-xmark text-lg"></i>
                 </button>
               </div>
             </div>
 
-            <div className="flex-1 p-8 flex flex-col items-center justify-center text-center bg-white/10">
+            <div className="flex-1 p-8 flex flex-col items-center justify-center text-center">
               {isEditing && !readOnly ? (
                 <div className="w-full space-y-6 animate-in fade-in zoom-in-95">
                   <div className="space-y-1.5 text-left">
-                    <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Document Name</label>
+                    <label className="text-[11px] font-black uppercase text-zinc-900 dark:text-zinc-400 tracking-widest ml-1">Document Name</label>
                     <input 
                       type="text" 
                       value={editName}
                       onChange={e => setEditName(e.target.value)}
-                      className="w-full p-5 bg-white/90 dark:bg-zinc-900 border-2 border-orange-100 dark:border-zinc-800 rounded-2xl font-bold text-sm outline-none focus:border-orange-500 dark:text-white shadow-inner"
+                      className="w-full p-5 bg-white dark:bg-zinc-900 border-2 border-orange-200 dark:border-zinc-800 rounded-2xl font-bold text-sm outline-none focus:border-orange-500 text-zinc-950 dark:text-white shadow-inner"
                     />
                   </div>
                   <div className="space-y-1.5 text-left">
-                    <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Category</label>
-                    <select 
-                      value={editType}
-                      onChange={e => setEditType(e.target.value as any)}
-                      className="w-full p-5 bg-white/90 dark:bg-zinc-900 border-2 border-orange-100 dark:border-zinc-800 rounded-2xl font-bold text-sm outline-none focus:border-orange-500 dark:text-white shadow-inner appearance-none"
-                    >
-                      <option value="Prescription">Prescription</option>
-                      <option value="Bill">Bill</option>
-                      <option value="Report">Report</option>
-                    </select>
+                    <label className="text-[11px] font-black uppercase text-zinc-900 dark:text-zinc-400 tracking-widest ml-1">Category</label>
+                    <div className="relative">
+                      <select 
+                        value={editType}
+                        onChange={e => setEditType(e.target.value as any)}
+                        className="w-full p-5 bg-white dark:bg-zinc-900 border-2 border-orange-200 dark:border-zinc-800 rounded-2xl font-bold text-sm outline-none focus:border-orange-500 text-zinc-950 dark:text-white shadow-inner appearance-none"
+                      >
+                        <option value="Prescription">Prescription</option>
+                        <option value="Bill">Bill</option>
+                        <option value="Report">Report</option>
+                      </select>
+                      <i className="fa-solid fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"></i>
+                    </div>
                   </div>
                   <button 
                     onClick={() => {
-                      if (window.confirm('Are you sure you want to permanently delete this record?')) {
+                      if (window.confirm('This action cannot be undone. Permanently delete this file?')) {
                         deleteDoc();
                       }
                     }}
-                    className="w-full flex items-center justify-center gap-2 py-5 bg-rose-50 text-rose-600 dark:bg-rose-950/20 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] border-2 border-rose-100 dark:border-rose-900/50 hover:bg-rose-500 hover:text-white transition-all"
+                    className="w-full flex items-center justify-center gap-2 py-5 bg-rose-50 text-rose-700 dark:bg-rose-950/20 rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] border-2 border-rose-200 dark:border-rose-900/50 hover:bg-rose-600 hover:text-white transition-all shadow-md active:scale-[0.98]"
                   >
                     <i className="fa-solid fa-trash-can"></i>
                     Permanently Delete
@@ -289,7 +292,7 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
                          <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/40 rounded-full flex items-center justify-center">
                             <i className="fa-solid fa-sync-alt fa-spin text-3xl text-orange-500"></i>
                          </div>
-                         <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest animate-bounce">Secure Link Synchronizing...</p>
+                         <p className="text-[11px] font-black text-orange-600 dark:text-orange-500 uppercase tracking-widest animate-bounce">Secure Syncing...</p>
                       </div>
                     ) : (
                       <div className="absolute inset-0 flex flex-col p-6 text-left opacity-30 group-hover:opacity-40 transition-opacity">
@@ -297,8 +300,6 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
                          <div className="h-2.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full mb-2"></div>
                          <div className="h-2.5 w-5/6 bg-zinc-100 dark:bg-zinc-800 rounded-full mb-2"></div>
                          <div className="h-2.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full mb-2"></div>
-                         <div className="mt-8 h-12 w-12 bg-zinc-200 dark:bg-zinc-800 rounded-lg"></div>
-                         <div className="mt-4 h-2.5 w-1/2 bg-zinc-200 dark:bg-zinc-800 rounded-full"></div>
                       </div>
                     )}
 
@@ -309,7 +310,7 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
                         </div>
                         <button 
                           onClick={() => openInNewTab(selectedDoc.fileUrl)}
-                          className="px-6 py-2.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full text-[9px] font-black uppercase tracking-[0.2em] shadow-lg hover:scale-105 transition-all"
+                          className="px-6 py-2.5 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg hover:scale-105 transition-all"
                         >
                           Expand View <i className="fa-solid fa-arrow-up-right-from-square ml-1.5"></i>
                         </button>
@@ -325,8 +326,8 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
                   
                   <div className="space-y-2">
                     <h4 className="text-3xl font-lobster text-zinc-900 dark:text-white tracking-wide">Secure File Preview</h4>
-                    <p className="text-[11px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em]">ID: {selectedDoc.id} • {selectedDoc.fileSize}</p>
-                    <p className={`text-[11px] font-black uppercase tracking-[0.25em] transition-colors duration-500 ${isFetching ? 'text-orange-500' : 'text-emerald-500'}`}>
+                    <p className="text-[11px] font-black text-zinc-600 dark:text-zinc-500 uppercase tracking-[0.2em]">ID: {selectedDoc.id} • {selectedDoc.fileSize}</p>
+                    <p className={`text-[11px] font-black uppercase tracking-[0.25em] transition-colors duration-500 ${isFetching ? 'text-orange-600' : 'text-emerald-600'}`}>
                        {isFetching ? 'DECRYPTING DATA...' : 'VERIFIED PLUTO ENCRYPTION'}
                     </p>
                   </div>
@@ -341,7 +342,7 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
                   className={`flex items-center justify-center gap-3 py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] transition-all border-2 active:scale-95 shadow-xl ${
                     shareStatus 
                       ? 'bg-emerald-500 text-white border-emerald-500' 
-                      : 'bg-white/50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-100 dark:border-zinc-800 hover:border-orange-500'
+                      : 'bg-white/50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-200 border-zinc-100 dark:border-zinc-800 hover:border-orange-500'
                   }`}
                 >
                   <i className={`fa-solid ${shareStatus ? 'fa-check' : 'fa-share-nodes'}`}></i>

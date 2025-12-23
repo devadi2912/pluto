@@ -112,7 +112,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({
         <div className="flex items-center justify-between px-2">
           <div>
             <h2 className="text-4xl font-lobster text-orange-600 dark:text-orange-400">Planned Care</h2>
-            <p className="text-xs font-black uppercase text-zinc-500 tracking-widest mt-1">Scheduled reminders</p>
+            <p className="text-[11px] font-black uppercase text-zinc-500 tracking-widest mt-1">Scheduled reminders</p>
           </div>
           {!readOnly && (
             <button 
@@ -128,27 +128,27 @@ const TimelineScreen: React.FC<TimelineProps> = ({
           <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border-4 border-orange-50 dark:border-zinc-800 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200">
             <h4 className="font-lobster text-3xl text-orange-600 dark:text-orange-400">Schedule Task</h4>
             <div className="grid grid-cols-2 gap-6">
-              <input type="date" className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-orange-200 outline-none font-bold dark:text-white" value={newReminder.date} onChange={e => setNewReminder({...newReminder, date: e.target.value})} />
-              <select className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-orange-200 outline-none font-bold dark:text-white" value={newReminder.type} onChange={e => setNewReminder({...newReminder, type: e.target.value as any})}>
+              <input type="date" className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-orange-200 outline-none font-bold text-zinc-900 dark:text-white" value={newReminder.date} onChange={e => setNewReminder({...newReminder, date: e.target.value})} />
+              <select className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-orange-200 outline-none font-bold text-zinc-900 dark:text-white" value={newReminder.type} onChange={e => setNewReminder({...newReminder, type: e.target.value as any})}>
                 <option value="Medication">Medication</option>
                 <option value="Vaccination">Vaccination</option>
                 <option value="Vet follow-up">Vet follow-up</option>
               </select>
             </div>
-            <input type="text" placeholder="What needs to be done?" className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-orange-200 outline-none font-bold dark:text-white shadow-inner" value={newReminder.title} onChange={e => setNewReminder({...newReminder, title: e.target.value})} />
+            <input type="text" placeholder="Task description..." className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-orange-200 outline-none font-bold text-zinc-900 dark:text-white shadow-inner" value={newReminder.title} onChange={e => setNewReminder({...newReminder, title: e.target.value})} />
             <button onClick={handleAddReminder} className="w-full bg-orange-500 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:brightness-110 active:scale-95 transition-all">Schedule</button>
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {reminders.filter(r => !r.completed).map(r => (
-            <div key={r.id} className="bg-orange-50/50 dark:bg-orange-950/10 border-2 border-orange-200/50 dark:border-orange-900/20 p-6 rounded-[2.5rem] flex items-center gap-6 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all group">
+            <div key={r.id} className="bg-orange-50/70 dark:bg-orange-950/10 border-2 border-orange-200/50 dark:border-orange-900/20 p-6 rounded-[2.5rem] flex items-center gap-6 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all group">
               <div className="w-14 h-14 rounded-2xl bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 flex items-center justify-center text-2xl group-hover:rotate-6 transition-transform">
                 <i className={`fa-solid ${r.type === 'Medication' ? 'fa-pills' : r.type === 'Vaccination' ? 'fa-syringe' : 'fa-user-doctor'}`}></i>
               </div>
               <div>
-                <h5 className="text-lg font-bold text-zinc-900 dark:text-zinc-200">{r.title}</h5>
-                <p className="text-[11px] font-black text-orange-700 dark:text-orange-400 uppercase tracking-widest mt-1">{new Date(r.date).toLocaleDateString()}</p>
+                <h5 className="text-lg font-bold text-zinc-950 dark:text-zinc-200">{r.title}</h5>
+                <p className="text-[11px] font-black text-orange-700 dark:text-orange-500 uppercase tracking-widest mt-1">{new Date(r.date).toLocaleDateString()}</p>
               </div>
             </div>
           ))}
@@ -160,7 +160,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({
         <div className="flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800 pt-12 px-2">
           <div>
             <h2 className="text-4xl font-lobster text-emerald-600 dark:text-emerald-400">Care Journal</h2>
-            <p className="text-xs font-black uppercase text-zinc-500 tracking-widest mt-1">Health history & milestones</p>
+            <p className="text-[11px] font-black uppercase text-zinc-500 tracking-widest mt-1">Health history & milestones</p>
           </div>
           {!readOnly && (
             <button 
@@ -176,12 +176,12 @@ const TimelineScreen: React.FC<TimelineProps> = ({
           <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border-4 border-emerald-50 dark:border-zinc-800 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200">
             <h4 className="font-lobster text-3xl text-emerald-600 dark:text-emerald-400">Add History</h4>
             <div className="grid grid-cols-2 gap-6">
-              <input type="date" className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-emerald-200 outline-none font-bold dark:text-white" value={newEntry.date} onChange={e => setNewEntry({...newEntry, date: e.target.value})} />
-              <select className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-emerald-200 outline-none font-bold dark:text-white" value={newEntry.type} onChange={e => setNewEntry({...newEntry, type: e.target.value as EntryType})}>
+              <input type="date" className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-emerald-200 outline-none font-bold text-zinc-900 dark:text-white" value={newEntry.date} onChange={e => setNewEntry({...newEntry, date: e.target.value})} />
+              <select className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-emerald-200 outline-none font-bold text-zinc-900 dark:text-white" value={newEntry.type} onChange={e => setNewEntry({...newEntry, type: e.target.value as EntryType})}>
                 {Object.values(EntryType).map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
-            <input type="text" placeholder="Title for this record..." className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-emerald-200 outline-none font-bold dark:text-white" value={newEntry.title} onChange={e => setNewEntry({...newEntry, title: e.target.value})} />
+            <input type="text" placeholder="Title for this record..." className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-emerald-200 outline-none font-bold text-zinc-900 dark:text-white" value={newEntry.title} onChange={e => setNewEntry({...newEntry, title: e.target.value})} />
             <button onClick={handleAdd} className="w-full bg-emerald-500 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:brightness-110 active:scale-95 transition-all">Save Memory</button>
           </div>
         )}
@@ -197,10 +197,10 @@ const TimelineScreen: React.FC<TimelineProps> = ({
                   <span className={`text-[10px] font-black uppercase tracking-widest text-white px-4 py-1.5 rounded-full ${getColor(entry.type)} shadow-sm`}>
                     {entry.type}
                   </span>
-                  <span className="text-xs font-black text-zinc-300 dark:text-zinc-600">{new Date(entry.date).toLocaleDateString()}</span>
+                  <span className="text-[10px] font-black text-zinc-500 dark:text-zinc-600">{new Date(entry.date).toLocaleDateString()}</span>
                 </div>
-                <h4 className="text-2xl font-bold font-lobster text-zinc-800 dark:text-zinc-100 mb-2">{entry.title}</h4>
-                {entry.notes && <p className="text-base text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed">{entry.notes}</p>}
+                <h4 className="text-2xl font-bold font-lobster text-zinc-900 dark:text-zinc-100 mb-2">{entry.title}</h4>
+                {entry.notes && <p className="text-base text-zinc-600 dark:text-zinc-400 font-bold leading-relaxed">{entry.notes}</p>}
               </div>
             </div>
           ))}
@@ -211,7 +211,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({
       <section className="space-y-8 pt-12 border-t border-zinc-100 dark:border-zinc-800 pb-20">
         <div className="px-2">
           <h2 className="text-4xl font-lobster text-indigo-600 dark:text-indigo-400 tracking-wide">Doctors Consulted</h2>
-          <p className="text-xs font-black uppercase text-zinc-500 tracking-widest mt-1">Medical professional access history</p>
+          <p className="text-[11px] font-black uppercase text-zinc-500 tracking-widest mt-1">Medical professional access history</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -225,55 +225,55 @@ const TimelineScreen: React.FC<TimelineProps> = ({
                 <i className="fa-solid fa-user-md"></i>
               </div>
               <div className="flex-1">
-                <h5 className="text-lg font-bold text-zinc-800 dark:text-zinc-200">{doc.name}</h5>
-                <p className="text-[11px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{doc.specialization}</p>
+                <h5 className="text-lg font-bold text-zinc-900 dark:text-zinc-200">{doc.name}</h5>
+                <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-500 uppercase tracking-widest">{doc.specialization}</p>
               </div>
-              <i className="fa-solid fa-chevron-right text-zinc-200 dark:text-zinc-800 group-hover:text-indigo-400 transition-colors"></i>
+              <i className="fa-solid fa-chevron-right text-zinc-300 dark:text-zinc-700 group-hover:text-indigo-400 transition-colors"></i>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Doctor Modal - Frosted effect applied ONLY to the window, not the backdrop */}
+      {/* Doctor Modal - Frosted effect with High Contrast Text */}
       {selectedDoctor && (
         <div 
-          className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/20 animate-in fade-in duration-500"
+          className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/30 animate-in fade-in duration-500"
           onClick={() => setSelectedDoctor(null)}
         >
           <div 
-            className="bg-white/60 dark:bg-zinc-950/60 backdrop-blur-[40px] backdrop-saturate-150 w-full max-w-md rounded-[3rem] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.4)] border border-white/40 dark:border-zinc-700/40 animate-in zoom-in-95 duration-300 relative"
+            className="bg-white/95 dark:bg-zinc-950/90 backdrop-blur-[40px] backdrop-saturate-150 w-full max-w-md rounded-[3rem] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.4)] border border-white dark:border-zinc-800 animate-in zoom-in-95 duration-300 relative"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Subtle light leak for glass effect */}
             <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px]"></div>
             
             <div className="p-10 text-center space-y-6 relative z-10">
-              <div className="w-24 h-24 bg-indigo-500/80 text-white rounded-[2.5rem] flex items-center justify-center text-4xl mx-auto shadow-2xl rotate-3 border-4 border-white/20">
+              <div className="w-24 h-24 bg-indigo-500 text-white rounded-[2.5rem] flex items-center justify-center text-4xl mx-auto shadow-2xl rotate-3 border-4 border-white/20">
                 <i className="fa-solid fa-user-doctor"></i>
               </div>
               <div>
-                <h3 className="text-4xl font-lobster text-zinc-900 dark:text-zinc-50 leading-tight">{selectedDoctor.name}</h3>
-                <p className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.25em] mt-1">{selectedDoctor.specialization}</p>
+                <h3 className="text-4xl font-lobster text-zinc-950 dark:text-zinc-50 leading-tight">{selectedDoctor.name}</h3>
+                <p className="text-[11px] font-black text-indigo-700 dark:text-indigo-400 uppercase tracking-[0.25em] mt-1">{selectedDoctor.specialization}</p>
               </div>
               
-              <div className="space-y-4 text-left border-t border-zinc-900/10 dark:border-zinc-100/10 pt-6">
+              <div className="space-y-4 text-left border-t border-zinc-200 dark:border-zinc-800 pt-6">
                  <div className="flex justify-between items-center">
-                   <span className="text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Clinic</span>
+                   <span className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">Clinic</span>
                    <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{selectedDoctor.clinic}</span>
                  </div>
                  <div className="flex justify-between items-center">
-                   <span className="text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Experience</span>
+                   <span className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">Experience</span>
                    <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{selectedDoctor.experience}</span>
                  </div>
                  <div className="flex justify-between items-center">
-                   <span className="text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Contact</span>
+                   <span className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">Contact</span>
                    <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{selectedDoctor.contact}</span>
                  </div>
               </div>
               
               <button 
                 onClick={() => setSelectedDoctor(null)}
-                className="w-full bg-zinc-900/90 dark:bg-white/90 text-white dark:text-zinc-950 font-black py-6 rounded-3xl shadow-2xl backdrop-blur-md uppercase tracking-[0.3em] hover:scale-[1.02] transition-all active:scale-95 border border-white/10"
+                className="w-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-black py-6 rounded-3xl shadow-2xl backdrop-blur-md uppercase tracking-[0.3em] hover:scale-[1.02] transition-all active:scale-95 border border-white/10"
               >
                 Close Profile
               </button>

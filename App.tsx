@@ -49,8 +49,8 @@ const MOCK_TIMELINE: TimelineEntry[] = [
 ];
 
 const MOCK_DOCUMENTS: PetDocument[] = [
-  { id: 'doc1', name: 'Annual Report 2023', type: 'Report', date: '2023-11-20', fileUrl: '#', fileSize: '1.2 MB' },
-  { id: 'doc2', name: 'Heartworm Prescription', type: 'Prescription', date: '2024-01-05', fileUrl: '#', fileSize: '450 KB' }
+  { id: 'doc1', name: 'Annual Report 2023', type: 'Report', date: '2023-11-20', fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileSize: '1.2 MB' },
+  { id: 'doc2', name: 'Heartworm Prescription', type: 'Prescription', date: '2024-01-05', fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileSize: '450 KB' }
 ];
 
 const MOCK_REMINDERS: Reminder[] = [
@@ -239,8 +239,8 @@ const App: React.FC = () => {
                 }}
                 className={`w-full flex items-center gap-4 px-4 py-3 rounded-[1.25rem] transition-all duration-500 group relative border-[3px] ${
                   isActive
-                    ? 'bg-orange-500 text-white border-white dark:border-zinc-950 shadow-[0_8px_20px_rgba(249,115,22,0.15)] scale-[0.98]' 
-                    : 'text-zinc-500 dark:text-zinc-400 border-transparent hover:bg-white/50 dark:hover:bg-zinc-800/50'
+                    ? 'bg-orange-500 text-white border-white dark:border-zinc-950 shadow-[0_20px_50px_rgba(249,115,22,0.5)] scale-[1.1]' 
+                    : 'text-zinc-800 dark:text-zinc-300 border-transparent hover:bg-white/50 dark:hover:bg-zinc-800/50'
                 }`}
               >
                 {(item.id === 'profile' || item.id === 'identity') && pet.avatar ? (
@@ -248,7 +248,7 @@ const App: React.FC = () => {
                 ) : (
                   <i className={`fa-solid fa-${item.icon} text-sm group-hover:scale-110 transition-transform ${isActive ? 'animate-pulse' : ''}`}></i>
                 )}
-                <span className="font-black text-[9px] uppercase tracking-widest">{item.label}</span>
+                <span className="font-black text-[10px] uppercase tracking-widest">{item.label}</span>
                 {isActive && <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-5 bg-white dark:bg-zinc-950 rounded-r-full animate-in fade-in"></div>}
               </button>
             );
@@ -260,7 +260,7 @@ const App: React.FC = () => {
           {user.role === 'DOCTOR' && doctorIsViewingPatient && (
             <button 
               onClick={() => setDoctorIsViewingPatient(false)}
-              className="w-full flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-black text-[9px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl mb-2"
+              className="w-full flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl mb-2"
             >
               <i className="fa-solid fa-arrow-left-long"></i>
               Back to Practice
@@ -268,13 +268,13 @@ const App: React.FC = () => {
           )}
 
           <div className="flex gap-2">
-            <button onClick={() => setDarkMode(!darkMode)} className={`flex-1 flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl transition-all group relative overflow-hidden border-2 border-transparent ${darkMode ? 'bg-zinc-800 text-amber-300 shadow-[0_0_15px_rgba(252,211,77,0.15)]' : 'bg-orange-50 text-orange-600 shadow-[0_0_15px_rgba(249,115,22,0.15)]'}`}>
+            <button onClick={() => setDarkMode(!darkMode)} className={`flex-1 flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl transition-all group relative overflow-hidden border-2 border-transparent ${darkMode ? 'bg-zinc-800 text-amber-300 shadow-[0_0_15px_rgba(252,211,77,0.15)]' : 'bg-orange-50 text-orange-600 shadow-[0_0_50px_rgba(30,64,175,0.8)]'}`}>
               <i className={`fa-solid ${darkMode ? 'fa-sun text-yellow-500 animate-spin-slow' : 'fa-moon text-indigo-400 animate-bounce'} text-base`}></i>
-              <span className="font-black text-[8px] uppercase tracking-widest">Theme</span>
+              <span className="font-black text-[9px] uppercase tracking-widest">Theme</span>
             </button>
             <button onClick={handleLogout} className="flex-1 flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl text-rose-500 bg-rose-50/50 dark:bg-rose-950/10 hover:bg-rose-100 dark:hover:bg-rose-950/30 transition-all group border border-transparent">
               <i className="fa-solid fa-power-off text-base group-hover:rotate-12 transition-transform"></i>
-              <span className="font-black text-[8px] uppercase tracking-widest">Exit</span>
+              <span className="font-black text-[9px] uppercase tracking-widest">Exit</span>
             </button>
           </div>
         </div>

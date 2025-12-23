@@ -88,7 +88,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
             <div>
               <h2 className="text-3xl md:text-4xl font-lobster tracking-wide">Hi, {pet.name}'s Family!</h2>
-              <p className="text-zinc-400 mt-1 font-bold italic text-sm md:text-base">You've reached <span className="text-orange-400">{progressPercent}%</span> today.</p>
+              <p className="text-zinc-300 dark:text-zinc-400 mt-1 font-bold italic text-sm md:text-base">You've reached <span className="text-orange-400">{progressPercent}%</span> today.</p>
             </div>
           </div>
           {!readOnly && (
@@ -103,7 +103,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         
         <div className="mt-8 md:mt-12 relative z-10">
           <div className="flex justify-between items-end mb-3 px-1">
-             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Care Progress</span>
+             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Care Progress</span>
              <span className="text-3xl font-black text-orange-500 drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]">{progressPercent}%</span>
           </div>
           <div className="bg-zinc-900 h-6 md:h-8 rounded-full overflow-hidden p-1 border border-zinc-800 shadow-inner">
@@ -122,7 +122,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           {!readOnly && (
             <button 
               onClick={() => setShowLogModal(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[9px] font-black uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all active:scale-95 border border-orange-500/20"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-orange-500/10 text-orange-700 dark:text-orange-400 text-[9px] font-black uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all active:scale-95 border border-orange-500/20"
             >
               <i className="fa-solid fa-plus-circle"></i> Log Today
             </button>
@@ -131,30 +131,30 @@ const Dashboard: React.FC<DashboardProps> = ({
         <HealthTrends petName={pet.name} dailyLogs={dailyLogs} color="orange" />
       </section>
 
-      {/* Daily Update Modal - Frosted Glass Window */}
+      {/* Daily Update Modal - Improved Text Visibility */}
       {showLogModal && !readOnly && (
-        <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center p-0 md:p-6 bg-black/20 animate-in fade-in" onClick={() => setShowLogModal(false)}>
-           <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-3xl backdrop-saturate-150 w-full max-w-sm rounded-t-[3rem] md:rounded-[3rem] p-8 shadow-2xl animate-in slide-in-from-bottom-10 border border-white/40 dark:border-zinc-800/40" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center p-0 md:p-6 bg-black/30 animate-in fade-in" onClick={() => setShowLogModal(false)}>
+           <div className="bg-white/95 dark:bg-zinc-900/90 backdrop-blur-3xl backdrop-saturate-150 w-full max-w-sm rounded-t-[3rem] md:rounded-[3rem] p-8 shadow-2xl animate-in slide-in-from-bottom-10 border border-white dark:border-zinc-800/40" onClick={e => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-8">
                  <div>
-                    <h4 className="font-lobster text-3xl text-zinc-800 dark:text-zinc-100">Daily Log</h4>
-                    <p className="text-[9px] font-black text-orange-500 uppercase tracking-widest mt-1">Optional fields for today</p>
+                    <h4 className="font-lobster text-3xl text-zinc-900 dark:text-zinc-50">Daily Log</h4>
+                    <p className="text-[10px] font-black text-orange-600 dark:text-orange-500 uppercase tracking-widest mt-1">Status for today</p>
                  </div>
-                 <button onClick={() => setShowLogModal(false)} className="w-12 h-12 rounded-2xl bg-zinc-50/50 dark:bg-zinc-800/50 text-zinc-400 flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"><i className="fa-solid fa-xmark"></i></button>
+                 <button onClick={() => setShowLogModal(false)} className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"><i className="fa-solid fa-xmark"></i></button>
               </div>
               
               <div className="space-y-8 pb-4">
                  <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.15em] ml-1">Daily Activity (Min)</label>
-                    <div className="flex items-center gap-4 bg-zinc-50/30 dark:bg-zinc-800/30 p-4 rounded-2xl border-2 border-transparent focus-within:border-orange-100 transition-all">
-                       <button onClick={() => onUpdateLog(today, { activityMinutes: Math.max(0, (currentLogData?.activityMinutes || 0) - 10) })} className="w-10 h-10 rounded-xl bg-white/80 dark:bg-zinc-800 shadow-sm flex items-center justify-center text-zinc-400 hover:text-orange-500"><i className="fa-solid fa-minus"></i></button>
+                    <label className="text-[11px] font-black uppercase text-zinc-700 dark:text-zinc-400 tracking-[0.15em] ml-1">Daily Activity (Min)</label>
+                    <div className="flex items-center gap-4 bg-zinc-100 dark:bg-zinc-800/50 p-4 rounded-2xl border-2 border-transparent focus-within:border-orange-200 transition-all">
+                       <button onClick={() => onUpdateLog(today, { activityMinutes: Math.max(0, (currentLogData?.activityMinutes || 0) - 10) })} className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-800 shadow-sm flex items-center justify-center text-zinc-500 hover:text-orange-500"><i className="fa-solid fa-minus"></i></button>
                        <span className="flex-1 text-center text-3xl font-black text-zinc-900 dark:text-zinc-50">{currentLogData?.activityMinutes || 0}</span>
-                       <button onClick={() => onUpdateLog(today, { activityMinutes: (currentLogData?.activityMinutes || 0) + 10 })} className="w-10 h-10 rounded-xl bg-white/80 dark:bg-zinc-800 shadow-sm flex items-center justify-center text-zinc-400 hover:text-orange-500"><i className="fa-solid fa-plus"></i></button>
+                       <button onClick={() => onUpdateLog(today, { activityMinutes: (currentLogData?.activityMinutes || 0) + 10 })} className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-800 shadow-sm flex items-center justify-center text-zinc-500 hover:text-orange-500"><i className="fa-solid fa-plus"></i></button>
                     </div>
                  </div>
 
                  <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.15em] ml-1">Owner-Observed Mood</label>
+                    <label className="text-[11px] font-black uppercase text-zinc-700 dark:text-zinc-400 tracking-[0.15em] ml-1">Owner-Observed Mood</label>
                     <div className="flex justify-between gap-2">
                        {[1,2,3,4,5].map(v => (
                          <button 
@@ -163,7 +163,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                            className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-all border-2 ${
                              currentLogData?.moodRating === v 
                                ? 'bg-orange-500 border-white text-white shadow-lg scale-110' 
-                               : 'bg-zinc-50/50 dark:bg-zinc-800/50 border-transparent text-zinc-300'
+                               : 'bg-zinc-100 dark:bg-zinc-800 border-transparent text-zinc-400'
                            }`}
                          >
                            {['😢', '😕', '😐', '🙂', '🤩'][v-1]}
@@ -173,8 +173,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                  </div>
 
                  <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.15em] ml-1">Daily Feeding Count</label>
-                    <div className="flex justify-between gap-2 bg-zinc-50/30 dark:bg-zinc-800/30 p-2 rounded-2xl">
+                    <label className="text-[11px] font-black uppercase text-zinc-700 dark:text-zinc-400 tracking-[0.15em] ml-1">Feeding Count</label>
+                    <div className="flex justify-between gap-2 bg-zinc-100 dark:bg-zinc-800/50 p-2 rounded-2xl">
                        {[1, 2, 3, 4].map(v => (
                          <button 
                            key={v}
@@ -182,7 +182,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                            className={`flex-1 py-3 rounded-xl font-black text-xs transition-all border-2 ${
                              currentLogData?.feedingCount === v 
                                ? 'bg-emerald-500 border-white text-white shadow-md' 
-                               : 'bg-transparent border-transparent text-zinc-400'
+                               : 'bg-transparent border-transparent text-zinc-500 dark:text-zinc-400'
                            }`}
                          >
                            {v}
@@ -193,7 +193,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
                  <button 
                   onClick={() => setShowLogModal(false)} 
-                  className="w-full py-5 bg-zinc-950/90 dark:bg-zinc-50/90 text-white dark:text-zinc-950 rounded-[2.2rem] font-black uppercase tracking-[0.25em] text-[10px] shadow-xl hover:brightness-110 active:scale-95 transition-all border border-white/10"
+                  className="w-full py-5 bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 rounded-[2.2rem] font-black uppercase tracking-[0.25em] text-[11px] shadow-xl hover:brightness-110 active:scale-95 transition-all border border-white/10"
                  >
                    Save Update
                  </button>
@@ -227,10 +227,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <i className={`fa-solid ${item.category === 'Food' ? 'fa-bowl-food' : 'fa-dog'}`}></i>
                   </div>
                   <div className="flex-1">
-                    <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">{item.time}</p>
+                    <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">{item.time}</p>
                     <h4 className={`text-lg font-bold ${item.completed ? 'line-through text-zinc-400' : 'text-zinc-900 dark:text-zinc-100'}`}>{item.title}</h4>
                   </div>
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all border-4 ${item.completed ? 'bg-emerald-500 border-white text-white rotate-[360deg]' : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 text-transparent'}`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all border-4 ${item.completed ? 'bg-emerald-500 border-white text-white rotate-[360deg]' : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 text-transparent'}`}>
                     <i className="fa-solid fa-check text-sm"></i>
                   </div>
                 </div>
@@ -250,25 +250,25 @@ const Dashboard: React.FC<DashboardProps> = ({
         </section>
       </div>
 
-      {/* Routine Creation Modal - Frosted Glass Style */}
+      {/* Routine Creation Modal - Improved Contrast */}
       {showAddRoutine && !readOnly && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/20 animate-in fade-in">
-          <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-3xl backdrop-saturate-150 border border-white/40 dark:border-zinc-800/40 w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 space-y-6">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/30 animate-in fade-in">
+          <div className="bg-white/95 dark:bg-zinc-900/90 backdrop-blur-3xl border border-white dark:border-zinc-800 w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 space-y-6">
             <div className="flex items-center justify-between">
               <h4 className="font-lobster text-3xl text-orange-600">New Task</h4>
-              <button onClick={() => setShowAddRoutine(false)} className="w-10 h-10 bg-zinc-100/50 dark:bg-zinc-800/50 rounded-full flex items-center justify-center text-zinc-500"><i className="fa-solid fa-xmark"></i></button>
+              <button onClick={() => setShowAddRoutine(false)} className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500"><i className="fa-solid fa-xmark"></i></button>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <input type="time" className="w-full p-4 rounded-xl bg-zinc-50/50 dark:bg-zinc-800/50 border-none outline-none font-bold" value={newRoutine.time} onChange={e => setNewRoutine({...newRoutine, time: e.target.value})} />
-              <select className="w-full p-4 rounded-xl bg-zinc-50/50 dark:bg-zinc-800/50 border-none outline-none font-bold" value={newRoutine.category} onChange={e => setNewRoutine({...newRoutine, category: e.target.value as any})}>
+              <input type="time" className="w-full p-4 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-none outline-none font-bold text-zinc-900 dark:text-zinc-100" value={newRoutine.time} onChange={e => setNewRoutine({...newRoutine, time: e.target.value})} />
+              <select className="w-full p-4 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-none outline-none font-bold text-zinc-900 dark:text-zinc-100" value={newRoutine.category} onChange={e => setNewRoutine({...newRoutine, category: e.target.value as any})}>
                 <option value="Food">Food 🍖</option>
                 <option value="Walk">Walk 🦮</option>
                 <option value="Medication">Meds 💊</option>
                 <option value="Play">Play 🎾</option>
               </select>
             </div>
-            <input type="text" placeholder="What's the goal?" className="w-full p-4 rounded-xl bg-zinc-50/50 dark:bg-zinc-800/50 border-none outline-none font-bold shadow-inner" value={newRoutine.title} onChange={e => setNewRoutine({...newRoutine, title: e.target.value})} />
-            <button onClick={handleAddRoutine} className="w-full bg-orange-500 text-white py-4 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:brightness-110 active:scale-95 transition-all">Create Goal</button>
+            <input type="text" placeholder="Task description..." className="w-full p-4 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-none outline-none font-bold text-zinc-900 dark:text-zinc-100 shadow-inner" value={newRoutine.title} onChange={e => setNewRoutine({...newRoutine, title: e.target.value})} />
+            <button onClick={handleAddRoutine} className="w-full bg-orange-500 text-white py-4 rounded-xl font-black uppercase tracking-widest text-[11px] shadow-xl hover:brightness-110 active:scale-95 transition-all">Create Goal</button>
           </div>
         </div>
       )}
@@ -288,12 +288,12 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="font-bold text-zinc-900 dark:text-zinc-50 truncate">{reminder.title}</h4>
-                <p className="text-[9px] text-zinc-400 font-black uppercase tracking-widest mt-1">{new Date(reminder.date).toLocaleDateString()}</p>
+                <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-widest mt-1">{new Date(reminder.date).toLocaleDateString()}</p>
               </div>
               {!readOnly && (
                 <button 
                   onClick={() => onCompleteReminder(reminder.id)}
-                  className="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 px-3 py-2 rounded-lg font-black text-[8px] uppercase tracking-widest border border-zinc-100 dark:border-zinc-700 hover:bg-orange-500 hover:text-white hover:shadow-[0_0_15px_rgba(249,115,22,0.6)] transition-all active:scale-90"
+                  className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 px-3 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest border border-zinc-200 dark:border-zinc-700 hover:bg-orange-500 hover:text-white hover:shadow-[0_0_15px_rgba(249,115,22,0.6)] transition-all active:scale-90"
                 >
                   Done
                 </button>
@@ -323,6 +323,13 @@ const CheckTile: React.FC<{
     purple: 'bg-purple-500',
   };
 
+  const activeLabelMap: any = {
+    orange: 'text-white',
+    blue: 'text-white',
+    emerald: 'text-white',
+    purple: 'text-white',
+  };
+
   return (
     <button 
       onClick={() => !readOnly && onClick()}
@@ -332,12 +339,12 @@ const CheckTile: React.FC<{
           : 'bg-white dark:bg-zinc-900 border-zinc-50 dark:border-zinc-800 shadow-sm'
       } hover:scale-[1.03] ${readOnly ? 'cursor-default' : 'hover:border-white'}`}
     >
-      <div className={`text-4xl transition-all ${active ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]' : 'text-zinc-200 dark:text-zinc-800'}`}>
+      <div className={`text-4xl transition-all ${active ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]' : 'text-zinc-300 dark:text-zinc-700'}`}>
         <i className={`fa-solid fa-${icon}`}></i>
       </div>
-      <span className={`font-black text-[9px] uppercase tracking-[0.1em] ${active ? 'text-white' : 'text-zinc-400'}`}>{label}</span>
+      <span className={`font-black text-[10px] uppercase tracking-[0.1em] ${active ? 'text-white' : 'text-zinc-500 dark:text-zinc-400'}`}>{label}</span>
       {active && (
-        <div className="absolute top-3 right-3 bg-white text-emerald-500 w-6 h-6 rounded-full flex items-center justify-center shadow-md animate-in zoom-in">
+        <div className="absolute top-3 right-3 bg-white text-emerald-600 w-6 h-6 rounded-full flex items-center justify-center shadow-md animate-in zoom-in">
           <i className="fa-solid fa-check text-[10px]"></i>
         </div>
       )}
