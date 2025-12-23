@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { AuthUser, PetProfile, TimelineEntry, PetDocument, DailyChecklist, RoutineItem, Reminder } from '../types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { AuthUser, PetProfile, TimelineEntry, PetDocument, DailyChecklist, RoutineItem, Reminder, DailyLog } from '../types';
 import Dashboard from './Dashboard';
 import TimelineScreen from './TimelineScreen';
 import DocumentsScreen from './DocumentsScreen';
@@ -29,6 +29,7 @@ interface DoctorDashboardProps {
     routine: RoutineItem[];
     reminders: Reminder[];
   };
+  dailyLogs: Record<string, DailyLog>;
   darkMode: boolean;
   setDarkMode: (dark: boolean) => void;
   activeTab: 'profile' | 'discover' | 'patients';
@@ -38,6 +39,7 @@ interface DoctorDashboardProps {
 const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ 
   doctor, 
   petData, 
+  dailyLogs,
   darkMode, 
   setDarkMode,
   activeTab,
@@ -95,6 +97,13 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
     setPriorityItems(prev => prev.filter(item => item.id !== id));
   };
 
+  const activityScore = useMemo(() => {
+    const { routine, checklist } = petData;
+    const totalItems = routine.length + 4;
+    const completedItems = routine.filter(r => r.completed).length + Object.values(checklist).filter(v => typeof v === 'boolean' && v).length;
+    return Math.round((completedItems / totalItems) * 100);
+  }, [petData]);
+
   const renderPetView = () => (
     <div className="flex flex-col h-full bg-[#FFFAF3] dark:bg-zinc-950 animate-in fade-in duration-500 overflow-hidden">
       {/* Patient Header */}
@@ -111,7 +120,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         <div className="bg-white/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em]">Medical Access</div>
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar pb-32">
+      <div className="flex-1 overflow-y-auto pb-44 no-scrollbar">
         {/* Context Navigation for Doctor */}
         <div className="flex bg-white dark:bg-zinc-900 border-b dark:border-zinc-800 sticky top-0 z-[60] overflow-x-auto no-scrollbar shadow-sm">
            <SubNavTab label="Pulse" active={activeSubTab === 'profile'} onClick={() => setActiveSubTab('profile')} icon="heart-pulse" />
@@ -122,15 +131,20 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
 
         <div className="relative z-10">
           {activeSubTab === 'profile' && (
-            <Dashboard 
-              pet={petData.pet} 
-              reminders={petData.reminders} 
-              checklist={petData.checklist} 
-              setChecklist={() => {}} 
-              routine={petData.routine} 
-              setRoutine={() => {}} 
-              onCompleteReminder={() => {}} 
-            />
+            <div className="space-y-6">
+              <Dashboard 
+                pet={petData.pet} 
+                reminders={petData.reminders} 
+                checklist={petData.checklist} 
+                setChecklist={() => {}} 
+                routine={petData.routine} 
+                setRoutine={() => {}} 
+                onCompleteReminder={() => {}}
+                timeline={petData.timeline}
+                dailyLogs={dailyLogs}
+                onUpdateLog={() => {}}
+              />
+            </div>
           )}
           {activeSubTab === 'timeline' && (
             <TimelineScreen 
@@ -139,6 +153,9 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
               documents={petData.documents} 
               reminders={petData.reminders} 
               setReminders={() => {}} 
+              dailyLogs={dailyLogs}
+              onUpdateLog={() => {}}
+              petName={petData.pet.name}
             />
           )}
           {activeSubTab === 'docs' && (
@@ -165,7 +182,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
       case 'discover':
       default:
         return (
-          <div className="space-y-10 animate-in fade-in duration-500 pb-20">
+          <div className="space-y-10 animate-in fade-in duration-500 pb-44">
              <div className="grid grid-cols-2 gap-5">
                 <StatCard label="Total Patients" value={visitedPatientIds.size} icon="users" color="bg-emerald-500" />
                 <StatCard label="Pending Care" value={priorityItems.length} icon="bell" color="bg-orange-500" />
@@ -203,10 +220,10 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#FFFAF3] dark:bg-zinc-950 relative">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#FFFAF3] dark:bg-zinc-950 relative no-scrollbar">
       {viewingPet ? renderPetView() : (
         <>
-          <div className="flex-1 p-6 space-y-10 overflow-y-auto custom-scrollbar pb-40">
+          <div className="flex-1 p-6 space-y-10 overflow-y-auto pb-44 no-scrollbar">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-4xl font-lobster text-zinc-900 dark:text-zinc-50 leading-tight">Practice Hub</h2>
@@ -224,13 +241,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
 
             {renderContent()}
           </div>
-
-          {/* Unified Slim Floating Footer for Doctor */}
-          <nav className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] bg-white/40 dark:bg-zinc-950/40 backdrop-blur-3xl border border-white/20 dark:border-zinc-800/30 rounded-[1.75rem] flex justify-around items-center p-1 pb-2 z-[70] shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition-all">
-            <NavButton active={activeTab === 'patients'} onClick={() => setActiveTab('patients')} icon="hospital-user" label="Patients" color="orange" />
-            <NavButton active={activeTab === 'discover'} onClick={() => setActiveTab('discover')} icon="house-medical" label="Hub" isAction color="orange" />
-            <NavButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon="address-card" label="Identity" color="emerald" />
-          </nav>
         </>
       )}
     </div>

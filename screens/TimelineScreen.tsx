@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { TimelineEntry, EntryType, PetDocument, Reminder, Doctor } from '../types';
+import { TimelineEntry, EntryType, PetDocument, Reminder, Doctor, DailyLog } from '../types';
 
 interface TimelineProps {
   timeline: TimelineEntry[];
@@ -8,6 +8,9 @@ interface TimelineProps {
   documents: PetDocument[];
   reminders: Reminder[];
   setReminders: (r: Reminder[]) => void;
+  dailyLogs: Record<string, DailyLog>;
+  onUpdateLog: (date: string, data: Partial<DailyLog>) => void;
+  petName?: string;
 }
 
 const MOCK_CONSULTED_DOCTORS: Doctor[] = [
@@ -35,7 +38,14 @@ const MOCK_CONSULTED_DOCTORS: Doctor[] = [
   }
 ];
 
-const TimelineScreen: React.FC<TimelineProps> = ({ timeline, setTimeline, documents, reminders, setReminders }) => {
+const TimelineScreen: React.FC<TimelineProps> = ({ 
+  timeline, 
+  setTimeline, 
+  documents, 
+  reminders, 
+  setReminders,
+  petName = "Luna"
+}) => {
   const [showAdd, setShowAdd] = useState(false);
   const [showAddReminder, setShowAddReminder] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
@@ -93,7 +103,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({ timeline, setTimeline, docume
   };
 
   return (
-    <div className="p-8 md:p-12 space-y-16 animate-in slide-in-from-right-10 duration-700 pb-32">
+    <div className="p-8 md:p-12 space-y-16 animate-in slide-in-from-right-10 duration-700 pb-32 no-scrollbar overflow-y-auto h-full">
       
       {/* Planned Care */}
       <section className="space-y-8">
@@ -203,7 +213,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({ timeline, setTimeline, docume
             <div 
               key={doc.id}
               onClick={() => setSelectedDoctor(doc)}
-              className="bg-white dark:bg-zinc-900 border-2 border-zinc-50 dark:border-zinc-800 p-6 rounded-[2.5rem] flex items-center gap-6 hover:border-indigo-200 dark:hover:border-indigo-900 cursor-pointer transition-all shadow-xl group active:scale-95 animate-in fade-in"
+              className="bg-white dark:bg-zinc-900 border-2 border-zinc-50 dark:border-zinc-800 p-6 rounded-[2.5rem] flex items-center gap-6 hover:border-indigo-200 dark:hover:border-indigo-900 cursor-pointer transition-all shadow-sm group active:scale-[0.98] animate-in fade-in"
             >
               <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center text-3xl group-hover:rotate-6 transition-transform shadow-sm">
                 <i className="fa-solid fa-user-md"></i>
@@ -218,7 +228,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({ timeline, setTimeline, docume
         </div>
       </section>
 
-      {/* Doctor Modal - Updated to Frosted Floating Window */}
+      {/* Doctor Modal */}
       {selectedDoctor && (
         <div 
           className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/5 backdrop-blur-sm animate-in fade-in duration-300"

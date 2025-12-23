@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-scrollbar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,11 +22,21 @@
       }
     </script>
     <style>
+        /* Globally hide scrollbars */
+        html, body, * {
+            scrollbar-width: none !important; /* Firefox */
+            -ms-overflow-style: none !important; /* IE and Edge */
+        }
+        *::-webkit-scrollbar {
+            display: none !important; /* Chrome, Safari, Opera */
+        }
+
         body {
             font-family: "Comic Neue", "Comic Sans MS", cursive;
             background-color: #fcfaf7;
             transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             font-size: 14px;
+            overflow: hidden; /* Prevent body scroll, use inner containers */
         }
         @media (min-width: 768px) {
             body { font-size: 16px; }
@@ -37,26 +47,7 @@
         .dark body {
             background-color: #09090b;
         }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #e2e8f0;
-            border-radius: 10px;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #27272a;
-        }
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        
         .animate-spin-slow {
             animation: spin 6s linear infinite;
         }
@@ -65,7 +56,6 @@
             to { transform: rotate(360deg); }
         }
         
-        /* Organic Party Animation */
         @keyframes party {
             0%, 100% { transform: scale(1) rotate(0deg); }
             25% { transform: scale(1.02) rotate(2deg); }
@@ -76,7 +66,6 @@
             animation: party 1.2s ease-in-out infinite;
         }
 
-        /* Alert Animation */
         @keyframes alert-shake {
             0%, 100% { transform: translateX(0); }
             10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
@@ -86,22 +75,28 @@
             animation: alert-shake 1s ease-in-out infinite;
         }
 
-        /* Organic Spring Jump Animation */
         @keyframes organic-jump {
           0% { transform: translateY(0) scale(1, 1); }
-          15% { transform: translateY(0) scale(1.1, 0.85); } /* Squish down */
-          40% { transform: translateY(-25px) scale(0.9, 1.1) rotate(2deg); } /* Launch up */
-          65% { transform: translateY(0) scale(1.05, 0.95); } /* Landing impact */
-          80% { transform: translateY(-5px) scale(1, 1); } /* Small secondary bounce */
+          15% { transform: translateY(0) scale(1.1, 0.85); }
+          40% { transform: translateY(-25px) scale(0.9, 1.1) rotate(2deg); }
+          65% { transform: translateY(0) scale(1.05, 0.95); }
+          80% { transform: translateY(-5px) scale(1, 1); }
           100% { transform: translateY(0) scale(1, 1); }
         }
         .animate-spring-jump {
           animation: organic-jump 0.65s cubic-bezier(0.45, 0.05, 0.55, 0.95);
         }
 
-        /* Smoother transition class */
         .smooth-transform {
           transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
 <script type="importmap">
@@ -115,7 +110,7 @@
 }
 </script>
 </head>
-<body>
-    <div id="root"></div>
+<body class="no-scrollbar">
+    <div id="root" class="h-full overflow-hidden"></div>
 </body>
 </html>

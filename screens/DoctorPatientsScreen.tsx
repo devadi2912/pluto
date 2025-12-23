@@ -63,11 +63,17 @@ const DoctorPatientsScreen: React.FC<DoctorPatientsScreenProps> = ({ onViewRecor
         <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">End of Record History</p>
       </div>
 
-      {/* Simplified Patient Profile Preview */}
+      {/* REFINED Frosted Glass Patient Detail Modal */}
       {selectedPatient && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/50 animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[3rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col">
-            <div className="p-8 text-center space-y-4 max-h-[85vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/10 backdrop-blur-md animate-in fade-in duration-300"
+          onClick={() => setSelectedPatient(null)}
+        >
+          <div 
+            className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-3xl backdrop-saturate-150 border-2 border-white/50 dark:border-zinc-800/50 w-full max-w-sm rounded-[3rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-8 text-center space-y-4 max-h-[85vh] overflow-y-auto no-scrollbar">
               <div className="w-24 h-24 rounded-[2.5rem] overflow-hidden border-4 border-white dark:border-zinc-800 shadow-xl mx-auto group">
                 <img src={selectedPatient.avatar} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={selectedPatient.name} />
               </div>
@@ -86,13 +92,13 @@ const DoctorPatientsScreen: React.FC<DoctorPatientsScreenProps> = ({ onViewRecor
               <div className="grid grid-cols-2 gap-4 pt-4">
                 <button 
                   onClick={() => setSelectedPatient(null)}
-                  className="py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-widest text-[10px] hover:bg-zinc-200 transition-all active:scale-95"
+                  className="py-4 rounded-2xl bg-zinc-100/50 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-widest text-[10px] hover:bg-zinc-200 transition-all active:scale-95 border border-white/20 dark:border-zinc-700/30"
                 >
                   Back
                 </button>
                 <button 
                   onClick={handleViewRecords}
-                  className="py-4 rounded-2xl bg-emerald-500 text-white font-black uppercase tracking-widest text-[10px] shadow-lg hover:brightness-110 active:scale-95 transition-all"
+                  className="py-4 rounded-2xl bg-orange-500 text-white font-black uppercase tracking-widest text-[10px] shadow-lg hover:brightness-110 active:scale-95 transition-all"
                 >
                   Open File
                 </button>
@@ -106,7 +112,7 @@ const DoctorPatientsScreen: React.FC<DoctorPatientsScreenProps> = ({ onViewRecor
 };
 
 const PatientDetailRow: React.FC<{ label: string, value: string }> = ({ label, value }) => (
-  <div className="flex items-center justify-between py-2 border-b border-zinc-50 dark:border-zinc-800/50">
+  <div className="flex items-center justify-between py-2 border-b border-zinc-50/50 dark:border-zinc-800/20">
     <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">{label}</span>
     <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{value}</span>
   </div>

@@ -71,6 +71,12 @@ export interface RoutineItem {
   category: 'Food' | 'Walk' | 'Medication' | 'Play' | 'Sleep' | 'Other';
 }
 
+export interface DailyLog {
+  activityMinutes: number;
+  moodRating: number; // 1-5
+  feedingCount: number;
+}
+
 export type UserRole = 'PET_OWNER' | 'DOCTOR';
 
 export interface Doctor {
