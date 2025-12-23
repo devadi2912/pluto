@@ -15,6 +15,11 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
   const [isFetching, setIsFetching] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
+  
+  // Edit mode states
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editType, setEditType] = useState<'Prescription' | 'Bill' | 'Report'>('Report');
 
   const filteredDocs = filter === 'All' ? documents : documents.filter(d => d.type === filter);
 
@@ -42,7 +47,6 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
       try {
         await navigator.share({
           title: `Pluto Medical Record: ${selectedDoc.name}`,
-          // Fix: Use petName from props instead of non-existent property on selectedDoc
           text: `Secure access to ${petName || 'Pet'}'s medical data.`,
           url: window.location.href,
         });
@@ -67,6 +71,28 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     }, 2000);
+  };
+
+  const startEdit = (doc: PetDocument) => {
+    setEditName(doc.name);
+    setEditType(doc.type);
+    setIsEditing(true);
+  };
+
+  const saveEdit = () => {
+    if (!selectedDoc) return;
+    const updated = documents.map(d => d.id === selectedDoc.id ? { ...d, name: editName, type: editType } : d);
+    setDocuments(updated);
+    setSelectedDoc({ ...selectedDoc, name: editName, type: editType });
+    setIsEditing(false);
+  };
+
+  const deleteDoc = () => {
+    if (!selectedDoc) return;
+    if (confirm(`Remove ${selectedDoc.name} permanently?`)) {
+      setDocuments(documents.filter(d => d.id !== selectedDoc.id));
+      setSelectedDoc(null);
+    }
   };
 
   return (
@@ -157,7 +183,10 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
       {selectedDoc && (
         <div 
           className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-black/60 animate-in fade-in duration-300"
-          onClick={() => setSelectedDoc(null)}
+          onClick={() => {
+            setSelectedDoc(null);
+            setIsEditing(false);
+          }}
         >
           <div 
             className="bg-white/90 dark:bg-zinc-950/90 border-2 border-white/50 dark:border-zinc-800/50 w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.5)] animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 flex flex-col backdrop-blur-3xl"
@@ -180,68 +209,118 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
                   <p className="text-[8px] text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-widest">{selectedDoc.type}</p>
                 </div>
               </div>
-              <button 
-                onClick={() => setSelectedDoc(null)}
-                className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500 hover:bg-rose-500 hover:text-white transition-all active:scale-90"
-              >
-                <i className="fa-solid fa-xmark"></i>
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => isEditing ? saveEdit() : startEdit(selectedDoc)}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90 border border-zinc-100 dark:border-zinc-700/30 ${
+                    isEditing ? 'bg-emerald-500 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-orange-500'
+                  }`}
+                >
+                  <i className={`fa-solid ${isEditing ? 'fa-check' : 'fa-pen'} text-xs`}></i>
+                </button>
+                <button 
+                  onClick={() => {
+                    setSelectedDoc(null);
+                    setIsEditing(false);
+                  }}
+                  className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500 hover:bg-rose-500 hover:text-white transition-all active:scale-90"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              </div>
             </div>
 
-            {/* Preview Body */}
+            {/* Preview Body / Edit Body */}
             <div className="flex-1 p-8 flex flex-col items-center justify-center text-center">
-              <div className={`w-32 h-44 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border-2 border-white dark:border-zinc-800 flex flex-col items-center justify-center p-6 mb-6 relative overflow-hidden group transition-all duration-500 ${isFetching ? 'scale-110 shadow-orange-500/20' : 'rotate-[-2deg] hover:rotate-0'}`}>
-                {/* Visual Placeholder Content */}
-                <div className="space-y-2 w-full mb-4">
-                  <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full"></div>
-                  <div className="h-1.5 w-4/5 bg-zinc-100 dark:bg-zinc-800 rounded-full"></div>
-                  <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full"></div>
-                </div>
-                
-                <div className="relative">
-                  <i className={`fa-solid ${isFetching ? 'fa-sync-alt fa-spin' : 'fa-file-pdf'} text-5xl ${isFetching ? 'text-orange-500' : 'text-rose-500'} transition-colors duration-500`}></i>
-                </div>
-                
-                {isFetching && (
-                  <div className="absolute inset-0 bg-orange-500/10 backdrop-blur-[1px] flex items-end p-2">
-                     <div className="w-full bg-white/20 h-1 rounded-full overflow-hidden">
-                        <div className="h-full bg-orange-500 w-1/2 animate-infinite-loading"></div>
-                     </div>
+              {isEditing ? (
+                <div className="w-full space-y-4 animate-in fade-in zoom-in-95">
+                  <div className="space-y-1 text-left">
+                    <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest ml-1">Document Name</label>
+                    <input 
+                      type="text" 
+                      value={editName}
+                      onChange={e => setEditName(e.target.value)}
+                      className="w-full p-4 bg-white dark:bg-zinc-900 border-2 border-orange-100 dark:border-zinc-800 rounded-2xl font-bold text-sm outline-none focus:border-orange-500 dark:text-white"
+                    />
                   </div>
-                )}
-              </div>
-              
-              <h4 className="text-2xl font-lobster text-zinc-900 dark:text-white mb-2 tracking-wide">Medical Record</h4>
-              <div className="space-y-1">
-                <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.15em]">Secure Archive: {selectedDoc.id}</p>
-                <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">{selectedDoc.fileSize} • {isFetching ? 'ACCESSING ENCRYPTED DATA...' : 'ENCRYPTED & SYNCED'}</p>
-              </div>
+                  <div className="space-y-1 text-left">
+                    <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest ml-1">Category</label>
+                    <select 
+                      value={editType}
+                      onChange={e => setEditType(e.target.value as any)}
+                      className="w-full p-4 bg-white dark:bg-zinc-900 border-2 border-orange-100 dark:border-zinc-800 rounded-2xl font-bold text-sm outline-none focus:border-orange-500 dark:text-white"
+                    >
+                      <option value="Prescription">Prescription</option>
+                      <option value="Bill">Bill</option>
+                      <option value="Report">Report</option>
+                    </select>
+                  </div>
+                  <button 
+                    onClick={deleteDoc}
+                    className="w-full flex items-center justify-center gap-2 py-4 bg-rose-50 text-rose-500 dark:bg-rose-950/20 rounded-2xl font-black text-[10px] uppercase tracking-widest border-2 border-rose-100 dark:border-rose-900/50 hover:bg-rose-500 hover:text-white transition-all"
+                  >
+                    <i className="fa-solid fa-trash-can"></i>
+                    Permanently Delete
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className={`w-32 h-44 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border-2 border-white dark:border-zinc-800 flex flex-col items-center justify-center p-6 mb-6 relative overflow-hidden group transition-all duration-500 ${isFetching ? 'scale-110 shadow-orange-500/20' : 'rotate-[-2deg] hover:rotate-0'}`}>
+                    {/* Visual Placeholder Content */}
+                    <div className="space-y-2 w-full mb-4">
+                      <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full"></div>
+                      <div className="h-1.5 w-4/5 bg-zinc-100 dark:bg-zinc-800 rounded-full"></div>
+                      <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full"></div>
+                    </div>
+                    
+                    <div className="relative">
+                      <i className={`fa-solid ${isFetching ? 'fa-sync-alt fa-spin' : 'fa-file-pdf'} text-5xl ${isFetching ? 'text-orange-500' : 'text-rose-500'} transition-colors duration-500`}></i>
+                    </div>
+                    
+                    {isFetching && (
+                      <div className="absolute inset-0 bg-orange-500/10 backdrop-blur-[1px] flex items-end p-2">
+                        <div className="w-full bg-white/20 h-1 rounded-full overflow-hidden">
+                            <div className="h-full bg-orange-500 w-1/2 animate-infinite-loading"></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <h4 className="text-2xl font-lobster text-zinc-900 dark:text-white mb-2 tracking-wide">Medical Record</h4>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.15em]">Secure Archive: {selectedDoc.id}</p>
+                    <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">{selectedDoc.fileSize} • {isFetching ? 'ACCESSING ENCRYPTED DATA...' : 'ENCRYPTED & SYNCED'}</p>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Functional Buttons */}
-            <div className="p-8 pt-0 grid grid-cols-2 gap-4">
-               <button 
-                onClick={handleShare}
-                className={`flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border-2 active:scale-95 ${
-                  shareStatus ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-100 dark:border-zinc-800 hover:border-orange-500'
-                }`}
-               >
+            {!isEditing && (
+              <div className="p-8 pt-0 grid grid-cols-2 gap-4">
+                <button 
+                  onClick={handleShare}
+                  className={`flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border-2 active:scale-95 ${
+                    shareStatus ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-100 dark:border-zinc-800 hover:border-orange-500'
+                  }`}
+                >
                   <i className={`fa-solid ${shareStatus ? 'fa-check' : 'fa-share-nodes'}`}></i>
                   {shareStatus || 'Share'}
-               </button>
-               <button 
-                onClick={handleFetch}
-                disabled={isFetching}
-                className={`flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all active:scale-95 ${
-                  isFetching 
-                    ? 'bg-zinc-400 cursor-not-allowed text-white' 
-                    : 'bg-gradient-to-r from-orange-500 to-rose-600 text-white shadow-orange-500/30 hover:brightness-110'
-                }`}
-               >
+                </button>
+                <button 
+                  onClick={handleFetch}
+                  disabled={isFetching}
+                  className={`flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all active:scale-95 ${
+                    isFetching 
+                      ? 'bg-zinc-400 cursor-not-allowed text-white' 
+                      : 'bg-gradient-to-r from-orange-500 to-rose-600 text-white shadow-orange-500/30 hover:brightness-110'
+                  }`}
+                >
                   <i className={`fa-solid ${isFetching ? 'fa-spinner fa-spin' : 'fa-bolt'}`}></i>
                   {isFetching ? 'Syncing' : 'Fetch'}
-               </button>
-            </div>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -181,7 +181,6 @@ const App: React.FC = () => {
       case 'timeline': 
         return <TimelineScreen timeline={timeline} setTimeline={setTimeline} documents={documents} reminders={reminders} setReminders={setReminders} dailyLogs={dailyLogs} onUpdateLog={handleUpdateDailyLog} petName={pet.name} />;
       case 'documents': 
-        // Pass petName prop to DocumentsScreen
         return <DocumentsScreen documents={documents} setDocuments={setDocuments} petName={pet.name} />;
       case 'ai': 
         return <AIScreen pet={pet} timeline={timeline} documents={documents} reminders={reminders} />;
@@ -197,34 +196,45 @@ const App: React.FC = () => {
     <div className="h-screen bg-[#FFFAF3] dark:bg-zinc-950 flex flex-col md:flex-row max-w-7xl mx-auto md:p-6 transition-colors duration-500 overflow-hidden no-scrollbar">
       {/* Sidebar for Desktop */}
       <aside className="hidden md:flex flex-col w-64 lg:w-72 h-full sticky top-0 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl rounded-[3rem] border border-white/40 dark:border-zinc-800/40 shadow-2xl p-8 mr-8 no-scrollbar overflow-y-auto">
-        <div className="flex items-center gap-3 mb-12 group cursor-pointer">
-          <div className="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:rotate-12 transition-transform duration-300">
-            <i className="fa-solid fa-paw text-xl"></i>
+        <div className="flex items-center gap-3 mb-16 group cursor-pointer justify-center">
+          <div className="w-14 h-14 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-xl group-hover:rotate-12 transition-transform duration-300">
+            <i className="fa-solid fa-paw text-2xl"></i>
           </div>
-          <h1 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50 group-hover:scale-105 transition-transform">Pluto</h1>
+          <h1 className="text-4xl font-lobster text-zinc-900 dark:text-zinc-50 group-hover:scale-105 transition-transform">Pluto</h1>
         </div>
 
-        <nav className="flex-1 space-y-4">
-          {currentNavItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => {
-                if (user.role === 'DOCTOR') setDoctorActiveTab(item.id as any);
-                else setActiveTab(item.id as any);
-              }}
-              className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${
-                currentActiveTab === item.id
-                  ? 'bg-orange-500 text-white shadow-xl translate-x-2' 
-                  : 'text-zinc-500 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50'
-              }`}
-            >
-              <i className={`fa-solid fa-${item.icon} text-lg group-hover:scale-110 transition-transform`}></i>
-              <span className="font-black text-[10px] uppercase tracking-widest">{item.label}</span>
-            </button>
-          ))}
+        <nav className="flex-1 space-y-6">
+          {currentNavItems.map(item => {
+            const isActive = currentActiveTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  if (user.role === 'DOCTOR') setDoctorActiveTab(item.id as any);
+                  else setActiveTab(item.id as any);
+                }}
+                className={`w-full flex items-center gap-4 px-6 py-5 rounded-[2rem] transition-all duration-300 group relative border-4 ${
+                  isActive
+                    ? 'bg-orange-500 text-white border-white dark:border-zinc-950 shadow-[0_15px_35px_rgba(249,115,22,0.4)] scale-[1.05]' 
+                    : 'text-zinc-500 dark:text-zinc-400 border-transparent hover:bg-white/50 dark:hover:bg-zinc-800/50'
+                }`}
+              >
+                {item.id === 'profile' && pet.avatar ? (
+                  <img src={pet.avatar} className={`w-6 h-6 rounded-full border-2 ${isActive ? 'border-white' : 'border-zinc-300 dark:border-zinc-700'}`} />
+                ) : (
+                  <i className={`fa-solid fa-${item.icon} text-lg group-hover:scale-110 transition-transform ${isActive ? 'animate-pulse' : ''}`}></i>
+                )}
+                <span className="font-black text-[11px] uppercase tracking-widest">{item.label}</span>
+                
+                {isActive && (
+                  <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-8 bg-white dark:bg-zinc-950 rounded-l-full animate-in slide-in-from-right-2"></div>
+                )}
+              </button>
+            );
+          })}
         </nav>
 
-        <div className="pt-8 border-t border-zinc-200 dark:border-zinc-800 flex flex-col gap-4">
+        <div className="pt-8 border-t border-zinc-200 dark:border-zinc-800 flex flex-col gap-4 mt-8">
           <button onClick={() => setDarkMode(!darkMode)} className="flex items-center gap-4 px-6 py-4 rounded-2xl text-zinc-500 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-all group">
             <i className={`fa-solid ${darkMode ? 'fa-sun text-yellow-500 animate-spin-slow' : 'fa-moon text-indigo-400'} text-lg group-hover:scale-125 transition-transform`}></i>
             <span className="font-black text-[10px] uppercase tracking-widest">{darkMode ? 'Light' : 'Dark'}</span>
@@ -233,7 +243,7 @@ const App: React.FC = () => {
             <i className="fa-solid fa-power-off text-lg group-hover:scale-125 transition-transform"></i>
             <span className="font-black text-[10px] uppercase tracking-widest">Sign Out</span>
           </button>
-          <div className="flex items-center gap-3 px-2">
+          <div className="flex items-center gap-3 px-2 pt-2">
             <img src={pet.avatar} className="w-10 h-10 rounded-full border-2 border-orange-500 shadow-md" alt="Pet" />
             <div className="min-w-0">
               <p className="text-sm font-bold truncate dark:text-zinc-50">{user.username}</p>
@@ -268,7 +278,7 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation Footer - Floating & Transparent */}
+        {/* Mobile Navigation Footer */}
         <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[88%] bg-white/10 dark:bg-zinc-900/10 backdrop-blur-3xl backdrop-saturate-[1.8] border border-white/30 dark:border-zinc-800/30 rounded-full flex justify-around items-center py-1.5 px-2 z-[150] shadow-[0_20px_60px_rgba(0,0,0,0.25)] ring-1 ring-white/10">
           {currentNavItems.map(item => (
             <NavButton 
