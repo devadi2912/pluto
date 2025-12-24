@@ -15,6 +15,7 @@ interface DashboardProps {
   dailyLogs: Record<string, DailyLog>;
   onUpdateLog: (date: string, data: Partial<DailyLog>) => void;
   doctorNotes?: DoctorNote[];
+  onDeleteNote?: (id: string) => void;
   readOnly?: boolean;
 }
 
@@ -30,6 +31,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   dailyLogs,
   onUpdateLog,
   doctorNotes = [],
+  onDeleteNote,
   readOnly = false
 }) => {
   const [showAddRoutine, setShowAddRoutine] = useState(false);
@@ -113,29 +115,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </section>
 
-      {/* Doctor's Note Section - Shown only to Pet Owner after a visit */}
-      {latestNote && !readOnly && (
-        <section className="animate-in slide-in-from-top-4 duration-700">
-           <div className="bg-indigo-600 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden group border-4 border-indigo-500/30">
-              <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
-              <div className="relative z-10 space-y-4">
-                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
-                       <i className="fa-solid fa-user-md text-xl"></i>
-                    </div>
-                    <div>
-                       <h4 className="font-lobster text-2xl leading-tight">Doctor's Advice</h4>
-                       <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60">From {latestNote.doctorName} • {new Date(latestNote.date).toLocaleDateString()}</p>
-                    </div>
-                 </div>
-                 <div className="bg-white/10 backdrop-blur-sm p-5 rounded-2xl border border-white/10 italic font-medium text-[15px] leading-relaxed">
-                    "{latestNote.content}"
-                 </div>
-              </div>
-           </div>
-        </section>
-      )}
-
       {/* Daily Vitals Sparkline */}
       <section className="space-y-4">
         <div className="flex items-center justify-between px-2">
@@ -152,7 +131,127 @@ const Dashboard: React.FC<DashboardProps> = ({
         <HealthTrends petName={pet.name} dailyLogs={dailyLogs} color="orange" />
       </section>
 
-      {/* Daily Update Modal */}
+      {/* Routine & Checklist */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <section className="space-y-6">
+          <div className="flex items-center justify-between px-2">
+            <h3 className="text-2xl md:text-3xl font-lobster text-zinc-900 dark:text-zinc-50">Daily Routine</h3>
+            {!readOnly && (
+              <button 
+                onClick={() => setShowAddRoutine(!showAddRoutine)}
+                className="w-12 h-12 rounded-xl bg-orange-500 text-white flex items-center justify-center hover:scale-110 shadow-lg active:rotate-12 transition-all"
+              >
+                <i className={`fa-solid ${showAddRoutine ? 'fa-xmark' : 'fa-plus'} text-lg`}></i>
+              </button>
+            )}
+          </div>
+          <div className="space-y-4">
+            {routine.map((item, idx) => (
+              <div key={item.id} className="animate-in slide-in-from-left-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
+                <div 
+                  onClick={() => toggleRoutine(item.id)}
+                  className={`flex items-center gap-4 md:gap-6 p-5 md:p-6 rounded-[2rem] border-2 transition-all duration-300 group ${item.completed ? 'bg-zinc-50/50 dark:bg-zinc-900/50 border-transparent opacity-60' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 shadow-lg'} ${!readOnly ? 'cursor-pointer' : 'cursor-default'}`}
+                >
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform ${item.category === 'Food' ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                    <i className={`fa-solid ${item.category === 'Food' ? 'fa-bowl-food' : 'fa-dog'}`}></i>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">{item.time}</p>
+                    <h4 className={`text-lg font-bold ${item.completed ? 'line-through text-zinc-400' : 'text-zinc-900 dark:text-zinc-100'}`}>{item.title}</h4>
+                  </div>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all border-4 ${item.completed ? 'bg-emerald-500 border-white text-white rotate-[360deg]' : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 text-transparent'}`}>
+                    <i className="fa-solid fa-check text-sm"></i>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-6">
+          <h3 className="text-2xl md:text-3xl font-lobster text-zinc-900 dark:text-zinc-50 px-2">Quick Checks</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <CheckTile active={checklist.food} icon="bowl-food" label="Full Tummy" onClick={() => toggleCheck('food')} color="orange" readOnly={readOnly} />
+            <CheckTile active={checklist.water} icon="faucet-drip" label="Hydrated" onClick={() => toggleCheck('water')} color="blue" readOnly={readOnly} />
+            <CheckTile active={checklist.walk} icon="dog" label="Adventures" onClick={() => toggleCheck('walk')} color="emerald" readOnly={readOnly} />
+            <CheckTile active={checklist.medication} icon="pills" label="Healthy Meds" onClick={() => toggleCheck('medication')} color="purple" readOnly={readOnly} />
+          </div>
+        </section>
+      </div>
+
+      {/* Upcoming Reminders */}
+      <section className="space-y-6">
+        <h3 className="text-2xl md:text-3xl font-lobster text-zinc-900 dark:text-zinc-50 px-2">Coming Up</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {reminders.filter(r => !r.completed).slice(0, 4).map((reminder, idx) => (
+            <div 
+              key={reminder.id} 
+              className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-5 rounded-[2rem] shadow-sm flex items-center gap-4 hover:border-orange-200 dark:hover:border-orange-500/50 hover:shadow-[0_10px_30px_rgba(249,115,22,0.15)] transition-all group animate-in slide-in-from-bottom-5"
+              style={{ animationDelay: `${idx * 150}ms` }}
+            >
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-transform group-hover:scale-110 ${reminder.type === 'Vaccination' ? 'bg-orange-50 text-orange-600 dark:bg-orange-950/40' : 'bg-purple-50 text-purple-600 dark:bg-purple-950/40'}`}>
+                <i className={`fa-solid ${reminder.type === 'Vaccination' ? 'fa-syringe' : 'fa-pills'}`}></i>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-bold text-zinc-900 dark:text-zinc-50 truncate">{reminder.title}</h4>
+                <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-widest mt-1">{new Date(reminder.date).toLocaleDateString()}</p>
+              </div>
+              {!readOnly && (
+                <button 
+                  onClick={() => onCompleteReminder(reminder.id)}
+                  className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 px-3 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest border border-zinc-200 dark:border-zinc-700 hover:bg-orange-500 hover:text-white hover:shadow-[0_0_15px_rgba(249,115,22,0.6)] transition-all active:scale-90"
+                >
+                  Done
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Doctor's Note Section - Moved to Bottom per User Request */}
+      {latestNote && !readOnly && (
+        <section className="animate-in slide-in-from-top-4 duration-1000 pt-10">
+           <div className="bg-white/20 dark:bg-zinc-900/10 backdrop-blur-[40px] backdrop-saturate-200 rounded-[3rem] p-8 md:p-10 text-zinc-950 dark:text-zinc-50 border-2 border-white/80 dark:border-zinc-800/40 shadow-[0_30px_60px_rgba(0,0,0,0.12)] dark:shadow-[0_30px_60px_rgba(0,0,0,0.5)] relative overflow-hidden group">
+              {/* Subtle accent glow */}
+              <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px]"></div>
+              
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                 <div className="flex items-center gap-5">
+                    <div className="w-16 h-16 bg-indigo-600/10 dark:bg-indigo-400/20 rounded-[1.75rem] flex items-center justify-center border-2 border-indigo-500/20 text-indigo-600 dark:text-indigo-400 shadow-lg">
+                       <i className="fa-solid fa-user-doctor text-2xl"></i>
+                    </div>
+                    <div>
+                       <h4 className="font-lobster text-3xl leading-none text-indigo-600 dark:text-indigo-400">Doctor's Insight</h4>
+                       <p className="text-[10px] font-black uppercase tracking-[0.25em] opacity-60 mt-2">Verified advice from {latestNote.doctorName}</p>
+                    </div>
+                 </div>
+
+                 <button 
+                  onClick={() => onDeleteNote?.(latestNote.id)}
+                  className="flex items-center gap-3 px-6 py-3.5 rounded-2xl bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl hover:bg-rose-600 dark:hover:bg-rose-500 hover:text-white dark:hover:text-white transition-all active:scale-95 border-2 border-white/10"
+                 >
+                    <i className="fa-solid fa-trash-can"></i>
+                    Permanently Delete Note
+                 </button>
+              </div>
+
+              <div className="mt-8 relative z-10">
+                 <div className="bg-white/50 dark:bg-black/20 backdrop-blur-md p-8 rounded-[2.5rem] border-2 border-white dark:border-zinc-800/50 shadow-inner group-hover:border-indigo-500/20 transition-colors duration-500">
+                    <p className="text-[17px] md:text-[19px] font-bold leading-relaxed italic text-zinc-900 dark:text-zinc-100">
+                       "{latestNote.content}"
+                    </p>
+                    <div className="flex items-center gap-2 mt-6 pt-6 border-t border-zinc-200/50 dark:border-zinc-800/50">
+                       <i className="fa-solid fa-calendar-check text-xs opacity-40"></i>
+                       <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Synchronized on {new Date(latestNote.date).toLocaleDateString()}</span>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </section>
+      )}
+
+      {/* Modals placed at end of container */}
       {showLogModal && !readOnly && (
         <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center p-0 md:p-6 bg-black/30 animate-in fade-in" onClick={() => setShowLogModal(false)}>
            <div className="bg-white/95 dark:bg-zinc-900/90 backdrop-blur-3xl backdrop-saturate-150 w-full max-w-sm rounded-t-[3rem] md:rounded-[3rem] p-8 shadow-2xl animate-in slide-in-from-bottom-10 border border-white dark:border-zinc-800/40" onClick={e => e.stopPropagation()}>
@@ -223,55 +322,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       )}
 
-      {/* Routine & Checklist */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        <section className="space-y-6">
-          <div className="flex items-center justify-between px-2">
-            <h3 className="text-2xl md:text-3xl font-lobster text-zinc-900 dark:text-zinc-50">Daily Routine</h3>
-            {!readOnly && (
-              <button 
-                onClick={() => setShowAddRoutine(!showAddRoutine)}
-                className="w-12 h-12 rounded-xl bg-orange-500 text-white flex items-center justify-center hover:scale-110 shadow-lg active:rotate-12 transition-all"
-              >
-                <i className={`fa-solid ${showAddRoutine ? 'fa-xmark' : 'fa-plus'} text-lg`}></i>
-              </button>
-            )}
-          </div>
-          <div className="space-y-4">
-            {routine.map((item, idx) => (
-              <div key={item.id} className="animate-in slide-in-from-left-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
-                <div 
-                  onClick={() => toggleRoutine(item.id)}
-                  className={`flex items-center gap-4 md:gap-6 p-5 md:p-6 rounded-[2rem] border-2 transition-all duration-300 group ${item.completed ? 'bg-zinc-50/50 dark:bg-zinc-900/50 border-transparent opacity-60' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 shadow-lg'} ${!readOnly ? 'cursor-pointer' : 'cursor-default'}`}
-                >
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform ${item.category === 'Food' ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                    <i className={`fa-solid ${item.category === 'Food' ? 'fa-bowl-food' : 'fa-dog'}`}></i>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">{item.time}</p>
-                    <h4 className={`text-lg font-bold ${item.completed ? 'line-through text-zinc-400' : 'text-zinc-900 dark:text-zinc-100'}`}>{item.title}</h4>
-                  </div>
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all border-4 ${item.completed ? 'bg-emerald-500 border-white text-white rotate-[360deg]' : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 text-transparent'}`}>
-                    <i className="fa-solid fa-check text-sm"></i>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="space-y-6">
-          <h3 className="text-2xl md:text-3xl font-lobster text-zinc-900 dark:text-zinc-50 px-2">Quick Checks</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <CheckTile active={checklist.food} icon="bowl-food" label="Full Tummy" onClick={() => toggleCheck('food')} color="orange" readOnly={readOnly} />
-            <CheckTile active={checklist.water} icon="faucet-drip" label="Hydrated" onClick={() => toggleCheck('water')} color="blue" readOnly={readOnly} />
-            <CheckTile active={checklist.walk} icon="dog" label="Adventures" onClick={() => toggleCheck('walk')} color="emerald" readOnly={readOnly} />
-            <CheckTile active={checklist.medication} icon="pills" label="Healthy Meds" onClick={() => toggleCheck('medication')} color="purple" readOnly={readOnly} />
-          </div>
-        </section>
-      </div>
-
-      {/* Routine Creation Modal */}
       {showAddRoutine && !readOnly && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/30 animate-in fade-in">
           <div className="bg-white/95 dark:bg-zinc-900/90 backdrop-blur-3xl border border-white dark:border-zinc-800 w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 space-y-6">
@@ -293,36 +343,6 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
       )}
-
-      {/* Upcoming Reminders */}
-      <section className="space-y-6 pb-20">
-        <h3 className="text-2xl md:text-3xl font-lobster text-zinc-900 dark:text-zinc-50 px-2">Coming Up</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {reminders.filter(r => !r.completed).slice(0, 4).map((reminder, idx) => (
-            <div 
-              key={reminder.id} 
-              className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-5 rounded-[2rem] shadow-sm flex items-center gap-4 hover:border-orange-200 dark:hover:border-orange-500/50 hover:shadow-[0_10px_30px_rgba(249,115,22,0.15)] transition-all group animate-in slide-in-from-bottom-5"
-              style={{ animationDelay: `${idx * 150}ms` }}
-            >
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-transform group-hover:scale-110 ${reminder.type === 'Vaccination' ? 'bg-orange-50 text-orange-600 dark:bg-orange-950/40' : 'bg-purple-50 text-purple-600 dark:bg-purple-950/40'}`}>
-                <i className={`fa-solid ${reminder.type === 'Vaccination' ? 'fa-syringe' : 'fa-pills'}`}></i>
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-zinc-900 dark:text-zinc-50 truncate">{reminder.title}</h4>
-                <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-widest mt-1">{new Date(reminder.date).toLocaleDateString()}</p>
-              </div>
-              {!readOnly && (
-                <button 
-                  onClick={() => onCompleteReminder(reminder.id)}
-                  className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 px-3 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest border border-zinc-200 dark:border-zinc-700 hover:bg-orange-500 hover:text-white hover:shadow-[0_0_15px_rgba(249,115,22,0.6)] transition-all active:scale-90"
-                >
-                  Done
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
     </div>
   );
 };

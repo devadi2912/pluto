@@ -128,6 +128,10 @@ const App: React.FC = () => {
     setDoctorNotes(prev => [note, ...prev]);
   };
 
+  const handleDeleteDoctorNote = (id: string) => {
+    setDoctorNotes(prev => prev.filter(n => n.id !== id));
+  };
+
   const handleCompleteReminder = (id: string) => {
     const reminder = reminders.find(r => r.id === id);
     if (reminder) {
@@ -198,7 +202,7 @@ const App: React.FC = () => {
 
     switch (activeTab) {
       case 'dashboard': 
-        return <Dashboard pet={pet} reminders={reminders} checklist={checklist} setChecklist={setChecklist} routine={routine} setRoutine={setRoutine} onCompleteReminder={handleCompleteReminder} timeline={timeline} dailyLogs={dailyLogs} onUpdateLog={handleUpdateDailyLog} doctorNotes={doctorNotes} />;
+        return <Dashboard pet={pet} reminders={reminders} checklist={checklist} setChecklist={setChecklist} routine={routine} setRoutine={setRoutine} onCompleteReminder={handleCompleteReminder} timeline={timeline} dailyLogs={dailyLogs} onUpdateLog={handleUpdateDailyLog} doctorNotes={doctorNotes} onDeleteNote={handleDeleteDoctorNote} />;
       case 'profile': 
         return <ProfileScreen pet={pet} setPet={setPet} reminders={reminders} onNavigate={setActiveTab} />;
       case 'timeline': 
@@ -264,7 +268,7 @@ const App: React.FC = () => {
         </nav>
 
         <div className="pt-8 border-t border-zinc-200 dark:border-zinc-800 flex flex-col gap-3 mt-8">
-          {/* Back to Clinic Button for Doctors in Patient View */}
+          {/* Back to Practice Button for Doctors in Patient View */}
           {user.role === 'DOCTOR' && doctorIsViewingPatient && (
             <button 
               onClick={() => setDoctorIsViewingPatient(false)}

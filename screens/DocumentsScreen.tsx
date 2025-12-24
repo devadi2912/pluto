@@ -50,22 +50,30 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
   const handleShare = async () => {
     if (!selectedDoc) return;
     
-    setShareStatus('Generating Link...');
+    setShareStatus('Syncing Link...');
     
-    if (navigator.share) {
-      try {
+    // Create a shareable message
+    const shareText = `Medical Record for ${petName || 'Pet'}: ${selectedDoc.name} (${selectedDoc.type})`;
+    const shareUrl = window.location.href;
+
+    try {
+      if (navigator.share) {
         await navigator.share({
-          title: `Pluto Medical Record: ${selectedDoc.name}`,
-          text: `Secure access to ${petName || 'Pet'}'s medical data.`,
-          url: window.location.href,
+          title: 'Pluto Pet Records',
+          text: shareText,
+          url: shareUrl,
         });
-        setShareStatus(null);
-      } catch (err) {
+        setShareStatus('Shared!');
+        setTimeout(() => setShareStatus(null), 2000);
+      } else {
+        // Fallback to clipboard
+        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
         setShareStatus('Link Copied!');
         setTimeout(() => setShareStatus(null), 2000);
       }
-    } else {
-      setShareStatus('Link Copied!');
+    } catch (err) {
+      console.error("Share failed", err);
+      setShareStatus('Failed to Share');
       setTimeout(() => setShareStatus(null), 2000);
     }
   };
@@ -102,7 +110,9 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
     if (window.confirm('Are you sure you want to delete this document permanently?')) {
       const updatedDocs = documents.filter(d => d.id !== id);
       setDocuments(updatedDocs);
-      if (selectedDoc?.id === id) setSelectedDoc(null);
+      setSelectedDoc(null);
+      setIsEditing(false);
+      setIsDeleteMode(false);
     }
   };
 
@@ -374,12 +384,12 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
                 <button 
                   onClick={handleShare}
                   className={`flex items-center justify-center gap-3 py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] transition-all border-2 active:scale-95 shadow-xl ${
-                    shareStatus 
+                    shareStatus?.includes('Shared') || shareStatus?.includes('Copied')
                       ? 'bg-emerald-500 text-white border-emerald-500' 
                       : 'bg-white/50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-200 border-zinc-100 dark:border-zinc-800 hover:border-orange-500'
                   }`}
                 >
-                  <i className={`fa-solid ${shareStatus ? 'fa-check' : 'fa-share-nodes'}`}></i>
+                  <i className={`fa-solid ${shareStatus?.includes('Shared') || shareStatus?.includes('Copied') ? 'fa-check' : 'fa-share-nodes'}`}></i>
                   {shareStatus || 'Share'}
                 </button>
                 <button 
