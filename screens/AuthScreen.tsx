@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { UserRole, AuthUser } from '../types';
-import { supabase } from '../lib/supabase';
 
 interface AuthScreenProps {
   onLogin: (user: AuthUser) => void;
@@ -11,50 +10,41 @@ interface AuthScreenProps {
 
 const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, darkMode, setDarkMode }) => {
   const [role, setRole] = useState<UserRole>('PET_OWNER');
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isSigningUp, setIsSigningUp] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const handleAuth = async () => {
-    if (!email.trim() || !password.trim()) {
-      setError("Please fill in all fields.");
-      return;
-    }
-    
-    setIsLoading(true);
-    setError(null);
+  const handleLogin = () => {
+    if (!username.trim()) return;
 
-    try {
-      if (isSigningUp) {
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        alert("Verification email sent! Check your inbox.");
-      } else {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+    const mockId = Math.random().toString(36).substr(2, 9).toUpperCase();
+    const newUser: AuthUser = {
+      id: `USR-${mockId}`,
+      username,
+      role,
+      petId: role === 'PET_OWNER' ? `PET-LUNA-123` : undefined,
+      doctorDetails: role === 'DOCTOR' ? {
+        id: `DOC-${mockId}`,
+        name: `Dr. ${username}`,
+        specialization: 'General Veterinary',
+        qualification: 'DVM, M.Sc Animal Health',
+        registrationId: `VET-ID-${mockId.substr(0,5)}`,
+        experience: '10+ Years',
+        clinic: 'Pluto Animal Hospital',
+        address: '77 Galaxy Square, Pet City, PC 10101',
+        contact: '+1 (555) 123-4567',
+        emergencyContact: '+1 (800) 999-HELP',
+        consultationHours: '09:00 - 17:00 (Mon-Fri)',
+        medicalFocus: 'Canine Geriatrics & Nutrition'
+      } : undefined
+    };
 
-        if (data.user) {
-          const authUser: AuthUser = {
-            id: data.user.id,
-            username: email.split('@')[0],
-            role,
-            petId: role === 'PET_OWNER' ? `PET-LUNA-123` : undefined // Mocked pet link for MVP
-          };
-          onLogin(authUser);
-        }
-      }
-    } catch (err: any) {
-      setError(err.message || "An authentication error occurred.");
-    } finally {
-      setIsLoading(false);
-    }
+    onLogin(newUser);
   };
 
   return (
     <div className="flex-1 flex flex-col justify-center p-8 bg-[#FFFAF3] dark:bg-zinc-950 min-h-screen animate-in fade-in duration-700 relative">
+      {/* Top Bar for Theme Toggle */}
       <div className="absolute top-6 right-6">
         <button 
           onClick={() => setDarkMode(!darkMode)}
@@ -97,15 +87,14 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, darkMode, setDarkMode 
         </div>
 
         <div className="space-y-6">
-          {error && <p className="text-rose-500 text-[10px] font-black uppercase text-center">{error}</p>}
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-widest ml-1">Email Address</label>
+            <label className="text-[10px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-widest ml-1">Username</label>
             <input 
-              type="email" 
-              placeholder="luna@paws.com"
+              type="text" 
+              placeholder="e.g. LunaLover99"
               className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-transparent focus:border-orange-200 outline-none rounded-2xl font-bold text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
+              value={username}
+              onChange={e => setUsername(e.target.value)}
             />
           </div>
           <div className="space-y-2">
@@ -122,6 +111,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, darkMode, setDarkMode 
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-xl text-zinc-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'} text-lg`}></i>
               </button>
@@ -130,23 +120,15 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, darkMode, setDarkMode 
         </div>
 
         <button 
-          onClick={handleAuth}
-          disabled={isLoading}
-          className="w-full bg-gradient-to-r from-orange-500 to-rose-600 text-white font-black py-5 rounded-[2rem] shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-[0.2em] disabled:opacity-50"
+          onClick={handleLogin}
+          className="w-full bg-gradient-to-r from-orange-500 to-rose-600 text-white font-black py-5 rounded-[2rem] shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-[0.2em]"
         >
-          {isLoading ? <i className="fa-solid fa-spinner fa-spin"></i> : (isSigningUp ? 'Join the Pack' : 'Enter Pluto')}
-        </button>
-        
-        <button 
-          onClick={() => setIsSigningUp(!isSigningUp)}
-          className="w-full text-center text-[10px] font-black uppercase text-zinc-400 hover:text-orange-500 transition-colors"
-        >
-          {isSigningUp ? 'Already a member? Sign In' : 'New here? Create Account'}
+          Enter Pluto
         </button>
       </div>
 
       <p className="mt-8 text-center text-zinc-500 dark:text-zinc-500 text-[10px] font-black uppercase tracking-widest">
-        Securely powered by Supabase & Gemini AI
+        By continuing you agree to Pluto's terms
       </p>
     </div>
   );

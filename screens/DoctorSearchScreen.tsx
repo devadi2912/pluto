@@ -1,55 +1,28 @@
 
-import React, { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import React from 'react';
 
 interface DoctorSearchScreenProps {
   searchId: string;
   setSearchId: (id: string) => void;
-  handleSearch: (petId?: string) => void;
+  handleSearch: () => void;
 }
 
 const DoctorSearchScreen: React.FC<DoctorSearchScreenProps> = ({ searchId, setSearchId, handleSearch }) => {
-  const [isSearching, setIsSearching] = useState(false);
-
-  const performSearch = async () => {
-    if (!searchId.trim()) return;
-    setIsSearching(true);
-    
-    try {
-      const { data, error } = await supabase
-        .from('pets')
-        .select('id')
-        .eq('id', searchId.toUpperCase())
-        .single();
-
-      if (error || !data) {
-        alert("Patient not found. Ensure the ID is correct.");
-      } else {
-        handleSearch(data.id);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       <section className="space-y-6">
         <h3 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50 px-2">Patient Lookup</h3>
         <div className="bg-zinc-900 dark:bg-zinc-800 rounded-[3rem] p-8 text-white shadow-2xl relative overflow-hidden border-4 border-zinc-800 dark:border-zinc-700">
+          {/* Animated Background Elements */}
           <div className="absolute -right-10 -top-10 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute -left-10 -bottom-10 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl animate-pulse delay-700"></div>
           
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-6">
                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center border border-white/20">
-                  <i className={`fa-solid ${isSearching ? 'fa-spinner fa-spin text-orange-400' : 'fa-dna text-emerald-400'} text-xs`}></i>
+                  <i className="fa-solid fa-dna text-emerald-400 text-xs"></i>
                </div>
-               <p className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400">
-                 {isSearching ? 'Searching Database...' : 'Scanner Ready'}
-               </p>
+               <p className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400">Scanner Ready</p>
             </div>
             
             <div className="flex gap-3">
@@ -60,19 +33,18 @@ const DoctorSearchScreen: React.FC<DoctorSearchScreenProps> = ({ searchId, setSe
                   className="w-full p-5 rounded-2xl bg-white/5 border-2 border-white/10 outline-none font-bold text-white placeholder:text-zinc-600 focus:border-emerald-500/50 focus:bg-white/10 transition-all uppercase tracking-wider shadow-inner"
                   value={searchId}
                   onChange={e => setSearchId(e.target.value)}
-                  onKeyPress={e => e.key === 'Enter' && performSearch()}
+                  onKeyPress={e => e.key === 'Enter' && handleSearch()}
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[8px] font-black text-zinc-600 uppercase tracking-widest hidden group-focus-within:block">
                   Press Enter
                 </div>
               </div>
               <button 
-                onClick={performSearch}
-                disabled={isSearching}
+                onClick={handleSearch}
                 className="w-16 h-16 bg-white text-zinc-900 rounded-2xl flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all group overflow-hidden relative"
               >
                 <div className="absolute inset-0 bg-emerald-500 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                <i className={`fa-solid ${isSearching ? 'fa-spinner fa-spin' : 'fa-magnifying-glass'} text-xl relative z-10 group-hover:text-white transition-colors`}></i>
+                <i className="fa-solid fa-magnifying-glass text-xl relative z-10 group-hover:text-white transition-colors"></i>
               </button>
             </div>
             

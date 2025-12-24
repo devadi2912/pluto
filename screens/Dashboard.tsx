@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { PetProfile, Reminder, DailyChecklist, RoutineItem, TimelineEntry, DailyLog } from '../types';
+import { PetProfile, Reminder, DailyChecklist, RoutineItem, TimelineEntry, DailyLog, DoctorNote } from '../types';
 import { HealthTrends } from '../components/HealthTrends';
 
 interface DashboardProps {
@@ -14,6 +14,7 @@ interface DashboardProps {
   timeline: TimelineEntry[];
   dailyLogs: Record<string, DailyLog>;
   onUpdateLog: (date: string, data: Partial<DailyLog>) => void;
+  doctorNotes?: DoctorNote[];
   readOnly?: boolean;
 }
 
@@ -28,6 +29,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   timeline,
   dailyLogs,
   onUpdateLog,
+  doctorNotes = [],
   readOnly = false
 }) => {
   const [showAddRoutine, setShowAddRoutine] = useState(false);
@@ -43,6 +45,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   const currentLogData = useMemo(() => {
     return dailyLogs[today] || { activityMinutes: 0, moodRating: 3, feedingCount: 0 };
   }, [today, dailyLogs]);
+
+  const latestNote = useMemo(() => {
+    return doctorNotes.find(note => note.petId === pet.id);
+  }, [doctorNotes, pet.id]);
 
   const toggleCheck = (key: keyof Omit<DailyChecklist, 'lastReset'>) => {
     if (readOnly) return;
@@ -74,7 +80,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="p-5 md:p-10 space-y-10 animate-in fade-in duration-700 pb-44 no-scrollbar">
-      {/* Hero Card - Removed Log Update Button */}
+      {/* Hero Card */}
       <section className="bg-zinc-950 rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl relative overflow-hidden group border border-zinc-800">
         <div className="absolute -right-10 -top-10 w-96 h-96 bg-orange-500/10 rounded-full blur-[100px] transition-transform duration-1000 group-hover:scale-110"></div>
         
@@ -82,7 +88,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-center gap-6">
             <div className="relative group/avatar cursor-pointer">
               <img src={pet.avatar} className="w-16 h-16 md:w-20 md:h-20 rounded-[1.75rem] border-4 border-white/10 shadow-2xl group-hover/avatar:rotate-6 transition-transform duration-500" alt="Pet" />
-              <div className="absolute -top-1.5 -right-1.5 w-7 h-7 bg-orange-500 rounded-lg flex items-center justify-center text-white shadow-[0_0_15px_rgba(249,115,22,0.6)] animate-bounce">
+              <div className="absolute -top-1.5 -right-1.5 w-7 h-7 bg-orange-50 rounded-lg flex items-center justify-center text-white shadow-[0_0_15px_rgba(249,115,22,0.6)] animate-bounce">
                 <i className="fa-solid fa-bolt text-[10px]"></i>
               </div>
             </div>
@@ -107,6 +113,29 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </section>
 
+      {/* Doctor's Note Section - Shown only to Pet Owner after a visit */}
+      {latestNote && !readOnly && (
+        <section className="animate-in slide-in-from-top-4 duration-700">
+           <div className="bg-indigo-600 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden group border-4 border-indigo-500/30">
+              <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
+              <div className="relative z-10 space-y-4">
+                 <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
+                       <i className="fa-solid fa-user-md text-xl"></i>
+                    </div>
+                    <div>
+                       <h4 className="font-lobster text-2xl leading-tight">Doctor's Advice</h4>
+                       <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60">From {latestNote.doctorName} • {new Date(latestNote.date).toLocaleDateString()}</p>
+                    </div>
+                 </div>
+                 <div className="bg-white/10 backdrop-blur-sm p-5 rounded-2xl border border-white/10 italic font-medium text-[15px] leading-relaxed">
+                    "{latestNote.content}"
+                 </div>
+              </div>
+           </div>
+        </section>
+      )}
+
       {/* Daily Vitals Sparkline */}
       <section className="space-y-4">
         <div className="flex items-center justify-between px-2">
@@ -123,7 +152,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         <HealthTrends petName={pet.name} dailyLogs={dailyLogs} color="orange" />
       </section>
 
-      {/* Daily Update Modal - Improved Text Visibility */}
+      {/* Daily Update Modal */}
       {showLogModal && !readOnly && (
         <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center p-0 md:p-6 bg-black/30 animate-in fade-in" onClick={() => setShowLogModal(false)}>
            <div className="bg-white/95 dark:bg-zinc-900/90 backdrop-blur-3xl backdrop-saturate-150 w-full max-w-sm rounded-t-[3rem] md:rounded-[3rem] p-8 shadow-2xl animate-in slide-in-from-bottom-10 border border-white dark:border-zinc-800/40" onClick={e => e.stopPropagation()}>
@@ -242,7 +271,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </section>
       </div>
 
-      {/* Routine Creation Modal - Improved Contrast */}
+      {/* Routine Creation Modal */}
       {showAddRoutine && !readOnly && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/30 animate-in fade-in">
           <div className="bg-white/95 dark:bg-zinc-900/90 backdrop-blur-3xl border border-white dark:border-zinc-800 w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 space-y-6">
@@ -313,13 +342,6 @@ const CheckTile: React.FC<{
     blue: 'bg-blue-500',
     emerald: 'bg-emerald-500',
     purple: 'bg-purple-500',
-  };
-
-  const activeLabelMap: any = {
-    orange: 'text-white',
-    blue: 'text-white',
-    emerald: 'text-white',
-    purple: 'text-white',
   };
 
   return (

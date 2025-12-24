@@ -12,7 +12,7 @@ import {
   RoutineItem,
   AuthUser,
   DailyLog,
-  Doctor
+  DoctorNote
 } from './types';
 import Dashboard from './screens/Dashboard';
 import ProfileScreen from './screens/ProfileScreen';
@@ -22,8 +22,8 @@ import AIScreen from './screens/AIScreen';
 import AuthScreen from './screens/AuthScreen';
 import DoctorDashboard from './screens/DoctorDashboard';
 import { NavButton } from './components/NavButton';
-import { supabase } from './lib/supabase';
 
+// Define a type for navigation items to ensure type safety across different user roles
 interface NavItem {
   id: string;
   icon: string;
@@ -32,25 +32,74 @@ interface NavItem {
   isAction?: boolean;
 }
 
+const MOCK_PET: PetProfile = {
+  id: 'PET-LUNA-123',
+  name: 'Luna',
+  species: Species.Dog,
+  breed: 'Golden Retriever',
+  dateOfBirth: '2021-06-15',
+  gender: Gender.Female,
+  avatar: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=400&h=400',
+  weight: '28'
+};
+
+const MOCK_TIMELINE: TimelineEntry[] = [
+  { id: '1', date: '2023-11-20', type: EntryType.VetVisit, title: 'Annual Checkup', notes: 'All clear, Luna is healthy!' },
+  { id: '2', date: '2023-11-20', type: EntryType.Vaccination, title: 'Rabies Booster' },
+  { id: '3', date: '2024-01-05', type: EntryType.Medication, title: 'Heartworm Prevention', notes: 'Monthly dose administered' }
+];
+
+const MOCK_DOCUMENTS: PetDocument[] = [
+  { id: 'doc1', name: 'Annual Report 2023', type: 'Report', date: '2023-11-20', fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileSize: '1.2 MB' },
+  { id: 'doc2', name: 'Heartworm Prescription', type: 'Prescription', date: '2024-01-05', fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileSize: '450 KB' }
+];
+
+const MOCK_REMINDERS: Reminder[] = [
+  { id: 'rem1', title: 'Heartworm Dose', date: '2024-02-05', type: 'Medication', completed: false },
+  { id: 'rem2', title: 'Rabies Booster', date: '2024-11-20', type: 'Vaccination', completed: false }
+];
+
+const MOCK_CHECKLIST: DailyChecklist = {
+  food: false,
+  water: true,
+  walk: false,
+  medication: false,
+  lastReset: new Date().toISOString()
+};
+
+const MOCK_ROUTINE: RoutineItem[] = [
+  { id: 'r1', title: 'Morning Walk', time: '07:30', completed: false, category: 'Walk' },
+  { id: 'r2', title: 'Breakfast', time: '08:30', completed: true, category: 'Food' },
+  { id: 'r3', title: 'Play Time', time: '17:30', completed: false, category: 'Play' }
+];
+
+const INITIAL_LOGS: Record<string, DailyLog> = {
+  [new Date(Date.now() - 6 * 86400000).toISOString().split('T')[0]]: { activityMinutes: 45, moodRating: 4, feedingCount: 2 },
+  [new Date(Date.now() - 5 * 86400000).toISOString().split('T')[0]]: { activityMinutes: 60, moodRating: 5, feedingCount: 2 },
+  [new Date(Date.now() - 4 * 86400000).toISOString().split('T')[0]]: { activityMinutes: 30, moodRating: 3, feedingCount: 1 },
+  [new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0]]: { activityMinutes: 90, moodRating: 5, feedingCount: 3 },
+  [new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0]]: { activityMinutes: 70, moodRating: 4, feedingCount: 2 },
+  [new Date(Date.now() - 1 * 86400000).toISOString().split('T')[0]]: { activityMinutes: 85, moodRating: 5, feedingCount: 2 },
+};
+
 const App: React.FC = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [pet, setPet] = useState<PetProfile | null>(null);
-  const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
-  const [documents, setDocuments] = useState<PetDocument[]>([]);
-  const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [checklist, setChecklist] = useState<DailyChecklist>({ food: false, water: false, walk: false, medication: false, lastReset: new Date().toISOString() });
-  const [routine, setRoutine] = useState<RoutineItem[]>([]);
-  const [dailyLogs, setDailyLogs] = useState<Record<string, DailyLog>>({});
+  const [pet, setPet] = useState<PetProfile>(MOCK_PET);
+  const [timeline, setTimeline] = useState<TimelineEntry[]>(MOCK_TIMELINE);
+  const [documents, setDocuments] = useState<PetDocument[]>(MOCK_DOCUMENTS);
+  const [reminders, setReminders] = useState<Reminder[]>(MOCK_REMINDERS);
+  const [checklist, setChecklist] = useState<DailyChecklist>(MOCK_CHECKLIST);
+  const [routine, setRoutine] = useState<RoutineItem[]>(MOCK_ROUTINE);
+  const [dailyLogs, setDailyLogs] = useState<Record<string, DailyLog>>(INITIAL_LOGS);
+  const [doctorNotes, setDoctorNotes] = useState<DoctorNote[]>([]);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'profile' | 'timeline' | 'documents' | 'ai'>('dashboard');
   const [darkMode, setDarkMode] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   
   // Doctor specific navigation states
   const [doctorActiveTab, setDoctorActiveTab] = useState<'profile' | 'discover' | 'patients'>('discover');
   const [doctorIsViewingPatient, setDoctorIsViewingPatient] = useState(false);
   const [patientSubTab, setPatientSubTab] = useState<'profile' | 'timeline' | 'docs' | 'identity'>('profile');
 
-  // Handle Dark Mode
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -59,136 +108,27 @@ const App: React.FC = () => {
     }
   }, [darkMode]);
 
-  // Load Initial Data and Listen to Auth Changes
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        syncUserProfile(session.user.id);
-      } else {
-        setUser(null);
-        setPet(null);
-        setIsLoading(false);
+  const handleLogin = (authUser: AuthUser) => setUser(authUser);
+  const handleLogout = () => {
+    setUser(null);
+    setDoctorIsViewingPatient(false);
+  };
+
+  const handleUpdateDailyLog = (date: string, data: Partial<DailyLog>) => {
+    setDailyLogs(prev => ({
+      ...prev,
+      [date]: {
+        ...(prev[date] || { activityMinutes: 0, moodRating: 3, feedingCount: 0 }),
+        ...data
       }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const syncUserProfile = async (userId: string) => {
-    setIsLoading(true);
-    try {
-      // 1. Fetch Profile
-      const { data: profile, error: profileErr } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (profileErr) throw profileErr;
-
-      let authUser: AuthUser = {
-        id: profile.id,
-        username: profile.username,
-        role: profile.role,
-      };
-
-      // 2. Fetch Extra Details based on role
-      if (profile.role === 'DOCTOR') {
-        const { data: doctorDetails } = await supabase
-          .from('doctors')
-          .select('*')
-          .eq('id', userId)
-          .single();
-        if (doctorDetails) authUser.doctorDetails = doctorDetails as Doctor;
-      }
-
-      setUser(authUser);
-
-      // 3. Fetch Pet Data if Pet Owner
-      if (profile.role === 'PET_OWNER') {
-        await fetchPetData(userId);
-      }
-    } catch (err) {
-      console.error("Sync Error:", err);
-    } finally {
-      setIsLoading(false);
-    }
+    }));
   };
 
-  const fetchPetData = async (userId: string) => {
-    // Fetch Pet associated with owner
-    const { data: pets } = await supabase
-      .from('pets')
-      .select('*')
-      .eq('ownerId', userId);
-
-    if (pets && pets.length > 0) {
-      const activePet = pets[0];
-      setPet(activePet);
-
-      // Fetch Timeline
-      const { data: timelineData } = await supabase
-        .from('timeline')
-        .select('*')
-        .eq('petId', activePet.id)
-        .order('date', { ascending: false });
-      if (timelineData) setTimeline(timelineData);
-
-      // Fetch Documents
-      const { data: docData } = await supabase
-        .from('documents')
-        .select('*')
-        .eq('petId', activePet.id)
-        .order('date', { ascending: false });
-      if (docData) setDocuments(docData);
-
-      // Fetch Reminders
-      const { data: remData } = await supabase
-        .from('reminders')
-        .select('*')
-        .eq('petId', activePet.id)
-        .order('date', { ascending: true });
-      if (remData) setReminders(remData);
-
-      // Fetch Logs
-      const { data: logData } = await supabase
-        .from('daily_logs')
-        .select('*')
-        .eq('petId', activePet.id);
-      if (logData) {
-        const logMap: Record<string, DailyLog> = {};
-        logData.forEach(l => {
-          logMap[l.date] = l;
-        });
-        setDailyLogs(logMap);
-      }
-    }
+  const handleAddDoctorNote = (note: DoctorNote) => {
+    setDoctorNotes(prev => [note, ...prev]);
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-  };
-
-  const updatePet = async (updatedPet: PetProfile) => {
-    setPet(updatedPet);
-    await supabase.from('pets').upsert(updatedPet);
-  };
-
-  const handleUpdateDailyLog = async (date: string, data: Partial<DailyLog>) => {
-    if (!pet) return;
-    const updatedLog = {
-      ...(dailyLogs[date] || { activityMinutes: 0, moodRating: 3, feedingCount: 0 }),
-      ...data,
-      date,
-      petId: pet.id
-    };
-    
-    setDailyLogs(prev => ({ ...prev, [date]: updatedLog }));
-    await supabase.from('daily_logs').upsert(updatedLog);
-  };
-
-  const handleCompleteReminder = async (id: string) => {
-    if (!pet) return;
+  const handleCompleteReminder = (id: string) => {
     const reminder = reminders.find(r => r.id === id);
     if (reminder) {
       let entryType = EntryType.Note;
@@ -197,39 +137,20 @@ const App: React.FC = () => {
       else if (reminder.type === 'Vet follow-up') entryType = EntryType.VetVisit;
 
       const newEntry: TimelineEntry = {
-        id: crypto.randomUUID(),
+        id: `auto-${Date.now()}`,
         date: new Date().toISOString().split('T')[0],
         type: entryType,
         title: `${reminder.title}`,
-        notes: `Completed scheduled ${reminder.type.toLowerCase()} task.`,
-        petId: pet.id
+        notes: `Completed scheduled ${reminder.type.toLowerCase()} task.`
       };
 
       setTimeline(prev => [newEntry, ...prev]);
-      await supabase.from('timeline').insert(newEntry);
     }
     setReminders(prev => prev.map(r => r.id === id ? { ...r, completed: true } : r));
-    await supabase.from('reminders').update({ completed: true }).eq('id', id);
   };
 
-  if (isLoading) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center bg-[#FFFAF3] dark:bg-zinc-950">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="font-lobster text-2xl text-orange-500 animate-pulse">Waking up Pluto...</p>
-        </div>
-      </div>
-    );
-  }
-
   if (!user) {
-    return <AuthScreen onLogin={() => {}} darkMode={darkMode} setDarkMode={setDarkMode} />;
-  }
-
-  // Handle case where user is logged in but has no pet yet
-  if (user.role === 'PET_OWNER' && !pet) {
-     return <ProfileScreen pet={{ id: '', name: 'New Pet', species: Species.Dog, breed: '', dateOfBirth: new Date().toISOString().split('T')[0], gender: Gender.Unknown }} setPet={updatePet} reminders={[]} onNavigate={() => {}} />;
+    return <AuthScreen onLogin={handleLogin} darkMode={darkMode} setDarkMode={setDarkMode} />;
   }
 
   // Navigation Items
@@ -238,14 +159,14 @@ const App: React.FC = () => {
     { id: 'timeline', icon: 'calendar-days', label: 'Journal', color: 'emerald' },
     { id: 'ai', icon: 'wand-magic-sparkles', label: 'AI', color: 'orange', isAction: true },
     { id: 'documents', icon: 'folder-open', label: 'Files', color: 'amber' },
-    { id: 'profile', icon: 'paw', label: pet?.name || 'Pet', color: 'rose' },
+    { id: 'profile', icon: 'paw', label: pet.name, color: 'rose' },
   ];
 
   const doctorPatientNavItems: NavItem[] = [
     { id: 'profile', icon: 'house', label: 'Home', color: 'orange' },
     { id: 'timeline', icon: 'calendar-days', label: 'Journal', color: 'emerald' },
     { id: 'docs', icon: 'folder-open', label: 'Files', color: 'amber' },
-    { id: 'identity', icon: 'paw', label: pet?.name || 'Patient', color: 'rose' },
+    { id: 'identity', icon: 'paw', label: pet.name, color: 'rose' },
   ];
 
   const doctorNavItems: NavItem[] = [
@@ -259,8 +180,10 @@ const App: React.FC = () => {
       return (
         <DoctorDashboard 
           doctor={user} 
-          petData={{ pet: pet!, timeline, documents, checklist, routine, reminders }}
+          petData={{ pet, timeline, documents, checklist, routine, reminders }}
           dailyLogs={dailyLogs}
+          doctorNotes={doctorNotes}
+          onAddNote={handleAddDoctorNote}
           darkMode={darkMode}
           setDarkMode={setDarkMode}
           activeTab={doctorActiveTab}
@@ -275,15 +198,15 @@ const App: React.FC = () => {
 
     switch (activeTab) {
       case 'dashboard': 
-        return <Dashboard pet={pet!} reminders={reminders} checklist={checklist} setChecklist={setChecklist} routine={routine} setRoutine={setRoutine} onCompleteReminder={handleCompleteReminder} timeline={timeline} dailyLogs={dailyLogs} onUpdateLog={handleUpdateDailyLog} />;
+        return <Dashboard pet={pet} reminders={reminders} checklist={checklist} setChecklist={setChecklist} routine={routine} setRoutine={setRoutine} onCompleteReminder={handleCompleteReminder} timeline={timeline} dailyLogs={dailyLogs} onUpdateLog={handleUpdateDailyLog} doctorNotes={doctorNotes} />;
       case 'profile': 
-        return <ProfileScreen pet={pet!} setPet={updatePet} reminders={reminders} onNavigate={setActiveTab} />;
+        return <ProfileScreen pet={pet} setPet={setPet} reminders={reminders} onNavigate={setActiveTab} />;
       case 'timeline': 
-        return <TimelineScreen timeline={timeline} setTimeline={setTimeline} documents={documents} reminders={reminders} setReminders={setReminders} dailyLogs={dailyLogs} onUpdateLog={handleUpdateDailyLog} petName={pet!.name} petId={pet!.id} />;
+        return <TimelineScreen timeline={timeline} setTimeline={setTimeline} documents={documents} reminders={reminders} setReminders={setReminders} dailyLogs={dailyLogs} onUpdateLog={handleUpdateDailyLog} petName={pet.name} />;
       case 'documents': 
-        return <DocumentsScreen documents={documents} setDocuments={setDocuments} petName={pet!.name} petId={pet!.id} />;
+        return <DocumentsScreen documents={documents} setDocuments={setDocuments} petName={pet.name} />;
       case 'ai': 
-        return <AIScreen pet={pet!} timeline={timeline} documents={documents} reminders={reminders} />;
+        return <AIScreen pet={pet} timeline={timeline} documents={documents} reminders={reminders} />;
       default: 
         return null;
     }
@@ -328,7 +251,7 @@ const App: React.FC = () => {
                     : 'text-zinc-800 dark:text-zinc-300 border-transparent hover:bg-white/50 dark:hover:bg-zinc-800/50'
                 }`}
               >
-                {(item.id === 'profile' || item.id === 'identity') && pet?.avatar ? (
+                {(item.id === 'profile' || item.id === 'identity') && pet.avatar ? (
                   <img src={pet.avatar} className={`w-5 h-5 rounded-full border-2 ${isActive ? 'border-white' : 'border-zinc-300 dark:border-zinc-700'}`} alt="avatar" />
                 ) : (
                   <i className={`fa-solid fa-${item.icon} text-sm group-hover:scale-110 transition-transform ${isActive ? 'animate-pulse' : ''}`}></i>
@@ -341,10 +264,11 @@ const App: React.FC = () => {
         </nav>
 
         <div className="pt-8 border-t border-zinc-200 dark:border-zinc-800 flex flex-col gap-3 mt-8">
+          {/* Back to Clinic Button for Doctors in Patient View */}
           {user.role === 'DOCTOR' && doctorIsViewingPatient && (
             <button 
               onClick={() => setDoctorIsViewingPatient(false)}
-              className="w-full flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl mb-2"
+              className="w-full flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl mb-2 border-4 border-white dark:border-zinc-950 shadow-[0_0_15px_rgba(255,255,255,0.2)] dark:shadow-[0_0_15px_rgba(0,0,0,0.4)]"
             >
               <i className="fa-solid fa-arrow-left-long"></i>
               Back to Practice
@@ -352,7 +276,14 @@ const App: React.FC = () => {
           )}
 
           <div className="flex gap-2">
-            <button onClick={() => setDarkMode(!darkMode)} className={`flex-1 flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl transition-all group relative overflow-hidden border-2 border-transparent ${darkMode ? 'bg-zinc-800 text-amber-300 shadow-[0_0_15px_rgba(252,211,77,0.15)]' : 'bg-orange-50 text-orange-600 shadow-[0_0_50px_rgba(30,64,175,0.8)]'}`}>
+            <button 
+              onClick={() => setDarkMode(!darkMode)} 
+              className={`flex-1 flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl transition-all group relative overflow-hidden ${
+                darkMode 
+                  ? 'bg-zinc-800 text-amber-300 shadow-[0_0_35px_rgba(251,191,36,0.3)]' 
+                  : 'bg-white text-orange-600 shadow-[0_0_35px_rgba(30,58,138,0.2)]'
+              }`}
+            >
               <i className={`fa-solid ${darkMode ? 'fa-sun text-yellow-500 animate-spin-slow' : 'fa-moon text-indigo-400 animate-bounce'} text-base`}></i>
               <span className="font-black text-[9px] uppercase tracking-widest">Theme</span>
             </button>
@@ -408,7 +339,7 @@ const App: React.FC = () => {
               label={item.label} 
               color={item.color} 
               isAction={item.isAction}
-              petAvatar={(user.role === 'PET_OWNER' || doctorIsViewingPatient) ? pet?.avatar : undefined}
+              petAvatar={(user.role === 'PET_OWNER' || doctorIsViewingPatient) ? pet.avatar : undefined}
             />
           ))}
         </nav>

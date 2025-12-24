@@ -29,7 +29,6 @@ export enum EntryType {
   Note = 'Note'
 }
 
-// Added petId to support database foreign key relationships and fix property existence errors
 export interface TimelineEntry {
   id: string;
   date: string;
@@ -37,10 +36,8 @@ export interface TimelineEntry {
   title: string;
   notes?: string;
   documentId?: string;
-  petId?: string;
 }
 
-// Added petId to support database foreign key relationships and fix property existence errors
 export interface PetDocument {
   id: string;
   name: string;
@@ -50,10 +47,8 @@ export interface PetDocument {
   fileSize: string;
   data?: string; // base64 encoded data
   mimeType?: string;
-  petId?: string;
 }
 
-// Added petId to support database foreign key relationships and fix property existence errors
 export interface Reminder {
   id: string;
   title: string;
@@ -61,7 +56,6 @@ export interface Reminder {
   type: 'Vaccination' | 'Medication' | 'Vet follow-up';
   repeat?: 'Daily' | 'Weekly' | 'Monthly' | 'Never';
   completed: boolean;
-  petId?: string;
 }
 
 export interface DailyChecklist {
@@ -98,6 +92,18 @@ export interface Doctor {
   clinic: string;
   address: string;
   contact: string;
+  emergencyContact: string;
+  consultationHours: string;
+  medicalFocus: string;
+}
+
+export interface DoctorNote {
+  id: string;
+  doctorId: string;
+  doctorName: string;
+  petId: string;
+  date: string;
+  content: string;
 }
 
 export interface AuthUser {

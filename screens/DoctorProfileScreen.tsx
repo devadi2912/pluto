@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Doctor } from '../types';
 
 interface DoctorProfileScreenProps {
@@ -89,21 +89,35 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
                        onChange={(v) => setFormData({...formData, qualification: v})}
                     />
                     <ProfileField 
-                       icon="phone" label="Clinic Contact" value={formData.contact} isEditing={isEditing} color="sky"
+                       icon="phone" label="Primary Contact" value={formData.contact} isEditing={isEditing} color="sky"
                        onChange={(v) => setFormData({...formData, contact: v})}
+                    />
+                    <ProfileField 
+                       icon="truck-medical" label="Emergency Pager" value={formData.emergencyContact} isEditing={isEditing} color="rose"
+                       onChange={(v) => setFormData({...formData, emergencyContact: v})}
+                    />
+                    <ProfileField 
+                       icon="clock" label="Consultation Hours" value={formData.consultationHours} isEditing={isEditing} color="amber"
+                       onChange={(v) => setFormData({...formData, consultationHours: v})}
                     />
                     <ProfileField 
                        icon="clinic-medical" label="Facility Primary" value={formData.clinic} isEditing={isEditing} color="emerald"
                        onChange={(v) => setFormData({...formData, clinic: v})}
                     />
                     <ProfileField 
-                       icon="location-arrow" label="Practice Base" value={formData.address} isEditing={isEditing} color="sky"
-                       onChange={(v) => setFormData({...formData, address: v})}
+                       icon="microscope" label="Medical Focus" value={formData.medicalFocus} isEditing={isEditing} color="indigo"
+                       onChange={(v) => setFormData({...formData, medicalFocus: v})}
                     />
+                    <div className="md:col-span-2">
+                       <ProfileField 
+                          icon="location-arrow" label="Practice Base" value={formData.address} isEditing={isEditing} color="sky"
+                          onChange={(v) => setFormData({...formData, address: v})}
+                       />
+                    </div>
                  </div>
               </section>
 
-              <div className="p-6 md:p-10 bg-white/20 dark:bg-zinc-800/30 rounded-[3rem] border-2 border-zinc-100 dark:border-zinc-700/50 flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-6 md:gap-8 shadow-inner transition-all hover:bg-white/30">
+              <div className="p-6 md:p-10 bg-white/20 dark:bg-zinc-800/30 rounded-[3rem] border-2 border-zinc-100 dark:border-zinc-700/50 flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-6 md:gap-8 shadow-inner transition-all hover:bg-white/40">
                  <div className="w-20 h-20 bg-white dark:bg-zinc-900 rounded-[2rem] flex items-center justify-center text-emerald-500 text-4xl shadow-xl shrink-0 transition-transform hover:scale-105">
                     <i className="fa-solid fa-vault"></i>
                  </div>
