@@ -1,4 +1,5 @@
 
+
 export enum Species {
   Dog = 'Dog',
   Cat = 'Cat',
@@ -19,7 +20,7 @@ export interface PetProfile {
   dateOfBirth: string;
   gender: Gender;
   avatar?: string;
-  weight?: string; // e.g., "25kg"
+  weight?: string; 
 }
 
 export enum EntryType {
@@ -45,7 +46,7 @@ export interface PetDocument {
   date: string;
   fileUrl: string;
   fileSize: string;
-  data?: string; // base64 encoded data
+  data?: string; 
   mimeType?: string;
 }
 
@@ -54,7 +55,6 @@ export interface Reminder {
   title: string;
   date: string;
   type: 'Vaccination' | 'Medication' | 'Vet follow-up';
-  repeat?: 'Daily' | 'Weekly' | 'Monthly' | 'Never';
   completed: boolean;
 }
 
@@ -76,20 +76,21 @@ export interface RoutineItem {
 
 export interface DailyLog {
   activityMinutes: number;
-  moodRating: number; // 1-5
+  moodRating: number; 
   feedingCount: number;
 }
 
 export type UserRole = 'PET_OWNER' | 'DOCTOR';
 
+// Added missing properties to the Doctor interface to fix TypeScript errors
 export interface Doctor {
   id: string;
   name: string;
   specialization: string;
   qualification: string;
+  clinic: string;
   registrationId: string;
   experience: string;
-  clinic: string;
   address: string;
   contact: string;
   emergencyContact: string;
@@ -110,6 +111,6 @@ export interface AuthUser {
   id: string;
   username: string;
   role: UserRole;
-  petId?: string;
   doctorDetails?: Doctor;
+  petId?: string; // Added to support usage in AuthScreen.tsx
 }
