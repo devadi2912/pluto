@@ -53,6 +53,11 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'profile' | 'timeline' | 'documents' | 'ai'>('dashboard');
   const [darkMode, setDarkMode] = useState(false);
 
+  // Doctor Dashboard State
+  const [doctorTab, setDoctorTab] = useState<'profile' | 'discover' | 'patients'>('discover');
+  const [doctorViewingPatient, setDoctorViewingPatient] = useState(false);
+  const [doctorPatientSubTab, setDoctorPatientSubTab] = useState<'profile' | 'timeline' | 'docs' | 'identity'>('profile');
+
   // GLOBAL THEME SYNC
   useEffect(() => {
     if (darkMode) {
@@ -71,8 +76,10 @@ const App: React.FC = () => {
         { id: '2', date: '2024-02-15', type: EntryType.Vaccination, title: 'Rabies Booster', notes: 'Given at Green Valley Clinic.' }
       ]);
       setDocuments([
-        { id: 'D1', name: 'Bloodwork_Report', type: 'Report', date: '2024-03-10', fileUrl: '#', fileSize: '1.2 MB' },
-        { id: 'D2', name: 'Vet_Invoice_March', type: 'Bill', date: '2024-03-10', fileUrl: '#', fileSize: '450 KB' }
+        { id: 'D1', name: 'Bloodwork_Report', type: 'Report', date: '2024-03-10', fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileSize: '1.2 MB' },
+        { id: 'D2', name: 'Vet_Invoice_March', type: 'Bill', date: '2024-03-10', fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileSize: '450 KB' },
+        { id: 'D3', name: 'Daily_Diet_Notes', type: 'Note', date: '2024-03-12', fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileSize: '12 KB' },
+        { id: 'D4', name: 'Antibiotic_Script', type: 'Prescription', date: '2024-03-11', fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileSize: '85 KB' }
       ]);
       setReminders([
         { id: 'R1', title: 'Heartworm Pill', date: '2024-04-01', type: 'Medication', completed: false },
@@ -128,6 +135,30 @@ const App: React.FC = () => {
 
   if (!user) return <AuthScreen onLogin={setUser} darkMode={darkMode} setDarkMode={setDarkMode} />;
 
+  // DOCTOR DASHBOARD ROUTING
+  if (user.role === 'DOCTOR') {
+    if (!pet) return <div className="h-screen w-full flex items-center justify-center bg-[#FFFAF3] dark:bg-zinc-950"><i className="fa-solid fa-circle-notch fa-spin text-4xl text-orange-500"></i></div>;
+    
+    return (
+      <DoctorDashboard 
+        doctor={user}
+        petData={{ pet, timeline, documents, checklist, routine, reminders }}
+        dailyLogs={dailyLogs}
+        doctorNotes={doctorNotes}
+        onAddNote={(note) => setDoctorNotes(prev => [note, ...prev])}
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+        activeTab={doctorTab}
+        setActiveTab={setDoctorTab}
+        isViewingPatient={doctorViewingPatient}
+        setIsViewingPatient={setDoctorViewingPatient}
+        patientSubTab={doctorPatientSubTab}
+        setPatientSubTab={setDoctorPatientSubTab}
+        onLogout={() => setUser(null)}
+      />
+    );
+  }
+
   const renderContent = () => {
     if (!pet && activeTab !== 'profile') return (
        <div className="flex flex-col items-center justify-center h-full p-10 text-center space-y-6">
@@ -148,22 +179,25 @@ const App: React.FC = () => {
   };
 
   // Mobile navigation configuration
-  const navItems = [
-    { id: 'dashboard', icon: 'house', label: 'Home' },
-    { id: 'timeline', icon: 'calendar-days', label: 'Journal' },
-    { id: 'ai', icon: 'wand-magic-sparkles', label: 'Pluto AI', isAction: true },
-    { id: 'documents', icon: 'folder-open', label: 'Files' },
-    { id: 'profile', icon: 'paw', label: pet?.name || 'Pet' },
+  const navItems: { id: string, icon: string, label: string, isAction?: boolean, color: 'orange' | 'emerald' | 'amber' | 'rose' | 'indigo' }[] = [
+    { id: 'dashboard', icon: 'house', label: 'Home', color: 'orange' },
+    { id: 'timeline', icon: 'calendar-days', label: 'Journal', color: 'emerald' },
+    { id: 'ai', icon: 'wand-magic-sparkles', label: 'Pluto AI', isAction: true, color: 'amber' },
+    { id: 'documents', icon: 'folder-open', label: 'Files', color: 'indigo' },
+    { id: 'profile', icon: 'paw', label: pet?.name || 'Pet', color: 'rose' },
   ];
 
   return (
     <div className={`h-screen flex flex-col md:flex-row transition-colors duration-500 overflow-hidden ${darkMode ? 'dark' : ''}`}>
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 lg:w-72 h-full bg-white dark:bg-zinc-900 border-r border-zinc-100 dark:border-zinc-800 shadow-xl p-8 shrink-0 z-[100]">
-        <div className="flex items-center gap-3 mb-16 justify-center">
-          <div className="w-11 h-11 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg animate-spring-jump"><i className="fa-solid fa-paw text-lg"></i></div>
-          <h1 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50">Pluto</h1>
-        </div>
+        <button 
+          onClick={() => setActiveTab('dashboard')} 
+          className="flex items-center gap-3 mb-16 justify-center group w-full outline-none"
+        >
+          <div className="w-11 h-11 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6 group-active:scale-95"><i className="fa-solid fa-paw text-lg"></i></div>
+          <h1 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50 transition-colors group-hover:text-orange-500">Pluto</h1>
+        </button>
         <nav className="flex-1 space-y-4">
           {navItems.map(item => (
             <button
@@ -175,12 +209,12 @@ const App: React.FC = () => {
                   : 'text-zinc-800 dark:text-zinc-300 border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:translate-x-1'
               }`}
             >
-              <i className={`fa-solid fa-${item.icon} text-sm transition-transform duration-300 group-hover:scale-125 ${activeTab === item.id ? 'animate-pulse' : ''}`}></i>
+              <i className={`fa-solid fa-${item.icon} text-sm transition-transform duration-300 group-hover:scale-125`}></i>
               <span className="font-black text-[10px] uppercase tracking-widest">{item.label}</span>
               
-              {/* Active Indicator Pulse Effect */}
+              {/* Active Indicator Pulse Effect (Removed Animation as requested) */}
               {activeTab === item.id && (
-                <div className="absolute inset-0 bg-white/10 pointer-events-none opacity-30 animate-pulse"></div>
+                <div className="absolute inset-0 bg-white/10 pointer-events-none opacity-30"></div>
               )}
             </button>
           ))}
@@ -221,15 +255,12 @@ const App: React.FC = () => {
             <i className={`fa-solid fa-sun absolute text-xl transition-all duration-700 ${darkMode ? 'rotate-0 scale-110 opacity-100 text-orange-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.8)] animate-spin-slow' : 'rotate-180 scale-0 opacity-0'}`}></i>
             <i className={`fa-solid fa-moon absolute text-xl transition-all duration-700 ${!darkMode ? 'rotate-0 scale-110 opacity-100 text-indigo-400 drop-shadow-[0_0_12px_rgba(129,140,248,0.8)]' : 'rotate-180 scale-0 opacity-0'}`}></i>
           </button>
-          {pet && (
-            <button onClick={() => setActiveTab('profile')}>
-              <img 
-                src={pet.avatar} 
-                className="w-8 h-8 rounded-full border-2 border-orange-100 dark:border-orange-900 shadow-sm active:scale-90 transition-transform" 
-                alt="Pet" 
-              />
-            </button>
-          )}
+          <button 
+            onClick={() => setUser(null)}
+            className="w-10 h-10 flex items-center justify-center rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 active:scale-90 transition-transform"
+          >
+            <i className="fa-solid fa-power-off text-lg"></i>
+          </button>
         </div>
       </header>
 
@@ -248,7 +279,8 @@ const App: React.FC = () => {
             icon={item.icon}
             label={item.label}
             isAction={item.isAction}
-            petAvatar={item.icon === 'paw' ? pet?.avatar : undefined}
+            color={item.color}
+            petAvatar={item.id === 'profile' ? pet?.avatar : undefined}
           />
         ))}
       </nav>

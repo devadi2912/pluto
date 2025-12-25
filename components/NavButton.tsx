@@ -26,31 +26,37 @@ export const NavButton: React.FC<{
     indigo: 'drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]',
   };
 
+  const bgGlowMap = {
+    orange: 'bg-orange-500/20',
+    emerald: 'bg-emerald-500/20',
+    amber: 'bg-amber-500/20',
+    rose: 'bg-rose-500/20',
+    indigo: 'bg-indigo-500/20',
+  };
+
   const isIdentity = icon === 'paw';
 
   if (isAction) {
     return (
       <button 
         onClick={onClick} 
-        className="flex flex-col items-center gap-0.5 transition-all outline-none focus:outline-none px-3 py-1"
+        className="flex flex-col items-center gap-0.5 transition-all outline-none focus:outline-none px-3 py-1 relative"
       >
         <div className={`
-          w-10 h-10 flex items-center justify-center transition-all duration-300 relative
+          w-10 h-10 flex items-center justify-center transition-all duration-300 relative z-10
           ${active ? 'scale-125' : 'scale-100'}
         `}>
           <i className={`
-            fa-solid fa-${icon === 'wand-magic-sparkles' ? 'wand-magic-sparkles' : 'house-medical'} 
+            fa-solid fa-${icon} 
             ${active ? `${colorMap[color]} ${glowMap[color]} animate-bounce text-xl` : 'text-zinc-500 dark:text-zinc-500 text-lg'}
             transition-all duration-300
           `}></i>
           {active && (
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-              <i className="fa-solid fa-sparkles absolute top-0 right-0 text-[10px] text-orange-400 animate-pulse"></i>
-            </div>
+            <div className={`absolute inset-0 pointer-events-none flex items-center justify-center blur-xl rounded-full ${bgGlowMap[color]} animate-pulse`}></div>
           )}
         </div>
-        <span className={`text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-300 mt-0.5
-          ${active ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-700 dark:text-zinc-500'}
+        <span className={`text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-300 mt-0.5 relative z-10
+          ${active ? colorMap[color] : 'text-zinc-700 dark:text-zinc-500'}
         `}>
           {label}
         </span>
@@ -61,14 +67,17 @@ export const NavButton: React.FC<{
   return (
     <button 
       onClick={onClick} 
-      className="flex flex-col items-center gap-0.5 transition-all hover:scale-110 active:scale-90 outline-none px-3 py-1"
+      className="flex flex-col items-center gap-0.5 transition-all hover:scale-110 active:scale-90 outline-none px-3 py-1 relative"
     >
       <div className={`
-        w-9 h-9 flex items-center justify-center transition-all duration-300 relative
+        w-9 h-9 flex items-center justify-center transition-all duration-300 relative z-10
         ${active ? 'scale-115' : 'scale-100'}
       `}>
+        {active && (
+          <div className={`absolute inset-0 pointer-events-none flex items-center justify-center blur-lg rounded-full ${bgGlowMap[color]} animate-pulse opacity-80`}></div>
+        )}
         {isIdentity && petAvatar ? (
-          <div className={`w-8 h-8 rounded-full overflow-hidden border-2 transition-all duration-300 ${active ? 'border-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]' : 'border-zinc-300 dark:border-zinc-700'}`}>
+          <div className={`w-8 h-8 rounded-full overflow-hidden border-2 transition-all duration-300 ${active ? 'border-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]' : 'border-zinc-300 dark:border-zinc-700'}`}>
             <img 
               src={petAvatar} 
               className={`w-full h-full object-cover transition-all duration-300 ${active ? 'scale-110 grayscale-0' : 'grayscale-[80%] opacity-50'}`} 
@@ -77,12 +86,12 @@ export const NavButton: React.FC<{
           </div>
         ) : (
           <i className={`
-            fa-solid fa-${icon} text-lg transition-all duration-300
+            fa-solid fa-${icon} text-lg transition-all duration-300 relative z-10
             ${active ? `${colorMap[color]} ${glowMap[color]}` : 'text-zinc-500 dark:text-zinc-500'}
           `}></i>
         )}
       </div>
-      <span className={`text-[8px] font-black uppercase tracking-[0.15em] transition-colors mt-0.5 ${active ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-600 dark:text-zinc-500'} truncate max-w-[50px]`}>
+      <span className={`text-[8px] font-black uppercase tracking-[0.15em] transition-colors mt-0.5 relative z-10 ${active ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-600 dark:text-zinc-500'} truncate max-w-[50px]`}>
         {label}
       </span>
     </button>

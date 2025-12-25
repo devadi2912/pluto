@@ -181,7 +181,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({
         </div>
       </section>
 
-      {/* Care Journal Section - Visual Match to Screenshot */}
+      {/* Care Journal Section */}
       <section className="space-y-8">
         <div className="flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800 pt-12 px-2">
           <div>
@@ -215,11 +215,9 @@ const TimelineScreen: React.FC<TimelineProps> = ({
         <div className="relative pl-12 md:pl-20 space-y-12 before:content-[''] before:absolute before:left-[23px] md:before:left-[31px] before:top-4 before:bottom-4 before:w-1.5 before:bg-zinc-100 dark:before:bg-zinc-800 before:rounded-full">
           {timeline.map((entry, idx) => (
             <div key={entry.id} onClick={() => !readOnly && setEditingItem({ item: { ...entry }, mode: 'journal' })} className="relative group animate-in slide-in-from-left-5 duration-500 cursor-pointer" style={{ animationDelay: `${idx * 100}ms` }}>
-              {/* Rounded icons on the timeline line to match screenshot */}
               <div className={`absolute -left-[45px] md:-left-[53px] top-4 w-12 h-12 rounded-full border-4 border-white dark:border-zinc-950 shadow-2xl flex items-center justify-center z-10 transition-all group-hover:scale-110 ${getColor(entry.type)} text-white`}>
                 <i className={`fa-solid ${getIcon(entry.type)} text-base`}></i>
               </div>
-              {/* Glass Card Entries */}
               <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border-2 border-zinc-50/50 dark:border-zinc-800/50 p-8 rounded-[2.5rem] shadow-xl group-hover:shadow-2xl group-hover:border-emerald-500/30 transition-all max-w-2xl">
                 <div className="flex justify-between items-center mb-4">
                   <span className={`text-[9px] font-black uppercase tracking-[0.2em] text-white px-5 py-2 rounded-full ${getColor(entry.type)} shadow-sm`}>{entry.type}</span>
@@ -258,12 +256,63 @@ const TimelineScreen: React.FC<TimelineProps> = ({
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-transparent pointer-events-none animate-in fade-in duration-300" onClick={() => setEditingItem(null)}>
           <div className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl w-full max-w-md rounded-[3rem] p-8 shadow-2xl border-4 border-white dark:border-zinc-950 animate-in zoom-in-95 duration-300 space-y-6 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h3 className="text-4xl font-lobster">Modify {editingItem.mode === 'journal' ? 'Entry' : 'Task'}</h3>
-              <button onClick={() => setEditingItem(null)} className="w-10 h-10 bg-white/50 dark:bg-zinc-800/50 rounded-full flex items-center justify-center text-zinc-500 border border-zinc-200 dark:border-zinc-700">
+              <h3 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50">Modify {editingItem.mode === 'journal' ? 'Entry' : 'Task'}</h3>
+              <button onClick={() => setEditingItem(null)} className="w-10 h-10 bg-white/50 dark:bg-zinc-800/50 rounded-full flex items-center justify-center text-zinc-500 border border-zinc-200 dark:border-zinc-700 hover:text-rose-500 transition-colors">
                 <i className="fa-solid fa-xmark"></i>
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            
+            {/* Inputs Section */}
+            <div className="space-y-5">
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                     <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Date</label>
+                     <input 
+                       type="date"
+                       className="w-full p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border-2 border-zinc-100 dark:border-transparent focus:border-indigo-400 outline-none font-bold text-zinc-900 dark:text-zinc-100 text-sm"
+                       value={editingItem.item.date}
+                       onChange={(e) => setEditingItem({ ...editingItem, item: { ...editingItem.item, date: e.target.value } })}
+                     />
+                  </div>
+                  <div className="space-y-2">
+                     <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Category</label>
+                     <select 
+                       className="w-full p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border-2 border-zinc-100 dark:border-transparent focus:border-indigo-400 outline-none font-bold text-zinc-900 dark:text-zinc-100 text-sm appearance-none"
+                       value={editingItem.item.type}
+                       onChange={(e) => setEditingItem({ ...editingItem, item: { ...editingItem.item, type: e.target.value } })}
+                     >
+                        {editingItem.mode === 'journal' ? (
+                          Object.values(EntryType).map(t => <option key={t} value={t}>{t}</option>)
+                        ) : (
+                          ['Medication', 'Vaccination', 'Vet follow-up'].map(t => <option key={t} value={t}>{t}</option>)
+                        )}
+                     </select>
+                  </div>
+               </div>
+               
+               <div className="space-y-2">
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">{editingItem.mode === 'journal' ? 'Entry Title' : 'Task Name'}</label>
+                  <input 
+                    type="text"
+                    className="w-full p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border-2 border-zinc-100 dark:border-transparent focus:border-indigo-400 outline-none font-bold text-zinc-900 dark:text-zinc-100 text-sm"
+                    value={editingItem.item.title}
+                    onChange={(e) => setEditingItem({ ...editingItem, item: { ...editingItem.item, title: e.target.value } })}
+                  />
+               </div>
+
+               {editingItem.mode === 'journal' && (
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Notes</label>
+                    <textarea 
+                      className="w-full p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border-2 border-zinc-100 dark:border-transparent focus:border-indigo-400 outline-none font-bold text-zinc-900 dark:text-zinc-100 text-sm h-24 resize-none"
+                      value={editingItem.item.notes || ''}
+                      onChange={(e) => setEditingItem({ ...editingItem, item: { ...editingItem.item, notes: e.target.value } })}
+                    />
+                 </div>
+               )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 pt-2">
               <button onClick={handleDeleteItem} className="w-full py-4 bg-rose-50/80 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-rose-600 hover:text-white transition-all active:scale-95 border-2 border-rose-100 dark:border-rose-900/30">Delete</button>
               <button onClick={handleUpdateItem} className="w-full py-4 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl hover:brightness-110 active:scale-95 transition-all border-2 border-white dark:border-zinc-950">Save Changes</button>
             </div>

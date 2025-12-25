@@ -8,6 +8,7 @@ import ProfileScreen from './ProfileScreen';
 import DoctorProfileScreen from './DoctorProfileScreen';
 import DoctorSearchScreen from './DoctorSearchScreen';
 import DoctorPatientsScreen from './DoctorPatientsScreen';
+import { NavButton } from '../components/NavButton';
 
 interface PriorityItemData {
   id: string;
@@ -39,6 +40,7 @@ interface DoctorDashboardProps {
   setIsViewingPatient: (v: boolean) => void;
   patientSubTab: 'profile' | 'timeline' | 'docs' | 'identity';
   setPatientSubTab: (tab: 'profile' | 'timeline' | 'docs' | 'identity') => void;
+  onLogout: () => void;
 }
 
 /**
@@ -58,7 +60,8 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   isViewingPatient,
   setIsViewingPatient,
   patientSubTab,
-  setPatientSubTab
+  setPatientSubTab,
+  onLogout
 }) => {
   const [searchId, setSearchId] = useState('');
   const [showNoteModal, setShowNoteModal] = useState(false);
@@ -131,7 +134,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   // Render the specific view for an opened patient record
   const renderPetView = () => (
     <div className="flex flex-col h-full bg-[#FFFAF3] dark:bg-zinc-950 animate-in fade-in duration-500 relative overflow-hidden">
-      {/* Mobile-Only Header */}
+      {/* Mobile-Only Header for Patient View */}
       <div className="md:hidden p-4 bg-orange-500 text-white flex items-center justify-between sticky top-0 z-[50] shadow-md shrink-0">
         <div className="flex items-center gap-3">
           <button onClick={() => setIsViewingPatient(false)} className="w-10 h-10 flex items-center justify-center hover:bg-white/20 rounded-2xl transition-all">
@@ -313,13 +316,45 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
             <i className={`fa-solid fa-${darkMode ? 'sun' : 'moon'} text-sm`}></i>
             <span className="font-black text-[10px] uppercase tracking-widest">Theme</span>
           </button>
+          <button onClick={onLogout} className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-zinc-500 hover:text-rose-500 transition-colors">
+            <i className="fa-solid fa-power-off text-sm"></i>
+            <span className="font-black text-[10px] uppercase tracking-widest">Logout</span>
+          </button>
         </div>
       </aside>
 
+      {/* Mobile Header (Main View) - Matches Pet Dashboard Aesthetics */}
+      {!isViewingPatient && (
+        <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md z-[100] px-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+          <button 
+            className="flex items-center gap-2 hover:scale-105 active:scale-95 hover:-rotate-2 transition-all group"
+            onClick={() => { setActiveTab('discover'); setIsViewingPatient(false); }}
+          >
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white text-xs shadow-sm group-hover:rotate-12 transition-transform"><i className="fa-solid fa-user-md"></i></div>
+            <h1 className="text-xl font-lobster text-zinc-900 dark:text-zinc-50 group-active:text-indigo-600 transition-colors">Pluto <span className="text-indigo-600">MD</span></h1>
+          </button>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setDarkMode(!darkMode)} 
+              className="w-10 h-10 flex items-center justify-center relative active:scale-90 transition-transform"
+            >
+              <i className={`fa-solid fa-sun absolute text-xl transition-all duration-700 ${darkMode ? 'rotate-0 scale-110 opacity-100 text-orange-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.8)] animate-spin-slow' : 'rotate-180 scale-0 opacity-0'}`}></i>
+              <i className={`fa-solid fa-moon absolute text-xl transition-all duration-700 ${!darkMode ? 'rotate-0 scale-110 opacity-100 text-indigo-400 drop-shadow-[0_0_12px_rgba(129,140,248,0.8)]' : 'rotate-180 scale-0 opacity-0'}`}></i>
+            </button>
+            <button 
+              onClick={onLogout}
+              className="w-10 h-10 flex items-center justify-center rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 active:scale-90 transition-transform"
+            >
+              <i className="fa-solid fa-power-off text-lg"></i>
+            </button>
+          </div>
+        </header>
+      )}
+
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto no-scrollbar relative">
+      <main className={`flex-1 overflow-y-auto no-scrollbar relative ${!isViewingPatient ? 'pt-16 md:pt-0' : ''}`}>
         {isViewingPatient ? renderPetView() : (
-          <div className="p-8 md:p-12 max-w-6xl mx-auto space-y-12">
+          <div className="p-8 md:p-12 max-w-6xl mx-auto space-y-12 pb-32">
             {activeTab === 'discover' && (
               <>
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -389,24 +424,22 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         )}
       </main>
 
-      {/* Mobile Footer Navigation for Doctor */}
+      {/* Mobile Floating Frosted Nav - Standardized */}
       {!isViewingPatient && (
-        <nav className="md:hidden fixed bottom-6 left-6 right-6 h-20 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl rounded-[2.5rem] border border-white/20 dark:border-zinc-800/20 shadow-2xl z-[100] flex items-center justify-around px-4">
+        <nav className="md:hidden fixed bottom-6 left-6 right-6 h-20 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl rounded-[2.5rem] border border-white/40 dark:border-zinc-800/40 shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-[100] flex items-center justify-around px-2">
           {[
-            { id: 'discover', icon: 'magnifying-glass', label: 'Search' },
-            { id: 'patients', icon: 'clipboard-list', label: 'History' },
-            { id: 'profile', icon: 'id-card-clip', label: 'Profile' },
-          ].map(item => (
-            <button 
+            { id: 'discover', icon: 'magnifying-glass', label: 'Discover', color: 'indigo' },
+            { id: 'patients', icon: 'clipboard-list', label: 'History', color: 'emerald' },
+            { id: 'profile', icon: 'id-card-clip', label: 'Identity', color: 'rose' },
+          ].map((item) => (
+            <NavButton
               key={item.id}
+              active={activeTab === item.id}
               onClick={() => setActiveTab(item.id as any)}
-              className="flex flex-col items-center gap-1"
-            >
-              <div className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${activeTab === item.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-zinc-400'}`}>
-                <i className={`fa-solid fa-${item.icon} text-lg`}></i>
-              </div>
-              <span className={`text-[8px] font-black uppercase tracking-widest ${activeTab === item.id ? 'text-indigo-600' : 'text-zinc-500'}`}>{item.label}</span>
-            </button>
+              icon={item.icon}
+              label={item.label}
+              color={item.color as any}
+            />
           ))}
         </nav>
       )}

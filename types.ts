@@ -1,5 +1,4 @@
 
-
 export enum Species {
   Dog = 'Dog',
   Cat = 'Cat',
@@ -21,6 +20,8 @@ export interface PetProfile {
   gender: Gender;
   avatar?: string;
   weight?: string; 
+  color?: string;
+  microchip?: string;
 }
 
 export enum EntryType {
@@ -42,7 +43,7 @@ export interface TimelineEntry {
 export interface PetDocument {
   id: string;
   name: string;
-  type: 'Prescription' | 'Bill' | 'Report';
+  type: 'Prescription' | 'Bill' | 'Report' | 'Note';
   date: string;
   fileUrl: string;
   fileSize: string;
