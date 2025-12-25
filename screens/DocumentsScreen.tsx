@@ -153,7 +153,7 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
       {selectedDoc && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none p-6">
            {/* Card Container - High Transparency & Theme Aware */}
-           <div className="pointer-events-auto w-full max-w-[340px] bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-white/40 dark:border-white/10 rounded-[3rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 relative">
+           <div className="pointer-events-auto w-full max-w-[340px] bg-white/30 dark:bg-black/40 backdrop-blur-3xl border border-white/40 dark:border-white/10 rounded-[3rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 relative">
               
               {/* Header: Badge & Close */}
               <div className="flex items-center justify-between p-6 pb-2">
@@ -208,11 +208,11 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
               </div>
 
               {/* Footer Actions */}
-              <div className="p-4 bg-white/30 dark:bg-black/20 backdrop-blur-md grid grid-cols-3 gap-2 mt-2 border-t border-white/20 dark:border-white/5">
-                 <FooterButton icon="share-nodes" label={shareStatus || "Share"} onClick={handleShare} color="indigo" />
+              <div className={`p-4 bg-white/30 dark:bg-black/20 backdrop-blur-md grid ${readOnly ? 'grid-cols-2' : 'grid-cols-3'} gap-2 mt-2 border-t border-white/20 dark:border-white/5`}>
+                 <FooterButton icon="share-nodes" label={shareStatus || "Share"} onClick={handleShare} color="indigo" fullWidth={readOnly} />
                  {!readOnly && <FooterButton icon="pen" label="Rename" onClick={startRename} color="amber" disabled={isRenaming} />}
                  {!readOnly && <FooterButton icon="trash" label="Delete" onClick={() => handleDeleteDoc(selectedDoc.id)} color="rose" />}
-                 {readOnly && <div className="col-span-2"><FooterButton icon="download" label="Download" onClick={handleOpenFile} color="emerald" fullWidth /></div>}
+                 {readOnly && <FooterButton icon="download" label="Download" onClick={handleOpenFile} color="emerald" fullWidth />}
               </div>
            </div>
         </div>

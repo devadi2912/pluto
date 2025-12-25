@@ -12,7 +12,8 @@ import {
   RoutineItem,
   AuthUser,
   DailyLog,
-  DoctorNote
+  DoctorNote,
+  Doctor
 } from './types';
 import Dashboard from './screens/Dashboard';
 import ProfileScreen from './screens/ProfileScreen';
@@ -34,6 +35,37 @@ const MOCK_PET: PetProfile = {
   avatar: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=400&h=400'
 };
 
+const MOCK_CONSULTED_DOCTORS: Doctor[] = [
+  { 
+    id: 'DOC-SMITH-45', 
+    name: 'Dr. Sarah Smith', 
+    specialization: 'Cardiology Specialist', 
+    qualification: 'DVM, PhD Cardiology',
+    registrationId: 'VET-TX-99881',
+    experience: '12 Years',
+    clinic: 'Green Valley Clinic', 
+    address: '123 Pawsome Way, Austin, TX',
+    contact: '555-0102',
+    emergencyContact: '555-0191',
+    consultationHours: '08:00 - 18:00',
+    medicalFocus: 'Cardiac surgery and heart murmurs'
+  },
+  { 
+    id: 'DOC-WONG-99', 
+    name: 'Dr. Mike Wong', 
+    specialization: 'Dental Vet', 
+    qualification: 'DVM, DDSV',
+    registrationId: 'VET-TX-11223',
+    experience: '8 Years',
+    clinic: 'Smile Pet Center', 
+    address: '88 Bark Blvd, Austin, TX',
+    contact: '555-0199',
+    emergencyContact: '555-0192',
+    consultationHours: '09:00 - 17:00',
+    medicalFocus: 'Canine orthodontics and periodontics'
+  }
+];
+
 const App: React.FC = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [pet, setPet] = useState<PetProfile | null>(null);
@@ -49,6 +81,7 @@ const App: React.FC = () => {
   ]);
   const [dailyLogs, setDailyLogs] = useState<Record<string, DailyLog>>({});
   const [doctorNotes, setDoctorNotes] = useState<DoctorNote[]>([]);
+  const [consultedDoctors, setConsultedDoctors] = useState<Doctor[]>(MOCK_CONSULTED_DOCTORS);
   
   const [activeTab, setActiveTab] = useState<'dashboard' | 'profile' | 'timeline' | 'documents' | 'ai'>('dashboard');
   const [darkMode, setDarkMode] = useState(false);
@@ -118,9 +151,7 @@ const App: React.FC = () => {
   const handleCompleteReminder = (id: string) => {
     const reminder = reminders.find(r => r.id === id);
     if (reminder) {
-      // 1. Remove from reminders
       setReminders(prev => prev.filter(r => r.id !== id));
-      // 2. Automatically add to Timeline/Journal
       const newEntry: TimelineEntry = {
         id: `TL-AUTO-${Date.now()}`,
         date: new Date().toISOString().split('T')[0],
@@ -131,6 +162,18 @@ const App: React.FC = () => {
       };
       setTimeline(prev => [newEntry, ...prev]);
     }
+  };
+
+  const handleDoctorVisit = (doctor: Doctor) => {
+    setConsultedDoctors(prev => {
+      // Avoid duplicates
+      if (prev.some(d => d.id === doctor.id)) return prev;
+      return [doctor, ...prev];
+    });
+  };
+
+  const handleDeleteDoctorNote = (noteId: string) => {
+    setDoctorNotes(prev => prev.filter(n => n.id !== noteId));
   };
 
   if (!user) return <AuthScreen onLogin={setUser} darkMode={darkMode} setDarkMode={setDarkMode} />;
@@ -146,6 +189,9 @@ const App: React.FC = () => {
         dailyLogs={dailyLogs}
         doctorNotes={doctorNotes}
         onAddNote={(note) => setDoctorNotes(prev => [note, ...prev])}
+        onDeleteNote={handleDeleteDoctorNote}
+        onVisitPatient={() => handleDoctorVisit(user.doctorDetails!)}
+        consultedDoctors={consultedDoctors}
         darkMode={darkMode}
         setDarkMode={setDarkMode}
         activeTab={doctorTab}
@@ -169,9 +215,9 @@ const App: React.FC = () => {
     );
 
     switch (activeTab) {
-      case 'dashboard': return <Dashboard pet={pet!} reminders={reminders} checklist={checklist} setChecklist={handleUpdateChecklist} routine={routine} setRoutine={setRoutine} onCompleteReminder={handleCompleteReminder} timeline={timeline} dailyLogs={dailyLogs} onUpdateLog={handleUpdateVitals} doctorNotes={doctorNotes} onDeleteNote={(id) => setDoctorNotes(prev => prev.filter(n => n.id !== id))} />;
+      case 'dashboard': return <Dashboard pet={pet!} reminders={reminders} checklist={checklist} setChecklist={handleUpdateChecklist} routine={routine} setRoutine={setRoutine} onCompleteReminder={handleCompleteReminder} timeline={timeline} dailyLogs={dailyLogs} onUpdateLog={handleUpdateVitals} doctorNotes={doctorNotes} onDeleteNote={handleDeleteDoctorNote} />;
       case 'profile': return <ProfileScreen pet={pet!} setPet={handleUpdatePet} reminders={reminders} onNavigate={setActiveTab} />;
-      case 'timeline': return <TimelineScreen timeline={timeline} setTimeline={setTimeline} documents={documents} reminders={reminders} setReminders={setReminders} dailyLogs={dailyLogs} onUpdateLog={() => {}} petName={pet?.name} />;
+      case 'timeline': return <TimelineScreen timeline={timeline} setTimeline={setTimeline} documents={documents} reminders={reminders} setReminders={setReminders} dailyLogs={dailyLogs} onUpdateLog={() => {}} petName={pet?.name} doctorNotes={doctorNotes} onDeleteNote={handleDeleteDoctorNote} consultedDoctors={consultedDoctors} />;
       case 'documents': return <DocumentsScreen documents={documents} setDocuments={setDocuments} petName={pet?.name} />;
       case 'ai': return <AIScreen pet={pet!} timeline={timeline} documents={documents} reminders={reminders} />;
       default: return null;
@@ -211,8 +257,6 @@ const App: React.FC = () => {
             >
               <i className={`fa-solid fa-${item.icon} text-sm transition-transform duration-300 group-hover:scale-125`}></i>
               <span className="font-black text-[10px] uppercase tracking-widest">{item.label}</span>
-              
-              {/* Active Indicator Pulse Effect (Removed Animation as requested) */}
               {activeTab === item.id && (
                 <div className="absolute inset-0 bg-white/10 pointer-events-none opacity-30"></div>
               )}

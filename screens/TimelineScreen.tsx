@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { TimelineEntry, EntryType, PetDocument, Reminder, Doctor, DailyLog } from '../types';
+import { TimelineEntry, EntryType, PetDocument, Reminder, Doctor, DailyLog, DoctorNote } from '../types';
 
 interface TimelineProps {
   timeline: TimelineEntry[];
@@ -11,39 +11,11 @@ interface TimelineProps {
   dailyLogs: Record<string, DailyLog>;
   onUpdateLog: (date: string, data: Partial<DailyLog>) => void;
   petName?: string;
+  doctorNotes?: DoctorNote[];
+  onDeleteNote?: (id: string) => void;
+  consultedDoctors?: Doctor[];
   readOnly?: boolean;
 }
-
-const MOCK_CONSULTED_DOCTORS: Doctor[] = [
-  { 
-    id: 'DOC-SMITH-45', 
-    name: 'Dr. Sarah Smith', 
-    specialization: 'Cardiology Specialist', 
-    qualification: 'DVM, PhD Cardiology',
-    registrationId: 'VET-TX-99881',
-    experience: '12 Years',
-    clinic: 'Green Valley Clinic', 
-    address: '123 Pawsome Way, Austin, TX',
-    contact: '555-0102',
-    emergencyContact: '555-0191',
-    consultationHours: '08:00 - 18:00',
-    medicalFocus: 'Cardiac surgery and heart murmurs'
-  },
-  { 
-    id: 'DOC-WONG-99', 
-    name: 'Dr. Mike Wong', 
-    specialization: 'Dental Vet', 
-    qualification: 'DVM, DDSV',
-    registrationId: 'VET-TX-11223',
-    experience: '8 Years',
-    clinic: 'Smile Pet Center', 
-    address: '88 Bark Blvd, Austin, TX',
-    contact: '555-0199',
-    emergencyContact: '555-0192',
-    consultationHours: '09:00 - 17:00',
-    medicalFocus: 'Canine orthodontics and periodontics'
-  }
-];
 
 const TimelineScreen: React.FC<TimelineProps> = ({ 
   timeline, 
@@ -52,6 +24,9 @@ const TimelineScreen: React.FC<TimelineProps> = ({
   reminders, 
   setReminders,
   petName = "Luna",
+  doctorNotes = [],
+  onDeleteNote,
+  consultedDoctors = [],
   readOnly = false
 }) => {
   const [showAdd, setShowAdd] = useState(false);
@@ -113,6 +88,13 @@ const TimelineScreen: React.FC<TimelineProps> = ({
         setReminders(prev => prev.filter(r => r.id !== item.id));
       }
       setEditingItem(null);
+    }
+  };
+
+  const handleDeleteDoctorNote = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm('Remove this doctor\'s note?')) {
+      if (onDeleteNote) onDeleteNote(id);
     }
   };
 
@@ -238,7 +220,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({
           <p className="text-[11px] font-black uppercase text-zinc-500 tracking-widest mt-1">Medical professional access history</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {MOCK_CONSULTED_DOCTORS.map(doc => (
+          {consultedDoctors.length > 0 ? consultedDoctors.map(doc => (
             <div key={doc.id} onClick={() => setSelectedDoctor(doc)} className="bg-white dark:bg-zinc-900 border-2 border-zinc-50 dark:border-zinc-800 p-6 rounded-[2.5rem] flex items-center gap-6 hover:border-indigo-200 dark:hover:border-indigo-900 cursor-pointer transition-all shadow-sm group active:scale-[0.98] animate-in fade-in">
               <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center text-3xl group-hover:rotate-6 transition-transform shadow-sm"><i className="fa-solid fa-user-md"></i></div>
               <div className="flex-1">
@@ -247,7 +229,51 @@ const TimelineScreen: React.FC<TimelineProps> = ({
               </div>
               <i className="fa-solid fa-chevron-right text-zinc-300 dark:text-zinc-700 group-hover:text-indigo-400 transition-colors"></i>
             </div>
-          ))}
+          )) : (
+             <div className="col-span-full py-12 text-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-[2.5rem]">
+               <p className="text-zinc-400 font-bold text-sm">No doctors have viewed this profile yet.</p>
+             </div>
+          )}
+        </div>
+      </section>
+
+      {/* Doctor's Advice Section */}
+      <section className="space-y-8 pt-12 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="px-2">
+           <h2 className="text-4xl font-lobster text-sky-600 dark:text-sky-400 tracking-wide">Doctor's Advice</h2>
+           <p className="text-[11px] font-black uppercase text-zinc-500 tracking-widest mt-1">Clinical notes & observations</p>
+        </div>
+
+        <div className="space-y-6">
+           {doctorNotes.length > 0 ? doctorNotes.map(note => (
+              <div key={note.id} className="bg-sky-50 dark:bg-sky-950/20 p-8 rounded-[2.5rem] border-2 border-sky-100 dark:border-sky-900/40 shadow-sm relative group">
+                 <div className="flex items-center gap-4 mb-4">
+                    <div className="w-10 h-10 bg-sky-500 text-white rounded-xl flex items-center justify-center shadow-lg"><i className="fa-solid fa-user-doctor"></i></div>
+                    <div>
+                       <h5 className="font-bold text-zinc-900 dark:text-zinc-100">{note.doctorName}</h5>
+                       <p className="text-[9px] font-black uppercase text-sky-600 dark:text-sky-400 tracking-widest">{new Date(note.date).toLocaleDateString()}</p>
+                    </div>
+                 </div>
+                 <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 leading-relaxed bg-white/50 dark:bg-black/20 p-4 rounded-2xl border border-sky-200/50 dark:border-sky-800/30">
+                    "{note.content}"
+                 </p>
+                 
+                 {/* Delete Button - Available to Pet Owner (!readOnly) or passed down handler */}
+                 {(!readOnly || onDeleteNote) && (
+                    <button 
+                       onClick={(e) => handleDeleteDoctorNote(note.id, e)}
+                       className="absolute top-6 right-6 w-8 h-8 rounded-full bg-white dark:bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all border border-transparent hover:border-rose-100"
+                    >
+                       <i className="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                 )}
+              </div>
+           )) : (
+              <div className="py-12 text-center border-2 border-dashed border-sky-100 dark:border-sky-900/30 rounded-[2.5rem] bg-sky-50/30 dark:bg-sky-900/10">
+                 <i className="fa-solid fa-clipboard-medical text-sky-200 text-4xl mb-3"></i>
+                 <p className="text-zinc-400 font-bold text-sm">No clinical notes recorded yet.</p>
+              </div>
+           )}
         </div>
       </section>
 

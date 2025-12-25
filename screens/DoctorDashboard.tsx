@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { AuthUser, PetProfile, TimelineEntry, PetDocument, DailyChecklist, RoutineItem, Reminder, DailyLog, DoctorNote } from '../types';
+import { AuthUser, PetProfile, TimelineEntry, PetDocument, DailyChecklist, RoutineItem, Reminder, DailyLog, DoctorNote, Doctor } from '../types';
 import Dashboard from './Dashboard';
 import TimelineScreen from './TimelineScreen';
 import DocumentsScreen from './DocumentsScreen';
@@ -32,6 +32,9 @@ interface DoctorDashboardProps {
   dailyLogs: Record<string, DailyLog>;
   doctorNotes: DoctorNote[];
   onAddNote: (note: DoctorNote) => void;
+  onDeleteNote?: (noteId: string) => void;
+  onVisitPatient?: () => void;
+  consultedDoctors?: Doctor[];
   darkMode: boolean;
   setDarkMode: (dark: boolean) => void;
   activeTab: 'profile' | 'discover' | 'patients';
@@ -43,6 +46,23 @@ interface DoctorDashboardProps {
   onLogout: () => void;
 }
 
+const patientNavItems = [
+  { id: 'profile', label: 'Dashboard', icon: 'chart-line', color: 'orange' },
+  { id: 'timeline', label: 'Journal', icon: 'book-medical', color: 'emerald' },
+  { id: 'docs', label: 'Files', icon: 'folder-open', color: 'indigo' },
+  { id: 'identity', label: 'Identity', icon: 'paw', color: 'rose' }
+];
+
+const getGlowClass = (color: string) => {
+  switch(color) {
+    case 'orange': return 'shadow-[0_6px_20px_rgba(249,115,22,0.25)]';
+    case 'emerald': return 'shadow-[0_6px_20px_rgba(16,185,129,0.25)]';
+    case 'indigo': return 'shadow-[0_6px_20px_rgba(99,102,241,0.25)]';
+    case 'rose': return 'shadow-[0_6px_20px_rgba(244,63,94,0.25)]';
+    default: return '';
+  }
+};
+
 /**
  * DoctorDashboard component provides the main interface for veterinarians.
  * It handles patient searches, clinical notes, and medical record viewing.
@@ -53,6 +73,9 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   dailyLogs,
   doctorNotes,
   onAddNote,
+  onDeleteNote,
+  onVisitPatient,
+  consultedDoctors,
   darkMode, 
   setDarkMode,
   activeTab,
@@ -71,12 +94,18 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   const [priorityItems, setPriorityItems] = useState<PriorityItemData[]>([]);
 
   // Function to handle patient record search
-  const handleSearch = (id?: string) => {
-    const targetId = (id || searchId).toUpperCase();
+  const handleSearch = (id?: string | any) => {
+    // Ensure we are working with a string, as this might be called with an event object
+    const query = typeof id === 'string' ? id : searchId;
+    const targetId = query.toUpperCase();
     
     if (targetId === petData.pet.id || targetId.startsWith('PET-')) {
       setVisitedPatientIds(prev => new Set([...Array.from(prev), targetId]));
       
+      if (onVisitPatient) {
+        onVisitPatient();
+      }
+
       if (targetId === petData.pet.id) {
         const newItems: PriorityItemData[] = petData.reminders
           .filter(r => !r.completed)
@@ -148,7 +177,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar relative h-full">
-        {/* Desktop Title Bar for Patient View */}
+        {/* Desktop Title Bar for Patient View - Simplified since actions are in sidebar */}
         <div className="hidden md:flex items-center justify-between p-8 border-b border-zinc-100 dark:border-zinc-800 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl">
            <div className="flex items-center gap-4">
               <img src={petData.pet.avatar} className="w-16 h-16 rounded-2xl border-4 border-white dark:border-zinc-800 shadow-lg" alt="avatar" />
@@ -157,43 +186,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                  <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">{petData.pet.id} • Medical File</p>
               </div>
            </div>
-           <div className="flex gap-4">
-              <button 
-                onClick={() => setShowNoteModal(true)}
-                className="px-6 py-3 rounded-2xl bg-indigo-600/90 text-white font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-xl hover:scale-105 active:scale-95 flex items-center gap-2"
-              >
-                <i className="fa-solid fa-pen-fancy"></i> Leave Clinical Note
-              </button>
-              <button 
-                onClick={() => setIsViewingPatient(false)}
-                className="px-6 py-3 rounded-2xl bg-white dark:bg-zinc-900 text-zinc-950 dark:text-white font-black text-[10px] uppercase tracking-widest transition-all shadow-md hover:scale-105 active:scale-95"
-              >
-                Exit Record
-              </button>
-           </div>
-        </div>
-
-        {/* Patient View Sub-Navigation */}
-        <div className="flex gap-4 p-8 overflow-x-auto no-scrollbar border-b border-zinc-100 dark:border-zinc-800">
-           {[
-             { id: 'profile', label: 'Dashboard', icon: 'chart-line' },
-             { id: 'timeline', label: 'Journal', icon: 'book-medical' },
-             { id: 'docs', label: 'Files', icon: 'folder-open' },
-             { id: 'identity', label: 'Identity', icon: 'paw' }
-           ].map(tab => (
-             <button
-               key={tab.id}
-               onClick={() => setPatientSubTab(tab.id as any)}
-               className={`flex items-center gap-3 px-6 py-3 rounded-2xl whitespace-nowrap transition-all font-bold text-xs ${
-                 patientSubTab === tab.id 
-                   ? 'bg-orange-500 text-white shadow-lg' 
-                   : 'bg-white dark:bg-zinc-900 text-zinc-500 border border-zinc-100 dark:border-zinc-800'
-               }`}
-             >
-               <i className={`fa-solid fa-${tab.icon}`}></i>
-               {tab.label}
-             </button>
-           ))}
+           {/* Actions moved to Sidebar */}
         </div>
 
         <div className="relative md:p-10 pb-44 md:pb-12">
@@ -210,6 +203,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
               dailyLogs={dailyLogs} 
               onUpdateLog={() => {}} 
               doctorNotes={doctorNotes}
+              onDeleteNote={onDeleteNote}
               readOnly={true}
             />
           )}
@@ -223,6 +217,9 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
               dailyLogs={dailyLogs} 
               onUpdateLog={() => {}} 
               petName={petData.pet.name} 
+              doctorNotes={doctorNotes}
+              onDeleteNote={onDeleteNote}
+              consultedDoctors={consultedDoctors}
               readOnly={true}
             />
           )}
@@ -244,6 +241,20 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
           )}
         </div>
       </div>
+
+      {/* Mobile Floating Footer for Patient View */}
+      <nav className="md:hidden fixed bottom-6 left-6 right-6 h-20 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl rounded-[2.5rem] border border-white/40 dark:border-zinc-800/40 shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-[100] flex items-center justify-around px-2 animate-in slide-in-from-bottom-10">
+        {patientNavItems.map(item => (
+          <NavButton
+            key={item.id}
+            active={patientSubTab === item.id}
+            onClick={() => setPatientSubTab(item.id as any)}
+            icon={item.icon}
+            label={item.label}
+            color={item.color as any}
+          />
+        ))}
+      </nav>
 
       {/* Note Modal - Glass Card Pattern */}
       {showNoteModal && (
@@ -285,42 +296,122 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
 
   return (
     <div className={`h-screen flex flex-col md:flex-row bg-[#FFFAF3] dark:bg-zinc-950 transition-colors duration-500 overflow-hidden ${darkMode ? 'dark' : ''}`}>
-      {/* Desktop Sidebar for Doctor */}
+      {/* Desktop Sidebar - Context Aware */}
       <aside className="hidden md:flex flex-col w-72 h-full bg-white dark:bg-zinc-900 border-r border-zinc-100 dark:border-zinc-800 shadow-xl p-8 shrink-0 z-[100]">
-        <div className="flex items-center gap-3 mb-16 justify-center">
-          <div className="w-11 h-11 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg"><i className="fa-solid fa-user-md text-lg"></i></div>
-          <h1 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50">Pluto <span className="text-indigo-600">MD</span></h1>
-        </div>
-        <nav className="flex-1 space-y-3">
-          {[
-            { id: 'discover', label: 'Discover', icon: 'magnifying-glass' },
-            { id: 'patients', label: 'Patient Logs', icon: 'clipboard-list' },
-            { id: 'profile', label: 'Identity', icon: 'id-card-clip' },
-          ].map(item => (
-            <button
-              key={item.id}
-              onClick={() => { setActiveTab(item.id as any); setIsViewingPatient(false); }}
-              className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all ${
-                activeTab === item.id && !isViewingPatient
-                  ? 'bg-indigo-600 text-white shadow-xl' 
-                  : 'text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800'
-              }`}
-            >
-              <i className={`fa-solid fa-${item.icon} text-sm`}></i>
-              <span className="font-black text-[10px] uppercase tracking-widest">{item.label}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="pt-8 border-t border-zinc-100 dark:border-zinc-800 flex flex-col gap-3">
-          <button onClick={() => setDarkMode(!darkMode)} className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-zinc-500 hover:text-indigo-600 transition-colors">
-            <i className={`fa-solid fa-${darkMode ? 'sun' : 'moon'} text-sm`}></i>
-            <span className="font-black text-[10px] uppercase tracking-widest">Theme</span>
-          </button>
-          <button onClick={onLogout} className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-zinc-500 hover:text-rose-500 transition-colors">
-            <i className="fa-solid fa-power-off text-sm"></i>
-            <span className="font-black text-[10px] uppercase tracking-widest">Logout</span>
-          </button>
-        </div>
+        {!isViewingPatient ? (
+          // MAIN DOCTOR SIDEBAR
+          <>
+            <div className="flex items-center gap-3 mb-16 justify-center">
+              <div className="w-11 h-11 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg"><i className="fa-solid fa-user-md text-lg"></i></div>
+              <h1 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50">Pluto <span className="text-indigo-600">MD</span></h1>
+            </div>
+            <nav className="flex-1 space-y-3">
+              {[
+                { id: 'discover', label: 'Discover', icon: 'magnifying-glass' },
+                { id: 'patients', label: 'Patient Logs', icon: 'clipboard-list' },
+                { id: 'profile', label: 'Identity', icon: 'id-card-clip' },
+              ].map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => { setActiveTab(item.id as any); setIsViewingPatient(false); }}
+                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all ${
+                    activeTab === item.id && !isViewingPatient
+                      ? 'bg-indigo-600 text-white shadow-xl' 
+                      : 'text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  <i className={`fa-solid fa-${item.icon} text-sm`}></i>
+                  <span className="font-black text-[10px] uppercase tracking-widest">{item.label}</span>
+                </button>
+              ))}
+            </nav>
+            <div className="pt-8 border-t border-zinc-100 dark:border-zinc-800 flex flex-row items-center gap-4">
+              <button 
+                onClick={() => setDarkMode(!darkMode)} 
+                className="flex-1 flex items-center justify-center h-14 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all hover:scale-110 active:scale-90"
+              >
+                <div className="relative w-8 h-8 flex items-center justify-center">
+                   <i className={`fa-solid fa-sun absolute transition-all duration-700 ${darkMode ? 'rotate-0 scale-110 opacity-100 text-orange-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.8)] animate-spin-slow' : 'rotate-180 scale-0 opacity-0'}`}></i>
+                   <i className={`fa-solid fa-moon absolute transition-all duration-700 ${!darkMode ? 'rotate-0 scale-110 opacity-100 text-indigo-400 drop-shadow-[0_0_12px_rgba(129,140,248,0.8)]' : 'rotate-180 scale-0 opacity-0'}`}></i>
+                </div>
+              </button>
+              <button 
+                onClick={onLogout} 
+                className="flex-1 flex items-center justify-center h-14 rounded-2xl bg-rose-50 dark:bg-rose-950/20 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-all hover:scale-110 active:scale-90"
+              >
+                <i className="fa-solid fa-power-off text-lg"></i>
+              </button>
+            </div>
+          </>
+        ) : (
+          // PATIENT CONTEXT SIDEBAR
+          <>
+             <div className="flex flex-col items-center text-center mb-10 animate-in slide-in-from-left-4 duration-500">
+                <div className="w-24 h-24 rounded-[2rem] p-1 bg-gradient-to-tr from-indigo-500 to-rose-500 shadow-xl mb-4">
+                   <img src={petData.pet.avatar} className="w-full h-full object-cover rounded-[1.8rem] border-4 border-white dark:border-zinc-900" alt="pet" />
+                </div>
+                <h2 className="text-2xl font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide">{petData.pet.name}</h2>
+                <div className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-full mt-2">
+                   <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">{petData.pet.id}</p>
+                </div>
+             </div>
+
+             <nav className="flex-1 space-y-4 animate-in slide-in-from-left-4 duration-700 delay-100 mt-6">
+                {patientNavItems.map(item => {
+                  const isActive = patientSubTab === item.id;
+                  const glowClass = getGlowClass(item.color);
+                  
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setPatientSubTab(item.id as any)}
+                      className={`w-full flex items-center gap-4 px-5 py-4 rounded-[1.5rem] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] border-[4px] relative group overflow-hidden ${
+                        isActive
+                          ? `bg-${item.color}-500 text-white border-white dark:border-black ${glowClass} scale-[1.05] z-10` 
+                          : 'text-zinc-500 dark:text-zinc-400 border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:translate-x-1'
+                      }`}
+                    >
+                      <i className={`fa-solid fa-${item.icon} text-sm transition-transform duration-300 group-hover:scale-125`}></i>
+                      <span className="font-black text-[10px] uppercase tracking-widest">{item.label}</span>
+                      
+                      {isActive && (
+                        <div className="absolute inset-0 bg-white/10 pointer-events-none opacity-30"></div>
+                      )}
+                    </button>
+                  );
+                })}
+             </nav>
+
+             <div className="pt-8 space-y-4 border-t border-zinc-100 dark:border-zinc-800 animate-in slide-in-from-bottom-4 duration-700 delay-200">
+                <button
+                  onClick={() => setShowNoteModal(true)}
+                  className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-[0_10px_30px_rgba(79,70,229,0.4)] hover:shadow-[0_15px_35px_rgba(79,70,229,0.5)] hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 border-2 border-white/20"
+                >
+                  <i className="fa-solid fa-pen-fancy text-sm"></i> Leave Note
+                </button>
+
+                {/* Footer Buttons Side-by-Side with Animations */}
+                <div className="flex gap-4">
+                   <button
+                      onClick={() => setDarkMode(!darkMode)}
+                      className="flex-1 flex items-center justify-center h-14 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all hover:scale-110 active:scale-90"
+                   >
+                      <div className="relative w-8 h-8 flex items-center justify-center">
+                         <i className={`fa-solid fa-sun absolute transition-all duration-700 ${darkMode ? 'rotate-0 scale-110 opacity-100 text-orange-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.8)] animate-spin-slow' : 'rotate-180 scale-0 opacity-0'}`}></i>
+                         <i className={`fa-solid fa-moon absolute transition-all duration-700 ${!darkMode ? 'rotate-0 scale-110 opacity-100 text-indigo-400 drop-shadow-[0_0_12px_rgba(129,140,248,0.8)]' : 'rotate-180 scale-0 opacity-0'}`}></i>
+                      </div>
+                   </button>
+                   <button
+                      onClick={() => setIsViewingPatient(false)}
+                      className="flex-1 flex items-center justify-center h-14 rounded-2xl bg-rose-50 dark:bg-rose-950/20 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-all hover:scale-110 active:scale-90"
+                      title="Exit Patient Record"
+                   >
+                      <i className="fa-solid fa-arrow-right-from-bracket text-lg"></i>
+                   </button>
+                </div>
+             </div>
+          </>
+        )}
       </aside>
 
       {/* Mobile Header (Main View) - Matches Pet Dashboard Aesthetics */}
@@ -392,21 +483,46 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                     </div>
                   </div>
 
-                  <div className="lg:col-span-4 space-y-8">
-                     <div className="bg-indigo-600 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
-                        <h4 className="text-2xl font-lobster mb-4">Daily Focus</h4>
-                        <div className="space-y-4">
-                           <div className="flex items-center gap-4 bg-white/10 p-4 rounded-2xl">
-                              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-black">4</div>
-                              <p className="text-xs font-bold">Planned Consults</p>
-                           </div>
-                           <div className="flex items-center gap-4 bg-white/10 p-4 rounded-2xl">
-                              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-black">12</div>
-                              <p className="text-xs font-bold">Files to Review</p>
-                           </div>
+                  <div className="lg:col-span-4 flex flex-col gap-6">
+                    {/* Consults Card - Matching Vitality Style */}
+                    <button className="relative h-48 rounded-[3rem] p-8 text-left transition-all duration-300 hover:scale-[1.02] active:scale-95 overflow-hidden group border-2 border-transparent hover:border-indigo-400 hover:shadow-[0_0_30px_rgba(99,102,241,0.3)] bg-indigo-50/80 dark:bg-indigo-950/20 w-full">
+                        <div className="absolute -right-6 -bottom-6 text-[10rem] opacity-[0.03] rotate-12 group-hover:rotate-[20deg] transition-transform text-indigo-900 dark:text-indigo-100 pointer-events-none">
+                            <i className="fa-solid fa-calendar-check"></i>
                         </div>
-                     </div>
+                        
+                        <div className="relative z-10 flex flex-col justify-between h-full">
+                            <div className="w-12 h-12 bg-white dark:bg-indigo-900/40 rounded-2xl flex items-center justify-center text-indigo-500 text-xl shadow-sm group-hover:scale-110 transition-transform">
+                                <i className="fa-solid fa-user-doctor"></i>
+                            </div>
+                            <div>
+                                <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400/80 mb-2">Today's Schedule</p>
+                                <div className="flex flex-col">
+                                    <span className="text-3xl font-lobster text-indigo-600 dark:text-indigo-300">4 Consults</span>
+                                    <span className="text-[10px] font-bold text-indigo-400/70 mt-1">2 Urgent • 2 Follow-up</span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+
+                    {/* Files Card - Matching Birthday Style */}
+                    <button className="relative h-48 rounded-[3rem] p-8 text-left transition-all duration-300 hover:scale-[1.02] active:scale-95 overflow-hidden group border-2 border-transparent hover:border-amber-400 hover:shadow-[0_0_30px_rgba(245,158,11,0.3)] bg-amber-50/80 dark:bg-amber-950/20 w-full">
+                        <div className="absolute -right-6 -bottom-6 text-[10rem] opacity-[0.03] rotate-12 group-hover:rotate-[20deg] transition-transform text-amber-900 dark:text-amber-100 pointer-events-none">
+                            <i className="fa-solid fa-folder-open"></i>
+                        </div>
+                        
+                        <div className="relative z-10 flex flex-col justify-between h-full">
+                            <div className="w-12 h-12 bg-white dark:bg-amber-900/40 rounded-2xl flex items-center justify-center text-amber-500 text-xl shadow-sm group-hover:scale-110 transition-transform">
+                                <i className="fa-solid fa-file-medical"></i>
+                            </div>
+                            <div>
+                                <p className="text-[9px] font-black uppercase tracking-widest text-amber-400/80 mb-2">Inbox</p>
+                                <div className="flex flex-col">
+                                    <span className="text-3xl font-lobster text-amber-600 dark:text-amber-300">12 Files</span>
+                                     <span className="text-[10px] font-bold text-amber-400/70 mt-1">New Labs & Reports</span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
                   </div>
                 </div>
               </>

@@ -40,7 +40,7 @@ const DoctorSearchScreen: React.FC<DoctorSearchScreenProps> = ({ searchId, setSe
                 </div>
               </div>
               <button 
-                onClick={handleSearch}
+                onClick={() => handleSearch()}
                 className="w-16 h-16 bg-white text-zinc-900 rounded-2xl flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all group overflow-hidden relative"
               >
                 <div className="absolute inset-0 bg-emerald-500 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
