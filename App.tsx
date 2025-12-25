@@ -164,33 +164,42 @@ const App: React.FC = () => {
           <div className="w-11 h-11 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg animate-spring-jump"><i className="fa-solid fa-paw text-lg"></i></div>
           <h1 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50">Pluto</h1>
         </div>
-        <nav className="flex-1 space-y-3">
+        <nav className="flex-1 space-y-4">
           {navItems.map(item => (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id as any)}
-              className={`w-full flex items-center gap-4 px-4 py-3 rounded-[1.25rem] transition-all border-[3px] ${
+              className={`w-full flex items-center gap-4 px-5 py-4 rounded-[1.5rem] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] border-[4px] relative group overflow-hidden ${
                 activeTab === item.id
-                  ? 'bg-orange-500 text-white border-white dark:border-zinc-900 shadow-xl scale-[1.05]' 
-                  : 'text-zinc-800 dark:text-zinc-300 border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                  ? 'bg-orange-500 text-white border-white dark:border-black shadow-[0_6px_20px_rgba(249,115,22,0.25)] scale-[1.05] z-10' 
+                  : 'text-zinc-800 dark:text-zinc-300 border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:translate-x-1'
               }`}
             >
-              <i className={`fa-solid fa-${item.icon} text-sm`}></i>
+              <i className={`fa-solid fa-${item.icon} text-sm transition-transform duration-300 group-hover:scale-125 ${activeTab === item.id ? 'animate-pulse' : ''}`}></i>
               <span className="font-black text-[10px] uppercase tracking-widest">{item.label}</span>
+              
+              {/* Active Indicator Pulse Effect */}
+              {activeTab === item.id && (
+                <div className="absolute inset-0 bg-white/10 pointer-events-none opacity-30 animate-pulse"></div>
+              )}
             </button>
           ))}
         </nav>
-        <div className="pt-8 border-t border-zinc-100 dark:border-zinc-800 flex flex-col gap-3">
-          <button onClick={() => setDarkMode(!darkMode)} className="w-full flex items-center gap-4 px-4 py-3 rounded-[1.25rem] text-zinc-500 hover:text-orange-500 transition-colors">
-            <div className="w-6 h-6 relative flex items-center justify-center">
-               <i className={`fa-solid fa-moon absolute transition-all duration-700 ${darkMode ? 'rotate-0 scale-100 opacity-100 text-amber-300' : 'rotate-180 scale-0 opacity-0'}`}></i>
-               <i className={`fa-solid fa-sun absolute transition-all duration-700 ${!darkMode ? 'rotate-0 scale-100 opacity-100 text-orange-500' : 'rotate-180 scale-0 opacity-0'}`}></i>
+        <div className="pt-8 border-t border-zinc-100 dark:border-zinc-800 flex flex-row items-center gap-4">
+          <button 
+            onClick={() => setDarkMode(!darkMode)} 
+            className="flex-1 flex items-center justify-center h-14 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all hover:scale-110 active:scale-90"
+          >
+            <div className="relative w-8 h-8 flex items-center justify-center">
+               <i className={`fa-solid fa-sun absolute transition-all duration-700 ${darkMode ? 'rotate-0 scale-110 opacity-100 text-orange-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.8)] animate-spin-slow' : 'rotate-180 scale-0 opacity-0'}`}></i>
+               <i className={`fa-solid fa-moon absolute transition-all duration-700 ${!darkMode ? 'rotate-0 scale-110 opacity-100 text-indigo-400 drop-shadow-[0_0_12px_rgba(129,140,248,0.8)]' : 'rotate-180 scale-0 opacity-0'}`}></i>
             </div>
-            <span className="font-black text-[10px] uppercase tracking-widest">Theme</span>
           </button>
-          <button onClick={() => setUser(null)} className="w-full flex items-center gap-4 px-4 py-3 rounded-[1.25rem] text-rose-500 hover:bg-rose-50 transition-all">
-            <i className="fa-solid fa-power-off text-sm"></i>
-            <span className="font-black text-[10px] uppercase tracking-widest">Logout</span>
+          <button 
+            onClick={() => setUser(null)} 
+            className="flex-1 flex items-center justify-center h-14 rounded-2xl bg-rose-50 dark:bg-rose-950/20 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-all hover:scale-110 active:scale-90"
+          >
+            <i className="fa-solid fa-power-off text-lg"></i>
           </button>
         </div>
       </aside>
@@ -209,8 +218,8 @@ const App: React.FC = () => {
             onClick={() => setDarkMode(!darkMode)} 
             className="w-10 h-10 flex items-center justify-center relative active:scale-90 transition-transform"
           >
-            <i className={`fa-solid fa-moon absolute text-xl transition-all duration-700 ${darkMode ? 'rotate-0 scale-110 opacity-100 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]' : 'rotate-[180deg] scale-0 opacity-0'}`}></i>
-            <i className={`fa-solid fa-sun absolute text-xl transition-all duration-700 ${!darkMode ? 'rotate-0 scale-110 opacity-100 text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]' : '-rotate-[180deg] scale-0 opacity-0'}`}></i>
+            <i className={`fa-solid fa-sun absolute text-xl transition-all duration-700 ${darkMode ? 'rotate-0 scale-110 opacity-100 text-orange-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.8)] animate-spin-slow' : 'rotate-180 scale-0 opacity-0'}`}></i>
+            <i className={`fa-solid fa-moon absolute text-xl transition-all duration-700 ${!darkMode ? 'rotate-0 scale-110 opacity-100 text-indigo-400 drop-shadow-[0_0_12px_rgba(129,140,248,0.8)]' : 'rotate-180 scale-0 opacity-0'}`}></i>
           </button>
           {pet && (
             <button onClick={() => setActiveTab('profile')}>
@@ -225,7 +234,7 @@ const App: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto no-scrollbar relative bg-[#FFFAF3] dark:bg-zinc-950 pt-16 pb-28 md:pt-0 md:pb-0">
+      <main className="flex-1 overflow-y-auto no-scrollbar relative bg-[#FFFAF3] dark:bg-zinc-950 pt-16 md:pt-0 md:pb-0">
         {renderContent()}
       </main>
 
