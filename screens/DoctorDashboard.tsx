@@ -160,6 +160,11 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
     setPriorityItems(prev => prev.filter(item => item.id !== id));
   };
 
+  const handleHomeClick = () => {
+    setActiveTab('discover');
+    setIsViewingPatient(false);
+  };
+
   // Render the specific view for an opened patient record
   const renderPetView = () => (
     <div className="flex flex-col h-full bg-[#FFFAF3] dark:bg-zinc-950 animate-in fade-in duration-500 relative overflow-hidden">
@@ -301,10 +306,15 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         {!isViewingPatient ? (
           // MAIN DOCTOR SIDEBAR
           <>
-            <div className="flex items-center gap-3 mb-16 justify-center">
-              <div className="w-11 h-11 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg"><i className="fa-solid fa-user-md text-lg"></i></div>
-              <h1 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50">Pluto <span className="text-indigo-600">MD</span></h1>
-            </div>
+            <button 
+              onClick={handleHomeClick}
+              className="flex items-center gap-3 mb-16 justify-center group outline-none hover:scale-105 active:scale-95 transition-transform"
+            >
+              <div className="w-11 h-11 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:rotate-12 transition-transform duration-300">
+                 <i className="fa-solid fa-user-md text-lg"></i>
+              </div>
+              <h1 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50 group-hover:text-indigo-600 transition-colors">Pluto <span className="text-indigo-600 group-hover:text-zinc-900 dark:group-hover:text-zinc-50">MD</span></h1>
+            </button>
             <nav className="flex-1 space-y-4">
               {[
                 { id: 'discover', label: 'Discover', icon: 'magnifying-glass' },
@@ -422,7 +432,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md z-[100] px-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
           <button 
             className="flex items-center gap-2 hover:scale-105 active:scale-95 hover:-rotate-2 transition-all group"
-            onClick={() => { setActiveTab('discover'); setIsViewingPatient(false); }}
+            onClick={handleHomeClick}
           >
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white text-xs shadow-sm group-hover:rotate-12 transition-transform"><i className="fa-solid fa-user-md"></i></div>
             <h1 className="text-xl font-lobster text-zinc-900 dark:text-zinc-50 group-active:text-indigo-600 transition-colors">Pluto <span className="text-indigo-600">MD</span></h1>

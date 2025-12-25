@@ -9,10 +9,28 @@ interface DoctorProfileScreenProps {
 
 const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile, doctorId }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<Doctor>(doctorProfile);
+  const [formData, setFormData] = useState<Doctor & { bio?: string; languages?: string }>(
+    { ...doctorProfile, bio: 'Dedicated to compassionate care for all furry friends.', languages: 'English, Spanish' }
+  );
+  const [status, setStatus] = useState<'Available' | 'In Surgery' | 'On Break'>('Available');
 
   const handleSave = () => {
     setIsEditing(false);
+  };
+
+  const toggleStatus = () => {
+    const statuses: ('Available' | 'In Surgery' | 'On Break')[] = ['Available', 'In Surgery', 'On Break'];
+    const currentIndex = statuses.indexOf(status);
+    setStatus(statuses[(currentIndex + 1) % statuses.length]);
+  };
+
+  const getStatusColor = (s: string) => {
+    switch (s) {
+      case 'Available': return 'bg-emerald-500 shadow-emerald-500/30';
+      case 'In Surgery': return 'bg-rose-500 shadow-rose-500/30';
+      case 'On Break': return 'bg-amber-500 shadow-amber-500/30';
+      default: return 'bg-zinc-500';
+    }
   };
 
   return (
@@ -22,60 +40,65 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
           <h3 className="text-4xl md:text-5xl font-lobster text-zinc-900 dark:text-zinc-50 leading-tight tracking-wide">Professional Profile</h3>
           <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] mt-2">Verified Medical Identity Vault</p>
         </div>
-        <button 
-          onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-          className={`px-8 md:px-12 py-4 rounded-[1.75rem] text-[10px] font-black tracking-widest uppercase transition-all shadow-2xl border-4 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] dark:hover:shadow-[0_0_20px_rgba(0,0,0,0.4)] ${
-            isEditing 
-              ? 'bg-emerald-500 text-white border-white dark:border-black shadow-emerald-500/20' 
-              : 'bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 border-white dark:border-black hover:scale-[1.03]'
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <i className={`fa-solid ${isEditing ? 'fa-check-circle' : 'fa-user-tie'} text-sm`}></i>
-            {isEditing ? 'Commit Changes' : 'Update Profile'}
-          </div>
-        </button>
+        <div className="flex gap-4">
+            <button 
+            onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+            className={`px-8 md:px-12 py-4 rounded-[1.75rem] text-[10px] font-black tracking-widest uppercase transition-all shadow-2xl border-4 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] dark:hover:shadow-[0_0_20px_rgba(0,0,0,0.4)] ${
+                isEditing 
+                ? 'bg-emerald-500 text-white border-white dark:border-black shadow-emerald-500/20' 
+                : 'bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 border-white dark:border-black hover:scale-[1.03]'
+            }`}
+            >
+            <div className="flex items-center gap-3">
+                <i className={`fa-solid ${isEditing ? 'fa-check-circle' : 'fa-user-tie'} text-sm`}></i>
+                {isEditing ? 'Commit Changes' : 'Update Profile'}
+            </div>
+            </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        {/* Left column: Doctor Photo - Frosted Glass Styled */}
+        {/* Left column: Doctor Photo & Quick Stats */}
         <div className="lg:col-span-4 space-y-8">
-           <div className="backdrop-blur-2xl bg-white/40 dark:bg-zinc-900/40 p-10 rounded-[3.5rem] border-4 border-white/60 dark:border-zinc-800/50 shadow-2xl text-center flex flex-col items-center">
-              <div className="relative mb-8">
-                 <div className="w-44 h-44 md:w-56 md:h-56 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-[3rem] flex items-center justify-center text-white text-6xl shadow-2xl border-8 border-white dark:border-zinc-950 transition-transform hover:rotate-2">
+           <div className="backdrop-blur-2xl bg-white/40 dark:bg-zinc-900/40 p-10 rounded-[3.5rem] border-4 border-white/60 dark:border-zinc-800/50 shadow-2xl text-center flex flex-col items-center relative overflow-hidden">
+              <div className="relative mb-8 group cursor-pointer" onClick={toggleStatus}>
+                 <div className="w-44 h-44 md:w-56 md:h-56 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-[3rem] flex items-center justify-center text-white text-6xl shadow-2xl border-8 border-white dark:border-zinc-950 transition-transform group-hover:rotate-2">
                     <i className="fa-solid fa-user-md"></i>
                  </div>
-                 <div className="absolute -bottom-2 -right-2 w-16 h-16 bg-emerald-500 text-white rounded-[1.5rem] shadow-xl flex items-center justify-center border-4 border-white dark:border-zinc-950 animate-pulse">
-                    <i className="fa-solid fa-shield-check text-2xl"></i>
+                 <div className={`absolute -bottom-2 -right-2 px-6 py-2 ${getStatusColor(status)} text-white rounded-full shadow-xl flex items-center justify-center border-4 border-white dark:border-zinc-950 transition-colors`}>
+                    <p className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">{status}</p>
                  </div>
               </div>
               <h4 className="text-3xl font-bold font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide">{formData.name}</h4>
               <p className="text-[11px] font-black text-emerald-500 uppercase tracking-[0.2em] mt-2">{formData.specialization}</p>
               
-              <div className="w-full mt-10 pt-10 border-t border-white/40 dark:border-zinc-800 grid grid-cols-1 gap-4">
-                 <StatRow label="Practice Experience" value={formData.experience} icon="briefcase" />
-                 <StatRow label="Professional License" value={formData.registrationId} icon="id-card-clip" />
+              {/* Fun Interactive Buttons */}
+              <div className="flex gap-3 mt-6">
+                <FunButton icon="coffee" onClick={() => setStatus('On Break')} />
+                <FunButton icon="hand-holding-heart" onClick={() => alert("High five! You're doing great!")} />
+                <FunButton icon="share-nodes" onClick={() => alert("Profile shared!")} />
               </div>
-           </div>
 
-           <div className="backdrop-blur-xl bg-gradient-to-br from-indigo-600/90 to-indigo-900/90 p-8 rounded-[3rem] text-white shadow-[0_0_40px_rgba(79,70,229,0.4)] relative overflow-hidden group border-4 border-white dark:border-black">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
-              <div className="relative z-10 flex flex-col gap-8">
-                 <div className="flex items-center justify-between">
-                    <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md shadow-lg">
-                       <i className="fa-solid fa-microscope text-xl"></i>
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">Practice History</span>
-                 </div>
-                 <div>
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-200">Patient Database</p>
-                    <p className="text-4xl font-black mt-2 tracking-tighter">4,281 <span className="text-xs font-black text-indigo-300 ml-1 uppercase opacity-60">Patients Visited</span></p>
-                 </div>
+              <div className="w-full mt-10 pt-10 border-t border-white/40 dark:border-zinc-800 grid grid-cols-1 gap-4">
+                 <StatRow 
+                    label="Practice Experience" 
+                    value={formData.experience} 
+                    icon="briefcase" 
+                    isEditing={isEditing}
+                    onChange={(v) => setFormData({...formData, experience: v})}
+                 />
+                 <StatRow 
+                    label="Professional License" 
+                    value={formData.registrationId} 
+                    icon="id-card-clip" 
+                    isEditing={isEditing}
+                    onChange={(v) => setFormData({...formData, registrationId: v})}
+                 />
               </div>
            </div>
         </div>
 
-        {/* Right column: Form Details - Frosted Glass Styled */}
+        {/* Right column: Details */}
         <div className="lg:col-span-8">
            <div className="backdrop-blur-2xl bg-white/40 dark:bg-zinc-900/40 p-10 md:p-14 rounded-[4rem] border-4 border-white/60 dark:border-zinc-800/50 shadow-2xl space-y-12">
               <section className="space-y-10 animate-in slide-in-from-right duration-700">
@@ -84,6 +107,18 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
                     <h5 className="text-2xl font-black tracking-wide text-zinc-900 dark:text-zinc-100">Medical Credentials</h5>
                  </div>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Bio Field - Full Width */}
+                    <div className="md:col-span-2">
+                        <ProfileField 
+                           icon="quote-left" label="Bio / Motto" value={formData.bio || ''} isEditing={isEditing} color="indigo"
+                           onChange={(v) => setFormData({...formData, bio: v})}
+                        />
+                    </div>
+
+                    <ProfileField 
+                       icon="language" label="Languages Spoken" value={formData.languages || ''} isEditing={isEditing} color="rose"
+                       onChange={(v) => setFormData({...formData, languages: v})}
+                    />
                     <ProfileField 
                        icon="graduation-cap" label="Academic Certification" value={formData.qualification} isEditing={isEditing} color="emerald"
                        onChange={(v) => setFormData({...formData, qualification: v})}
@@ -117,8 +152,8 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
                  </div>
               </section>
 
-              <div className="p-6 md:p-10 bg-white/20 dark:bg-zinc-800/30 rounded-[3rem] border-2 border-zinc-100 dark:border-zinc-700/50 flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-6 md:gap-8 shadow-inner transition-all hover:bg-white/40">
-                 <div className="w-20 h-20 bg-white dark:bg-zinc-900 rounded-[2rem] flex items-center justify-center text-emerald-500 text-4xl shadow-xl shrink-0 transition-transform hover:scale-105">
+              <div className="p-6 md:p-10 bg-white/20 dark:bg-zinc-800/30 rounded-[3rem] border-2 border-zinc-100 dark:border-zinc-700/50 flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-6 md:gap-8 shadow-inner transition-all hover:bg-white/40 group">
+                 <div className="w-20 h-20 bg-white dark:bg-zinc-900 rounded-[2rem] flex items-center justify-center text-emerald-500 text-4xl shadow-xl shrink-0 transition-transform group-hover:scale-110 group-hover:rotate-12">
                     <i className="fa-solid fa-vault"></i>
                  </div>
                  <div className="min-w-0">
@@ -133,14 +168,32 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
   );
 };
 
-const StatRow: React.FC<{ label: string, value: string, icon: string }> = ({ label, value, icon }) => (
+const FunButton: React.FC<{ icon: string, onClick: () => void }> = ({ icon, onClick }) => (
+  <button 
+    onClick={onClick}
+    className="w-10 h-10 rounded-full bg-white dark:bg-zinc-800 text-zinc-400 hover:text-indigo-500 hover:scale-110 transition-all shadow-sm border border-zinc-100 dark:border-zinc-700 flex items-center justify-center active:scale-90"
+  >
+    <i className={`fa-solid fa-${icon}`}></i>
+  </button>
+);
+
+const StatRow: React.FC<{ label: string, value: string, icon: string, isEditing?: boolean, onChange?: (val: string) => void }> = ({ label, value, icon, isEditing, onChange }) => (
   <div className="flex items-center gap-5 p-5 bg-white/30 dark:bg-zinc-800/50 rounded-[1.75rem] border border-white/40 dark:border-zinc-700/50 w-full transition-all hover:bg-white/50 group/stat">
      <div className="w-12 h-12 rounded-2xl bg-white dark:bg-zinc-900 flex items-center justify-center text-emerald-500 text-lg shadow-md transition-transform group-hover/stat:scale-110">
         <i className={`fa-solid fa-${icon}`}></i>
      </div>
      <div className="text-left flex-1 min-w-0">
         <p className="text-[8px] font-black text-zinc-400 uppercase tracking-[0.2em] leading-none">{label}</p>
-        <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200 truncate mt-1.5">{value}</p>
+        {isEditing && onChange ? (
+            <input 
+                type="text" 
+                value={value} 
+                onChange={(e) => onChange(e.target.value)}
+                className="w-full bg-transparent border-b-2 border-zinc-200 dark:border-zinc-700 outline-none font-bold text-sm text-zinc-800 dark:text-zinc-200 mt-1 focus:border-emerald-500 transition-colors py-1"
+            />
+        ) : (
+            <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200 truncate mt-1.5">{value}</p>
+        )}
      </div>
   </div>
 );
