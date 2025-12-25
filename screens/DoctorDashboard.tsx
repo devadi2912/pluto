@@ -114,7 +114,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
             title: `${petData.pet.name}'s ${r.type}`,
             detail: `Due: ${r.title}`,
             type: "Urgent",
-            color: "bg-rose-100 text-rose-600 border-rose-200",
+            color: "bg-rose-100", // Simplified color handling, we'll enforce rose theme in UI
             targetId: targetId
           }))
           .filter(newItem => !priorityItems.some(existing => existing.title === newItem.title));
@@ -126,7 +126,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
           title: `${targetId.split('-')[1] || 'Patient'}'s Follow-up`,
           detail: "Check recent lab reports",
           type: "Review",
-          color: "bg-amber-100 text-amber-600 border-amber-200",
+          color: "bg-rose-100",
           targetId: targetId
         };
         setPriorityItems(prev => [...prev, mockItem]);
@@ -305,7 +305,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
               <div className="w-11 h-11 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg"><i className="fa-solid fa-user-md text-lg"></i></div>
               <h1 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50">Pluto <span className="text-indigo-600">MD</span></h1>
             </div>
-            <nav className="flex-1 space-y-3">
+            <nav className="flex-1 space-y-4">
               {[
                 { id: 'discover', label: 'Discover', icon: 'magnifying-glass' },
                 { id: 'patients', label: 'Patient Logs', icon: 'clipboard-list' },
@@ -314,14 +314,17 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                 <button
                   key={item.id}
                   onClick={() => { setActiveTab(item.id as any); setIsViewingPatient(false); }}
-                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all ${
+                  className={`w-full flex items-center gap-4 px-5 py-4 rounded-[1.5rem] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] border-[4px] relative group overflow-hidden ${
                     activeTab === item.id && !isViewingPatient
-                      ? 'bg-indigo-600 text-white shadow-xl' 
-                      : 'text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                      ? 'bg-indigo-600 text-white border-white dark:border-black shadow-[0_0_20px_rgba(99,102,241,0.5)] scale-105 z-10' 
+                      : 'text-zinc-500 dark:text-zinc-400 border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:translate-x-1'
                   }`}
                 >
-                  <i className={`fa-solid fa-${item.icon} text-sm`}></i>
+                  <i className={`fa-solid fa-${item.icon} text-sm transition-transform duration-300 group-hover:scale-125`}></i>
                   <span className="font-black text-[10px] uppercase tracking-widest">{item.label}</span>
+                  {activeTab === item.id && !isViewingPatient && (
+                    <div className="absolute inset-0 bg-white/10 pointer-events-none opacity-30"></div>
+                  )}
                 </button>
               ))}
             </nav>
@@ -463,15 +466,17 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                       <h3 className="text-2xl font-lobster text-zinc-900 dark:text-zinc-50 px-2">Priority Alerts</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {priorityItems.length > 0 ? priorityItems.map(item => (
-                          <div key={item.id} className={`${item.color} p-5 rounded-3xl border-2 flex items-start justify-between group animate-in slide-in-from-bottom-2`}>
-                            <div>
-                              <p className="text-[8px] font-black uppercase tracking-widest mb-1 opacity-70">{item.type}</p>
-                              <h4 className="font-bold text-sm">{item.title}</h4>
-                              <p className="text-[10px] mt-1 font-medium">{item.detail}</p>
+                          <div key={item.id} className="bg-rose-100 dark:bg-rose-900/30 p-5 rounded-[1.5rem] relative group animate-in slide-in-from-bottom-2 border-none shadow-sm">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-rose-500 mb-1 block">URGENT</span>
+                                    <h4 className="font-lobster text-xl text-rose-600 dark:text-rose-400">{item.title}</h4>
+                                    <p className="text-[11px] font-bold text-rose-800/60 dark:text-rose-200/60 mt-0.5">{item.detail}</p>
+                                </div>
+                                <button onClick={(e) => removePriorityItem(item.id, e)} className="w-6 h-6 rounded-full bg-rose-200 dark:bg-rose-800 text-rose-500 dark:text-rose-300 flex items-center justify-center hover:bg-rose-300 transition-colors">
+                                     <i className="fa-solid fa-xmark text-[10px]"></i>
+                                </button>
                             </div>
-                            <button onClick={(e) => removePriorityItem(item.id, e)} className="text-zinc-400 hover:text-zinc-900 transition-colors">
-                              <i className="fa-solid fa-circle-xmark"></i>
-                            </button>
                           </div>
                         )) : (
                           <div className="md:col-span-2 py-12 text-center border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-[2.5rem]">
@@ -484,41 +489,41 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                   </div>
 
                   <div className="lg:col-span-4 flex flex-col gap-6">
-                    {/* Consults Card - Matching Vitality Style */}
+                    {/* Active Patients Card (Formerly Consults) - Blue Theme */}
                     <button className="relative h-48 rounded-[3rem] p-8 text-left transition-all duration-300 hover:scale-[1.02] active:scale-95 overflow-hidden group border-2 border-transparent hover:border-indigo-400 hover:shadow-[0_0_30px_rgba(99,102,241,0.3)] bg-indigo-50/80 dark:bg-indigo-950/20 w-full">
                         <div className="absolute -right-6 -bottom-6 text-[10rem] opacity-[0.03] rotate-12 group-hover:rotate-[20deg] transition-transform text-indigo-900 dark:text-indigo-100 pointer-events-none">
-                            <i className="fa-solid fa-calendar-check"></i>
+                            <i className="fa-solid fa-user-clock"></i>
                         </div>
                         
                         <div className="relative z-10 flex flex-col justify-between h-full">
                             <div className="w-12 h-12 bg-white dark:bg-indigo-900/40 rounded-2xl flex items-center justify-center text-indigo-500 text-xl shadow-sm group-hover:scale-110 transition-transform">
-                                <i className="fa-solid fa-user-doctor"></i>
+                                <i className="fa-solid fa-users-viewfinder"></i>
                             </div>
                             <div>
-                                <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400/80 mb-2">Today's Schedule</p>
+                                <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400/80 mb-2">Active Patients</p>
                                 <div className="flex flex-col">
-                                    <span className="text-3xl font-lobster text-indigo-600 dark:text-indigo-300">4 Consults</span>
-                                    <span className="text-[10px] font-bold text-indigo-400/70 mt-1">2 Urgent • 2 Follow-up</span>
+                                    <span className="text-3xl font-lobster text-indigo-600 dark:text-indigo-300">{visitedPatientIds.size} Accessed</span>
+                                    <span className="text-[10px] font-bold text-indigo-400/70 mt-1">Session History</span>
                                 </div>
                             </div>
                         </div>
                     </button>
 
-                    {/* Files Card - Matching Birthday Style */}
+                    {/* Pending Care Card (Formerly Inbox) - Amber Theme */}
                     <button className="relative h-48 rounded-[3rem] p-8 text-left transition-all duration-300 hover:scale-[1.02] active:scale-95 overflow-hidden group border-2 border-transparent hover:border-amber-400 hover:shadow-[0_0_30px_rgba(245,158,11,0.3)] bg-amber-50/80 dark:bg-amber-950/20 w-full">
                         <div className="absolute -right-6 -bottom-6 text-[10rem] opacity-[0.03] rotate-12 group-hover:rotate-[20deg] transition-transform text-amber-900 dark:text-amber-100 pointer-events-none">
-                            <i className="fa-solid fa-folder-open"></i>
+                            <i className="fa-solid fa-bell"></i>
                         </div>
                         
                         <div className="relative z-10 flex flex-col justify-between h-full">
                             <div className="w-12 h-12 bg-white dark:bg-amber-900/40 rounded-2xl flex items-center justify-center text-amber-500 text-xl shadow-sm group-hover:scale-110 transition-transform">
-                                <i className="fa-solid fa-file-medical"></i>
+                                <i className="fa-solid fa-file-signature"></i>
                             </div>
                             <div>
-                                <p className="text-[9px] font-black uppercase tracking-widest text-amber-400/80 mb-2">Inbox</p>
+                                <p className="text-[9px] font-black uppercase tracking-widest text-amber-400/80 mb-2">Pending Care</p>
                                 <div className="flex flex-col">
-                                    <span className="text-3xl font-lobster text-amber-600 dark:text-amber-300">12 Files</span>
-                                     <span className="text-[10px] font-bold text-amber-400/70 mt-1">New Labs & Reports</span>
+                                    <span className="text-3xl font-lobster text-amber-600 dark:text-amber-300">{priorityItems.length} Alerts</span>
+                                     <span className="text-[10px] font-bold text-amber-400/70 mt-1">Clear to resolve</span>
                                 </div>
                             </div>
                         </div>

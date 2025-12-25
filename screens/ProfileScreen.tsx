@@ -225,6 +225,15 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                 
+                {/* NEW: Unique Medical ID Field */}
+                <ColorField 
+                   label="Unique Medical ID" 
+                   value={formData.id} 
+                   icon="fingerprint" 
+                   isEditing={false} // Always read-only
+                   highlight
+                />
+
                 <ColorField 
                    label="Species" 
                    value={formData.species} 
@@ -333,19 +342,29 @@ const ColorField: React.FC<{
   isEditing: boolean,
   onChange?: (val: string) => void,
   component?: React.ReactNode,
-  inputType?: string
-}> = ({ label, value, icon, isEditing, onChange, component, inputType = "text" }) => {
+  inputType?: string,
+  highlight?: boolean
+}> = ({ label, value, icon, isEditing, onChange, component, inputType = "text", highlight }) => {
   
   return (
     <div className={`
       relative p-4 rounded-3xl transition-all duration-500 group border
       ${isEditing 
         ? 'bg-white dark:bg-zinc-800 border-orange-200 dark:border-zinc-700 shadow-sm hover:border-orange-400' 
-        : 'bg-white/40 dark:bg-zinc-800/20 border-white/40 dark:border-zinc-800 hover:bg-white dark:hover:bg-zinc-800 hover:scale-[1.03] hover:shadow-xl hover:border-orange-500/20 cursor-default'
+        : highlight 
+          ? 'bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-900/30 shadow-md cursor-copy'
+          : 'bg-white/40 dark:bg-zinc-800/20 border-white/40 dark:border-zinc-800 hover:bg-white dark:hover:bg-zinc-800 hover:scale-[1.03] hover:shadow-xl hover:border-orange-500/20 cursor-default'
       }
-    `}>
+    `}
+    onClick={() => {
+      if(highlight && !isEditing) {
+        navigator.clipboard.writeText(value);
+        alert(`ID ${value} copied to clipboard!`);
+      }
+    }}
+    >
       <div className="flex items-center gap-4">
-        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-sm bg-white dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 shadow-sm transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6`}>
+        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-sm bg-white dark:bg-zinc-800 ${highlight ? 'text-orange-500' : 'text-zinc-400 dark:text-zinc-500'} shadow-sm transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6`}>
           <i className={`fa-solid fa-${icon}`}></i>
         </div>
         <div className="flex-1 min-w-0">
@@ -356,14 +375,17 @@ const ColorField: React.FC<{
                 type={inputType}
                 value={value}
                 onChange={e => onChange && onChange(e.target.value)}
-                className="w-full bg-transparent outline-none font-bold text-zinc-900 dark:text-zinc-100 text-sm"
+                className="w-full bg-transparent border-none outline-none font-bold text-sm text-zinc-900 dark:text-zinc-100 w-full"
                 placeholder="-"
               />
             )
           ) : (
-            <p className="font-bold text-zinc-800 dark:text-zinc-200 truncate text-sm">{value || '-'}</p>
+            <p className={`font-bold truncate text-sm ${highlight ? 'text-orange-600 dark:text-orange-400 font-mono tracking-wider' : 'text-zinc-800 dark:text-zinc-200'}`}>{value || '-'}</p>
           )}
         </div>
+        {highlight && !isEditing && (
+           <i className="fa-solid fa-copy text-zinc-300 dark:text-zinc-600 text-xs group-hover:text-orange-400 transition-colors"></i>
+        )}
       </div>
     </div>
   );
