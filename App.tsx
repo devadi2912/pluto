@@ -100,10 +100,17 @@ const App: React.FC = () => {
     }
   }, [darkMode]);
 
-  // Initialize with rich demo data
+  // Initialize with rich demo data OR registered user data
   useEffect(() => {
     if (user && !pet) {
-      setPet(MOCK_PET);
+      if (user.role === 'PET_OWNER' && user.petDetails) {
+        // Use registered pet details
+        setPet(user.petDetails);
+      } else {
+        // Fallback to mock data
+        setPet(MOCK_PET);
+      }
+
       setTimeline([
         { id: '1', date: '2024-03-10', type: EntryType.VetVisit, title: 'Annual Checkup', notes: 'Heart rate perfect. Recommended dental cleaning next month.' },
         { id: '2', date: '2024-02-15', type: EntryType.Vaccination, title: 'Rabies Booster', notes: 'Given at Green Valley Clinic.' }

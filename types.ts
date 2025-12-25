@@ -113,5 +113,6 @@ export interface AuthUser {
   username: string;
   role: UserRole;
   doctorDetails?: Doctor;
-  petId?: string; // Added to support usage in AuthScreen.tsx
+  petId?: string; 
+  petDetails?: PetProfile; // Added to persist registered pet data
 }
