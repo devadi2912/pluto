@@ -86,7 +86,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({
         type: newReminder.type as any,
         completed: false
       };
-      setReminders(prev => [...prev, reminder].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+      setReminders(prev => [...prev, reminder].sort((a, b) => new Date(a.date).getTime() - new Date(a.date).getTime()));
       setShowAddReminder(false);
       setNewReminder({ type: 'Medication', date: new Date().toISOString().split('T')[0], title: '' });
     }
@@ -98,7 +98,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({
     if (mode === 'journal') {
       setTimeline(prev => prev.map(e => e.id === item.id ? item : e).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     } else {
-      setReminders(prev => prev.map(r => r.id === item.id ? item : r).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+      setReminders(prev => prev.map(r => r.id === item.id ? item : r).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     }
     setEditingItem(null);
   };
@@ -135,7 +135,8 @@ const TimelineScreen: React.FC<TimelineProps> = ({
   };
 
   return (
-    <div className="p-8 md:p-12 space-y-16 animate-in slide-in-from-right-10 duration-700 pb-32 no-scrollbar overflow-y-auto h-full">
+    <div className="p-8 md:p-12 space-y-16 animate-in slide-in-from-right-10 duration-700 pb-60 no-scrollbar">
+      {/* Planned Care Section */}
       <section className="space-y-8">
         <div className="flex items-center justify-between px-2">
           <div>
@@ -150,17 +151,17 @@ const TimelineScreen: React.FC<TimelineProps> = ({
         </div>
 
         {showAddReminder && !readOnly && (
-          <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border-4 border-orange-50 dark:border-zinc-800 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200">
+          <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-8 rounded-[2.5rem] border-4 border-orange-50 dark:border-zinc-800 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200">
             <h4 className="font-lobster text-3xl text-orange-600 dark:text-orange-400">Schedule Task</h4>
             <div className="grid grid-cols-2 gap-6">
-              <input type="date" className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-orange-200 outline-none font-bold text-zinc-900 dark:text-white" value={newReminder.date} onChange={e => setNewReminder({...newReminder, date: e.target.value})} />
-              <select className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-orange-200 outline-none font-bold text-zinc-900 dark:text-white" value={newReminder.type} onChange={e => setNewReminder({...newReminder, type: e.target.value as any})}>
+              <input type="date" className="w-full p-5 rounded-2xl bg-zinc-50/50 dark:bg-zinc-800/50 border-2 border-transparent focus:border-orange-200 outline-none font-bold text-zinc-900 dark:text-white" value={newReminder.date} onChange={e => setNewReminder({...newReminder, date: e.target.value})} />
+              <select className="w-full p-5 rounded-2xl bg-zinc-50/50 dark:bg-zinc-800/50 border-2 border-transparent focus:border-orange-200 outline-none font-bold text-zinc-900 dark:text-white" value={newReminder.type} onChange={e => setNewReminder({...newReminder, type: e.target.value as any})}>
                 <option value="Medication">Medication</option>
                 <option value="Vaccination">Vaccination</option>
                 <option value="Vet follow-up">Vet follow-up</option>
               </select>
             </div>
-            <input type="text" placeholder="Task description..." className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-orange-200 outline-none font-bold text-zinc-900 dark:text-white shadow-inner" value={newReminder.title} onChange={e => setNewReminder({...newReminder, title: e.target.value})} />
+            <input type="text" placeholder="Task description..." className="w-full p-5 rounded-2xl bg-zinc-50/50 dark:bg-zinc-800/50 border-2 border-transparent focus:border-orange-200 outline-none font-bold text-zinc-900 dark:text-white shadow-inner" value={newReminder.title} onChange={e => setNewReminder({...newReminder, title: e.target.value})} />
             <button onClick={handleAddReminder} className="w-full bg-orange-500 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:brightness-110 active:scale-95 transition-all">Schedule</button>
           </div>
         )}
@@ -180,29 +181,33 @@ const TimelineScreen: React.FC<TimelineProps> = ({
         </div>
       </section>
 
+      {/* Care Journal Section - Visual Match to Screenshot */}
       <section className="space-y-8">
         <div className="flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800 pt-12 px-2">
           <div>
-            <h2 className="text-4xl font-lobster text-emerald-600 dark:text-emerald-400">Care Journal</h2>
+            <h2 className="text-4xl font-lobster text-emerald-500 dark:text-emerald-400">Care Journal</h2>
             <p className="text-[11px] font-black uppercase text-zinc-500 tracking-widest mt-1">Health history & milestones</p>
           </div>
           {!readOnly && (
-            <button onClick={() => setShowAdd(!showAdd)} className="w-16 h-16 bg-emerald-500 text-white rounded-[1.5rem] shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:rotate-45">
+            <button 
+              onClick={() => setShowAdd(!showAdd)} 
+              className="w-16 h-16 bg-emerald-500 text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:rotate-45"
+            >
               <i className={`fa-solid ${showAdd ? 'fa-xmark' : 'fa-plus'} text-2xl`}></i>
             </button>
           )}
         </div>
 
         {showAdd && !readOnly && (
-          <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border-4 border-emerald-50 dark:border-zinc-800 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200">
+          <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-8 rounded-[2.5rem] border-4 border-emerald-50 dark:border-zinc-800 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200">
             <h4 className="font-lobster text-3xl text-emerald-600 dark:text-emerald-400">Add History</h4>
             <div className="grid grid-cols-2 gap-6">
-              <input type="date" className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-emerald-200 outline-none font-bold text-zinc-900 dark:text-white" value={newEntry.date} onChange={e => setNewEntry({...newEntry, date: e.target.value})} />
-              <select className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-emerald-200 outline-none font-bold text-zinc-900 dark:text-white" value={newEntry.type} onChange={e => setNewEntry({...newEntry, type: e.target.value as EntryType})}>
+              <input type="date" className="w-full p-5 rounded-2xl bg-zinc-50/50 dark:bg-zinc-800/50 border-2 border-transparent focus:border-emerald-200 outline-none font-bold text-zinc-900 dark:text-white" value={newEntry.date} onChange={e => setNewEntry({...newEntry, date: e.target.value})} />
+              <select className="w-full p-5 rounded-2xl bg-zinc-50/50 dark:bg-zinc-800/50 border-2 border-transparent focus:border-emerald-200 outline-none font-bold text-zinc-900 dark:text-white" value={newEntry.type} onChange={e => setNewEntry({...newEntry, type: e.target.value as EntryType})}>
                 {Object.values(EntryType).map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
-            <input type="text" placeholder="Title for this record..." className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-emerald-200 outline-none font-bold text-zinc-900 dark:text-white" value={newEntry.title} onChange={e => setNewEntry({...newEntry, title: e.target.value})} />
+            <input type="text" placeholder="Title for this record..." className="w-full p-5 rounded-2xl bg-zinc-50/50 dark:bg-zinc-800/50 border-2 border-transparent focus:border-emerald-200 outline-none font-bold text-zinc-900 dark:text-white" value={newEntry.title} onChange={e => setNewEntry({...newEntry, title: e.target.value})} />
             <button onClick={handleAdd} className="w-full bg-emerald-500 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:brightness-110 active:scale-95 transition-all">Save Memory</button>
           </div>
         )}
@@ -210,38 +215,26 @@ const TimelineScreen: React.FC<TimelineProps> = ({
         <div className="relative pl-12 md:pl-20 space-y-12 before:content-[''] before:absolute before:left-[23px] md:before:left-[31px] before:top-4 before:bottom-4 before:w-1.5 before:bg-zinc-100 dark:before:bg-zinc-800 before:rounded-full">
           {timeline.map((entry, idx) => (
             <div key={entry.id} onClick={() => !readOnly && setEditingItem({ item: { ...entry }, mode: 'journal' })} className="relative group animate-in slide-in-from-left-5 duration-500 cursor-pointer" style={{ animationDelay: `${idx * 100}ms` }}>
-              <div className={`absolute -left-[45px] md:-left-[53px] top-4 w-14 h-14 rounded-3xl border-[8px] border-white dark:border-zinc-950 shadow-2xl flex items-center justify-center z-10 transition-all group-hover:scale-110 ${getColor(entry.type)} text-white`}>
-                <i className={`fa-solid ${getIcon(entry.type)} text-xl`}></i>
+              {/* Rounded icons on the timeline line to match screenshot */}
+              <div className={`absolute -left-[45px] md:-left-[53px] top-4 w-12 h-12 rounded-full border-4 border-white dark:border-zinc-950 shadow-2xl flex items-center justify-center z-10 transition-all group-hover:scale-110 ${getColor(entry.type)} text-white`}>
+                <i className={`fa-solid ${getIcon(entry.type)} text-base`}></i>
               </div>
-              <div className="bg-white dark:bg-zinc-900 border-2 border-zinc-50 dark:border-zinc-800 p-8 rounded-[3rem] shadow-xl group-hover:shadow-2xl group-hover:border-emerald-100 transition-all max-w-2xl">
+              {/* Glass Card Entries */}
+              <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border-2 border-zinc-50/50 dark:border-zinc-800/50 p-8 rounded-[2.5rem] shadow-xl group-hover:shadow-2xl group-hover:border-emerald-500/30 transition-all max-w-2xl">
                 <div className="flex justify-between items-center mb-4">
-                  <span className={`text-[10px] font-black uppercase tracking-widest text-white px-4 py-1.5 rounded-full ${getColor(entry.type)} shadow-sm`}>{entry.type}</span>
-                  <span className="text-[10px] font-black text-zinc-500 dark:text-zinc-600">{new Date(entry.date).toLocaleDateString()}</span>
+                  <span className={`text-[9px] font-black uppercase tracking-[0.2em] text-white px-5 py-2 rounded-full ${getColor(entry.type)} shadow-sm`}>{entry.type}</span>
+                  <span className="text-[10px] font-black text-zinc-500 dark:text-zinc-600 tracking-widest">{new Date(entry.date).toLocaleDateString()}</span>
                 </div>
                 <h4 className="text-2xl font-bold font-lobster text-zinc-900 dark:text-zinc-100 mb-2">{entry.title}</h4>
-                {entry.notes && <p className="text-base text-zinc-600 dark:text-zinc-400 font-bold leading-relaxed">{entry.notes}</p>}
+                {entry.notes && <p className="text-sm text-zinc-600 dark:text-zinc-400 font-bold leading-relaxed">{entry.notes}</p>}
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {editingItem && !readOnly && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setEditingItem(null)}>
-          <div className="bg-white/95 dark:bg-zinc-950/90 backdrop-blur-[40px] w-full max-w-md rounded-[3rem] p-8 shadow-2xl border border-white dark:border-zinc-800 animate-in zoom-in-95 duration-300 space-y-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <h3 className="text-4xl font-lobster">Modify {editingItem.mode === 'journal' ? 'Entry' : 'Task'}</h3>
-              <button onClick={() => setEditingItem(null)} className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500"><i className="fa-solid fa-xmark"></i></button>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <button onClick={handleDeleteItem} className="w-full py-4 bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-rose-600 hover:text-white transition-all active:scale-95">Delete</button>
-              <button onClick={handleUpdateItem} className="w-full py-4 bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl hover:brightness-110 active:scale-95 transition-all">Save Changes</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <section className="space-y-8 pt-12 border-t border-zinc-100 dark:border-zinc-800 pb-20">
+      {/* Doctors Consulted Section */}
+      <section className="space-y-8 pt-12 border-t border-zinc-100 dark:border-zinc-800">
         <div className="px-2">
           <h2 className="text-4xl font-lobster text-indigo-600 dark:text-indigo-400 tracking-wide">Doctors Consulted</h2>
           <p className="text-[11px] font-black uppercase text-zinc-500 tracking-widest mt-1">Medical professional access history</p>
@@ -260,13 +253,32 @@ const TimelineScreen: React.FC<TimelineProps> = ({
         </div>
       </section>
 
+      {/* Editing Glass Card Modal */}
+      {editingItem && !readOnly && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-transparent pointer-events-none animate-in fade-in duration-300" onClick={() => setEditingItem(null)}>
+          <div className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl w-full max-w-md rounded-[3rem] p-8 shadow-2xl border-4 border-white dark:border-zinc-950 animate-in zoom-in-95 duration-300 space-y-6 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-4xl font-lobster">Modify {editingItem.mode === 'journal' ? 'Entry' : 'Task'}</h3>
+              <button onClick={() => setEditingItem(null)} className="w-10 h-10 bg-white/50 dark:bg-zinc-800/50 rounded-full flex items-center justify-center text-zinc-500 border border-zinc-200 dark:border-zinc-700">
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <button onClick={handleDeleteItem} className="w-full py-4 bg-rose-50/80 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-rose-600 hover:text-white transition-all active:scale-95 border-2 border-rose-100 dark:border-rose-900/30">Delete</button>
+              <button onClick={handleUpdateItem} className="w-full py-4 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl hover:brightness-110 active:scale-95 transition-all border-2 border-white dark:border-zinc-950">Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Doctor Profile Glass Card Modal */}
       {selectedDoctor && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/30 animate-in fade-in duration-500" onClick={() => setSelectedDoctor(null)}>
-          <div className="bg-white/95 dark:bg-zinc-950/90 backdrop-blur-[40px] w-full max-w-md rounded-[3rem] p-10 shadow-2xl border border-white dark:border-zinc-800 animate-in zoom-in-95 duration-300 relative text-center space-y-6" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-transparent pointer-events-none animate-in fade-in duration-300" onClick={() => setSelectedDoctor(null)}>
+          <div className="bg-white/70 dark:bg-zinc-950/70 backdrop-blur-2xl w-full max-w-md rounded-[3rem] p-10 shadow-2xl border-4 border-white dark:border-zinc-800 animate-in zoom-in-95 duration-300 relative text-center space-y-6 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
             <div className="w-24 h-24 bg-indigo-500 text-white rounded-[2.5rem] flex items-center justify-center text-4xl mx-auto shadow-2xl rotate-3 border-4 border-white/20"><i className="fa-solid fa-user-doctor"></i></div>
             <h3 className="text-4xl font-lobster text-zinc-950 dark:text-zinc-50 leading-tight">{selectedDoctor.name}</h3>
             <p className="text-[11px] font-black text-indigo-700 dark:text-indigo-400 uppercase tracking-[0.25em] mt-1">{selectedDoctor.specialization}</p>
-            <button onClick={() => setSelectedDoctor(null)} className="w-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-black py-6 rounded-3xl shadow-2xl uppercase tracking-[0.3em] hover:scale-[1.02] transition-all">Close Profile</button>
+            <button onClick={() => setSelectedDoctor(null)} className="w-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-black py-6 rounded-3xl shadow-2xl uppercase tracking-[0.3em] hover:scale-[1.02] transition-all border-4 border-white dark:border-zinc-950">Close Profile</button>
           </div>
         </div>
       )}

@@ -1,132 +1,92 @@
 
 import React, { useState } from 'react';
-import { PetProfile, Species, Gender } from '../types';
 
-const MOCK_PATIENTS: PetProfile[] = [
-  { id: 'PET-LUNA-123', name: 'Luna', species: Species.Dog, breed: 'Golden Retriever', dateOfBirth: '2021-06-15', gender: Gender.Female, avatar: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=200&h=200' },
-  { id: 'PET-MAX-55', name: 'Max', species: Species.Dog, breed: 'Beagle', dateOfBirth: '2019-04-12', gender: Gender.Male, avatar: 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?auto=format&fit=crop&q=80&w=200&h=200' },
-  { id: 'PET-BELLA-22', name: 'Bella', species: Species.Cat, breed: 'Siamese', dateOfBirth: '2022-08-20', gender: Gender.Female, avatar: 'https://images.unsplash.com/photo-1513245538231-152271936348?auto=format&fit=crop&q=80&w=200&h=200' },
-  { id: 'PET-CHARLIE-88', name: 'Charlie', species: Species.Dog, breed: 'Poodle', dateOfBirth: '2023-01-05', gender: Gender.Male, avatar: 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&q=80&w=200&h=200' },
-  { id: 'PET-LUCY-11', name: 'Lucy', species: Species.Cat, breed: 'Persian', dateOfBirth: '2018-11-30', gender: Gender.Female, avatar: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=200&h=200' },
-  { id: 'PET-COOPER-00', name: 'Cooper', species: Species.Other, breed: 'Holland Lop', dateOfBirth: '2022-03-15', gender: Gender.Unknown, avatar: 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?auto=format&fit=crop&q=80&w=200&h=200' }
-];
-
-interface DoctorPatientsScreenProps {
-  onViewRecords?: (petId: string) => void;
+interface Patient {
+  id: string;
+  name: string;
+  breed: string;
+  avatar?: string;
 }
 
-const DoctorPatientsScreen: React.FC<DoctorPatientsScreenProps> = ({ onViewRecords }) => {
-  const [selectedPatient, setSelectedPatient] = useState<PetProfile | null>(null);
+interface DoctorPatientsScreenProps {
+  patients: Patient[];
+  onSelectPatient: (id: string) => void;
+}
 
-  // Strictly limited to 10 recent patients
-  const recentPatients = MOCK_PATIENTS.slice(0, 10);
-
-  const handleViewRecords = () => {
-    if (selectedPatient && onViewRecords) {
-      onViewRecords(selectedPatient.id);
-      setSelectedPatient(null);
-    }
-  };
+/**
+ * DoctorPatientsScreen renders a grid of recently visited patients for quick access.
+ * It features a preview modal before opening the full record.
+ */
+const DoctorPatientsScreen: React.FC<DoctorPatientsScreenProps> = ({ patients, onSelectPatient }) => {
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300 pb-44 px-1">
+    <div className="space-y-10 animate-in fade-in duration-500">
       <div className="px-2">
-        <h3 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50">Recent Cases</h3>
-        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">Showing last 10 visits</p>
+        <h2 className="text-4xl font-lobster text-zinc-900 dark:text-zinc-50">Patient Logs</h2>
+        <p className="text-[11px] font-black text-zinc-500 uppercase tracking-widest mt-1">Recently accessed medical files</p>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-        {recentPatients.map((patient, idx) => (
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {patients.length > 0 ? patients.map((patient, idx) => (
           <div 
-            key={patient.id}
+            key={patient.id} 
             onClick={() => setSelectedPatient(patient)}
-            className="bg-white dark:bg-zinc-900 border-4 border-white dark:border-black p-6 rounded-[3rem] flex flex-col items-start gap-4 cursor-pointer transition-all duration-500 shadow-[0_10px_30px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.4)] md:hover:scale-[1.03] md:hover:-translate-y-3 group active:scale-[0.98] animate-in slide-in-from-bottom-2 overflow-hidden relative"
+            className="bg-white dark:bg-zinc-900 border-2 border-zinc-100 dark:border-zinc-800 p-6 rounded-[2.5rem] shadow-sm hover:shadow-xl hover:border-indigo-200 dark:hover:border-indigo-900 transition-all cursor-pointer group animate-in slide-in-from-bottom-4"
             style={{ animationDelay: `${idx * 50}ms` }}
           >
-            {/* Dynamic Background Glow Layer */}
-            <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-[0.02] dark:group-hover:opacity-[0.2] transition-opacity duration-500 pointer-events-none"></div>
-            
-            {/* Background Blob */}
-            <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-orange-500/5 dark:bg-orange-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-            
-            <div className="flex items-center gap-4 w-full relative z-10">
-              <div className="relative">
-                <img 
-                  src={patient.avatar} 
-                  alt={patient.name} 
-                  className="w-16 h-16 rounded-2xl object-cover border-4 border-white dark:border-zinc-800 shadow-lg group-hover:rotate-3 transition-all duration-500"
-                />
-                <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white dark:border-zinc-800 flex items-center justify-center text-[8px] text-white shadow-sm ${patient.species === Species.Dog ? 'bg-orange-500' : 'bg-emerald-500'}`}>
-                  <i className={`fa-solid ${patient.species === Species.Dog ? 'fa-dog' : 'fa-cat'}`}></i>
-                </div>
+            <div className="flex items-center gap-5">
+              <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-3xl group-hover:rotate-6 transition-transform">
+                <i className="fa-solid fa-paw"></i>
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-zinc-800 dark:text-zinc-100 text-lg leading-tight group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">{patient.name}</h4>
-                <p className="text-[9px] font-black text-orange-500 uppercase tracking-widest mt-0.5">{patient.id}</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600 flex items-center justify-center group-hover:bg-zinc-950 dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-zinc-950 transition-all shadow-inner">
-                <i className="fa-solid fa-arrow-right-long text-sm"></i>
+                <h4 className="font-bold text-lg truncate text-zinc-900 dark:text-zinc-100">{patient.name}</h4>
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{patient.id}</p>
               </div>
             </div>
-
-            <div className="flex items-center gap-3 mt-1 relative z-10">
-              <span className="px-3 py-1 bg-zinc-100/50 dark:bg-zinc-800/50 rounded-lg text-[8px] font-black text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 uppercase tracking-widest transition-colors">
-                {patient.breed}
-              </span>
-              <span className="px-3 py-1 bg-zinc-100/50 dark:bg-zinc-800/50 rounded-lg text-[8px] font-black text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 uppercase tracking-widest transition-colors">
-                {patient.gender}
-              </span>
+            <div className="mt-6 pt-6 border-t border-zinc-50 dark:border-zinc-800 flex justify-between items-center">
+               <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em]">Verified Record</span>
+               <i className="fa-solid fa-chevron-right text-zinc-300"></i>
             </div>
           </div>
-        ))}
+        )) : (
+          <div className="col-span-full py-20 text-center border-4 border-dashed border-zinc-100 dark:border-zinc-900 rounded-[3rem]">
+            <i className="fa-solid fa-folder-open text-zinc-100 text-6xl mb-4"></i>
+            <p className="text-zinc-400 font-bold">No patient history found. Use Discovery to search.</p>
+          </div>
+        )}
       </div>
 
-      <div className="text-center py-10">
-        <p className="text-[10px] font-black text-zinc-300 dark:text-zinc-700 uppercase tracking-widest flex items-center justify-center gap-3">
-          <span className="h-[1px] w-8 bg-zinc-100 dark:bg-zinc-800"></span>
-          End of Archive
-          <span className="h-[1px] w-8 bg-zinc-100 dark:bg-zinc-800"></span>
-        </p>
-      </div>
-
-      {/* Patient Detail Modal - Consistent Frosted Glass Style */}
+      {/* Patient Detail Modal - Glass Card Pattern */}
       {selectedPatient && (
         <div 
-          className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/20 animate-in fade-in duration-300"
+          className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-transparent backdrop-blur-none pointer-events-none animate-in fade-in duration-300"
           onClick={() => setSelectedPatient(null)}
         >
           <div 
-            className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-[40px] backdrop-saturate-150 border-2 border-white/40 dark:border-zinc-800/40 w-full max-w-sm rounded-[3rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col"
+            className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-3xl border-4 border-white dark:border-zinc-950 w-full max-w-sm rounded-[3rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col pointer-events-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-8 text-center space-y-4 max-h-[85vh] overflow-y-auto no-scrollbar">
-              <div className="w-24 h-24 rounded-[2.5rem] overflow-hidden border-4 border-white/80 dark:border-zinc-800/80 shadow-xl mx-auto group">
-                <img src={selectedPatient.avatar} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={selectedPatient.name} />
+            <div className="p-10 text-center space-y-6">
+              <div className="w-24 h-24 bg-indigo-600 text-white rounded-[2rem] flex items-center justify-center text-5xl mx-auto shadow-xl group-hover:scale-110 transition-transform">
+                <i className="fa-solid fa-shield-cat"></i>
               </div>
               <div>
-                <h3 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50 leading-tight">{selectedPatient.name}</h3>
-                <p className="text-[11px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-widest">{selectedPatient.id}</p>
+                <h3 className="text-4xl font-lobster text-zinc-950 dark:text-zinc-50">{selectedPatient.name}</h3>
+                <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-2">File: {selectedPatient.id}</p>
               </div>
-              
-              <div className="pt-6 space-y-3 text-left border-t border-zinc-100/40 dark:border-zinc-800/40">
-                <PatientDetailRow label="Species" value={selectedPatient.species} />
-                <PatientDetailRow label="Breed" value={selectedPatient.breed} />
-                <PatientDetailRow label="Gender" value={selectedPatient.gender} />
-                <PatientDetailRow label="Age" value={calculateAge(selectedPatient.dateOfBirth)} />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 pt-4">
+              <div className="space-y-3">
                 <button 
-                  onClick={() => setSelectedPatient(null)}
-                  className="py-4 rounded-2xl bg-white/60 dark:bg-zinc-800/60 text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-widest text-[10px] hover:bg-white transition-all active:scale-95 border border-white/40 dark:border-zinc-700/40"
+                  onClick={() => { onSelectPatient(selectedPatient.id); setSelectedPatient(null); }}
+                  className="w-full py-5 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all border-4 border-white dark:border-zinc-950"
                 >
-                  Back
+                  Open Full Record
                 </button>
                 <button 
-                  onClick={handleViewRecords}
-                  className="py-4 rounded-2xl bg-orange-500 text-white font-black uppercase tracking-widest text-[10px] shadow-lg hover:brightness-110 active:scale-95 transition-all"
+                  onClick={() => setSelectedPatient(null)}
+                  className="w-full py-5 bg-white/40 dark:bg-zinc-800/40 text-zinc-500 rounded-2xl font-black uppercase tracking-widest border-2 border-white dark:border-zinc-700"
                 >
-                  Open File
+                  Dismiss
                 </button>
               </div>
             </div>
@@ -136,19 +96,5 @@ const DoctorPatientsScreen: React.FC<DoctorPatientsScreenProps> = ({ onViewRecor
     </div>
   );
 };
-
-const PatientDetailRow: React.FC<{ label: string, value: string }> = ({ label, value }) => (
-  <div className="flex items-center justify-between py-2 border-b border-zinc-50/50 dark:border-zinc-800/20">
-    <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">{label}</span>
-    <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{value}</span>
-  </div>
-);
-
-function calculateAge(dob: string) {
-  const diff = Date.now() - new Date(dob).getTime();
-  const ageDate = new Date(diff);
-  const years = Math.abs(ageDate.getUTCFullYear() - 1970);
-  return years === 0 ? '< 1 year' : `${years} ${years === 1 ? 'year' : 'years'}`;
-}
 
 export default DoctorPatientsScreen;

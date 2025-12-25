@@ -48,14 +48,15 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, darkMode, setDarkMode 
       <div className="absolute top-6 right-6 z-50">
         <button 
           onClick={() => setDarkMode(!darkMode)}
-          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-lg border-2 ${
+          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-lg border-2 relative overflow-hidden ${
             darkMode 
-              ? 'bg-zinc-900 text-amber-300 border-zinc-800' 
-              : 'bg-white text-orange-600 border-orange-100'
+              ? 'bg-zinc-900 border-zinc-800' 
+              : 'bg-white border-orange-100'
           }`}
           aria-label="Toggle Theme"
         >
-          <i className={`fa-solid ${darkMode ? 'fa-moon' : 'fa-sun'} text-xl`}></i>
+          <i className={`fa-solid fa-moon absolute text-xl transition-all duration-700 ${darkMode ? 'rotate-0 scale-100 opacity-100 text-amber-300 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]' : 'rotate-[180deg] scale-0 opacity-0'}`}></i>
+          <i className={`fa-solid fa-sun absolute text-xl transition-all duration-700 ${!darkMode ? 'rotate-0 scale-100 opacity-100 text-orange-600 drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]' : '-rotate-[180deg] scale-0 opacity-0'}`}></i>
         </button>
       </div>
 

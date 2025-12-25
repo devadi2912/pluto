@@ -80,6 +80,13 @@ const Dashboard: React.FC<DashboardProps> = ({
     return Math.round((completedItems / totalItems) * 100);
   }, [routine, checklist]);
 
+  const upcomingEvents = useMemo(() => {
+    return reminders
+      .filter(r => !r.completed)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 5);
+  }, [reminders]);
+
   return (
     <div className="p-5 md:p-10 space-y-10 animate-in fade-in duration-700 pb-44 no-scrollbar">
       {/* Hero Card */}
@@ -90,9 +97,6 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-center gap-6">
             <div className="relative group/avatar cursor-pointer">
               <img src={pet.avatar} className="w-16 h-16 md:w-20 md:h-20 rounded-[1.75rem] border-4 border-white/10 shadow-2xl group-hover/avatar:rotate-6 transition-transform duration-500" alt="Pet" />
-              <div className="absolute -top-1.5 -right-1.5 w-7 h-7 bg-orange-50 rounded-lg flex items-center justify-center text-white shadow-[0_0_15px_rgba(249,115,22,0.6)] animate-bounce">
-                <i className="fa-solid fa-bolt text-[10px]"></i>
-              </div>
             </div>
             <div>
               <h2 className="text-3xl md:text-4xl font-lobster tracking-wide">Hi, {pet.name}'s Family!</h2>
@@ -122,9 +126,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           {!readOnly && (
             <button 
               onClick={() => setShowLogModal(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-orange-500/10 text-orange-700 dark:text-orange-400 text-[9px] font-black uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all active:scale-95 border border-orange-500/20"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-orange-500 text-white text-[9px] font-black uppercase tracking-[0.2em] shadow-lg shadow-orange-500/20 active:scale-90 transition-all border-2 border-white/10"
             >
-              <i className="fa-solid fa-plus-circle"></i> Log Today
+              <i className="fa-solid fa-bolt-lightning"></i> Log Today
             </button>
           )}
         </div>
@@ -179,167 +183,223 @@ const Dashboard: React.FC<DashboardProps> = ({
         </section>
       </div>
 
-      {/* Upcoming Reminders */}
-      <section className="space-y-6">
-        <h3 className="text-2xl md:text-3xl font-lobster text-zinc-900 dark:text-zinc-50 px-2">Coming Up</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {reminders.filter(r => !r.completed).slice(0, 4).map((reminder, idx) => (
-            <div 
-              key={reminder.id} 
-              className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-5 rounded-[2rem] shadow-sm flex items-center gap-4 hover:border-orange-200 dark:hover:border-orange-500/50 hover:shadow-[0_10px_30px_rgba(249,115,22,0.15)] transition-all group animate-in slide-in-from-bottom-5"
-              style={{ animationDelay: `${idx * 150}ms` }}
-            >
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-transform group-hover:scale-110 ${reminder.type === 'Vaccination' ? 'bg-orange-50 text-orange-600 dark:bg-orange-950/40' : 'bg-purple-50 text-purple-600 dark:bg-purple-950/40'}`}>
-                <i className={`fa-solid ${reminder.type === 'Vaccination' ? 'fa-syringe' : 'fa-pills'}`}></i>
+      {/* Upcoming Events Section - STACKED VERTICALLY AT BOTTOM */}
+      <section className="space-y-6 pt-10 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center justify-between px-2">
+          <div>
+            <h3 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide leading-none">Upcoming Events</h3>
+            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-2">Planned Care History</p>
+          </div>
+        </div>
+        
+        <div className="space-y-4 px-2">
+          {upcomingEvents.length > 0 ? (
+            upcomingEvents.map((reminder, idx) => (
+              <div 
+                key={reminder.id}
+                className="w-full bg-white dark:bg-zinc-900 border-2 border-zinc-100 dark:border-zinc-800 p-6 rounded-[2.5rem] flex items-center gap-6 shadow-sm hover:shadow-xl transition-all group relative animate-in slide-in-from-bottom-4"
+                style={{ animationDelay: `${idx * 100}ms` }}
+              >
+                <div className="w-14 h-14 rounded-2xl bg-orange-50 dark:bg-orange-900/20 text-orange-500 flex items-center justify-center text-2xl group-hover:rotate-6 transition-transform shrink-0">
+                   <i className={`fa-solid ${
+                     reminder.type === 'Medication' ? 'fa-pills' : 
+                     reminder.type === 'Vaccination' ? 'fa-syringe' : 'fa-stethoscope'
+                   }`}></i>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-lg text-zinc-900 dark:text-zinc-100 truncate">{reminder.title}</h4>
+                  <p className="text-[11px] font-black text-orange-600 dark:text-orange-500 uppercase tracking-[0.2em] mt-1.5">
+                    {new Date(reminder.date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                  </p>
+                </div>
+                
+                {/* Complete & Add to Journal Button */}
+                {!readOnly && (
+                  <button 
+                    onClick={() => onCompleteReminder(reminder.id)}
+                    className="w-12 h-12 bg-zinc-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center text-zinc-300 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all border-2 border-transparent hover:border-emerald-100 dark:hover:border-emerald-900/40 active:scale-90 shadow-sm"
+                    title="Complete & Log to Journal"
+                  >
+                    <i className="fa-solid fa-check text-lg"></i>
+                  </button>
+                )}
               </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-zinc-900 dark:text-zinc-50 truncate">{reminder.title}</h4>
-                <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-widest mt-1">{new Date(reminder.date).toLocaleDateString()}</p>
-              </div>
-              {!readOnly && (
-                <button 
-                  onClick={() => onCompleteReminder(reminder.id)}
-                  className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 px-3 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest border border-zinc-200 dark:border-zinc-700 hover:bg-orange-500 hover:text-white hover:shadow-[0_0_15px_rgba(249,115,22,0.6)] transition-all active:scale-90"
-                >
-                  Done
-                </button>
-              )}
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center w-full py-16 text-zinc-400 bg-zinc-50 dark:bg-zinc-900/40 rounded-[3rem] border-4 border-dashed border-zinc-100 dark:border-zinc-800">
+               <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-4">
+                  <i className="fa-solid fa-calendar-check text-2xl opacity-40"></i>
+               </div>
+               <p className="font-black text-[10px] uppercase tracking-widest">No scheduled events found</p>
             </div>
-          ))}
+          )}
         </div>
       </section>
 
-      {/* Doctor's Note Section - Moved to Bottom per User Request */}
-      {latestNote && !readOnly && (
-        <section className="animate-in slide-in-from-top-4 duration-1000 pt-10">
-           <div className="bg-white/20 dark:bg-zinc-900/10 backdrop-blur-[40px] backdrop-saturate-200 rounded-[3rem] p-8 md:p-10 text-zinc-950 dark:text-zinc-50 border-2 border-white/80 dark:border-zinc-800/40 shadow-[0_30px_60px_rgba(0,0,0,0.12)] dark:shadow-[0_30px_60px_rgba(0,0,0,0.5)] relative overflow-hidden group">
-              {/* Subtle accent glow */}
-              <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px]"></div>
-              
-              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                 <div className="flex items-center gap-5">
-                    <div className="w-16 h-16 bg-indigo-600/10 dark:bg-indigo-400/20 rounded-[1.75rem] flex items-center justify-center border-2 border-indigo-500/20 text-indigo-600 dark:text-indigo-400 shadow-lg">
-                       <i className="fa-solid fa-user-doctor text-2xl"></i>
-                    </div>
-                    <div>
-                       <h4 className="font-lobster text-3xl leading-none text-indigo-600 dark:text-indigo-400">Doctor's Insight</h4>
-                       <p className="text-[10px] font-black uppercase tracking-[0.25em] opacity-60 mt-2">Verified advice from {latestNote.doctorName}</p>
-                    </div>
-                 </div>
-
-                 <button 
-                  onClick={() => onDeleteNote?.(latestNote.id)}
-                  className="flex items-center gap-3 px-6 py-3.5 rounded-2xl bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl hover:bg-rose-600 dark:hover:bg-rose-500 hover:text-white dark:hover:text-white transition-all active:scale-95 border-2 border-white/10"
-                 >
-                    <i className="fa-solid fa-trash-can"></i>
-                    Permanently Delete Note
-                 </button>
-              </div>
-
-              <div className="mt-8 relative z-10">
-                 <div className="bg-white/50 dark:bg-black/20 backdrop-blur-md p-8 rounded-[2.5rem] border-2 border-white dark:border-zinc-800/50 shadow-inner group-hover:border-indigo-500/20 transition-colors duration-500">
-                    <p className="text-[17px] md:text-[19px] font-bold leading-relaxed italic text-zinc-900 dark:text-zinc-100">
-                       "{latestNote.content}"
-                    </p>
-                    <div className="flex items-center gap-2 mt-6 pt-6 border-t border-zinc-200/50 dark:border-zinc-800/50">
-                       <i className="fa-solid fa-calendar-check text-xs opacity-40"></i>
-                       <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Synchronized on {new Date(latestNote.date).toLocaleDateString()}</span>
-                    </div>
-                 </div>
-              </div>
-           </div>
-        </section>
-      )}
-
-      {/* Modals placed at end of container */}
+      {/* Activity Log - Glass Card Pattern */}
       {showLogModal && !readOnly && (
-        <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center p-0 md:p-6 bg-black/30 animate-in fade-in" onClick={() => setShowLogModal(false)}>
-           <div className="bg-white/95 dark:bg-zinc-900/90 backdrop-blur-3xl backdrop-saturate-150 w-full max-w-sm rounded-t-[3rem] md:rounded-[3rem] p-8 shadow-2xl animate-in slide-in-from-bottom-10 border border-white dark:border-zinc-800/40" onClick={e => e.stopPropagation()}>
-              <div className="flex justify-between items-center mb-8">
-                 <div>
-                    <h4 className="font-lobster text-3xl text-zinc-900 dark:text-zinc-50">Daily Log</h4>
-                    <p className="text-[10px] font-black text-orange-600 dark:text-orange-500 uppercase tracking-widest mt-1">Status for today</p>
-                 </div>
-                 <button onClick={() => setShowLogModal(false)} className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"><i className="fa-solid fa-xmark"></i></button>
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-transparent pointer-events-none transition-all duration-300 animate-in fade-in">
+          <div 
+            className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl w-full max-w-[380px] rounded-[3.5rem] shadow-2xl border-4 border-white dark:border-zinc-950 animate-in zoom-in-95 duration-500 overflow-hidden pointer-events-auto" 
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="p-6 md:p-10 space-y-8">
+              {/* Header */}
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-orange-500 flex items-center justify-center text-white shadow-lg">
+                  <i className="fa-solid fa-paw text-lg"></i>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-lobster text-3xl text-zinc-900 dark:text-zinc-50 truncate leading-none">Activity Log</h4>
+                  <p className="text-[9px] font-black text-orange-600 uppercase tracking-[0.2em] mt-1.5 opacity-60">Status: {pet.name}</p>
+                </div>
+                <button onClick={() => setShowLogModal(false)} className="text-zinc-400 hover:text-rose-500 transition-colors">
+                  <i className="fa-solid fa-xmark text-lg"></i>
+                </button>
               </div>
-              
-              <div className="space-y-8 pb-4">
-                 <div className="space-y-3">
-                    <label className="text-[11px] font-black uppercase text-zinc-700 dark:text-zinc-400 tracking-[0.15em] ml-1">Daily Activity (Min)</label>
-                    <div className="flex items-center gap-4 bg-zinc-100 dark:bg-zinc-800/50 p-4 rounded-2xl border-2 border-transparent focus-within:border-orange-200 transition-all">
-                       <button onClick={() => onUpdateLog(today, { activityMinutes: Math.max(0, (currentLogData?.activityMinutes || 0) - 10) })} className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-800 shadow-sm flex items-center justify-center text-zinc-500 hover:text-orange-500"><i className="fa-solid fa-minus"></i></button>
-                       <span className="flex-1 text-center text-3xl font-black text-zinc-900 dark:text-zinc-50">{currentLogData?.activityMinutes || 0}</span>
-                       <button onClick={() => onUpdateLog(today, { activityMinutes: (currentLogData?.activityMinutes || 0) + 10 })} className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-800 shadow-sm flex items-center justify-center text-zinc-500 hover:text-orange-500"><i className="fa-solid fa-plus"></i></button>
-                    </div>
-                 </div>
 
-                 <div className="space-y-3">
-                    <label className="text-[11px] font-black uppercase text-zinc-700 dark:text-zinc-400 tracking-[0.15em] ml-1">Owner-Observed Mood</label>
-                    <div className="flex justify-between gap-2">
-                       {[1,2,3,4,5].map(v => (
-                         <button 
-                           key={v}
-                           onClick={() => onUpdateLog(today, { moodRating: v })}
-                           className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-all border-2 ${
-                             currentLogData?.moodRating === v 
-                               ? 'bg-orange-500 border-white text-white shadow-lg scale-110' 
-                               : 'bg-zinc-100 dark:bg-zinc-800 border-transparent text-zinc-400'
-                           }`}
-                         >
-                           {['😢', '😕', '😐', '🙂', '🤩'][v-1]}
-                         </button>
-                       ))}
+              {/* Status Controls */}
+              <div className="space-y-8">
+                
+                {/* 1. Activity Strip */}
+                <div className="bg-zinc-100/50 dark:bg-black/20 p-5 rounded-3xl border border-white dark:border-zinc-800 space-y-3 group">
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Active Time</span>
+                    <span className="text-xs font-black text-orange-600">{currentLogData?.activityMinutes || 0}m</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button 
+                      onClick={() => onUpdateLog(today, { activityMinutes: Math.max(0, (currentLogData?.activityMinutes || 0) - 15) })}
+                      className="w-10 h-10 rounded-xl bg-white/80 dark:bg-zinc-800/80 border-2 border-transparent hover:border-orange-500 transition-all text-zinc-400 hover:text-orange-500 active:scale-90 shadow-sm"
+                    >
+                      <i className="fa-solid fa-minus text-[10px]"></i>
+                    </button>
+                    <div className="flex-1 h-2.5 bg-zinc-200/50 dark:bg-zinc-700/50 rounded-full overflow-hidden">
+                      <div className="h-full bg-orange-500 transition-all duration-700 ease-out shadow-[0_0_10px_rgba(249,115,22,0.4)]" style={{ width: `${Math.min(100, ((currentLogData?.activityMinutes || 0) / 120) * 100)}%` }}></div>
                     </div>
-                 </div>
+                    <button 
+                      onClick={() => onUpdateLog(today, { activityMinutes: (currentLogData?.activityMinutes || 0) + 15 })}
+                      className="w-10 h-10 rounded-xl bg-white/80 dark:bg-zinc-800/80 border-2 border-transparent hover:border-orange-500 transition-all text-zinc-400 hover:text-orange-500 active:scale-90 shadow-sm"
+                    >
+                      <i className="fa-solid fa-plus text-[10px]"></i>
+                    </button>
+                  </div>
+                </div>
 
-                 <div className="space-y-3">
-                    <label className="text-[11px] font-black uppercase text-zinc-700 dark:text-zinc-400 tracking-[0.15em] ml-1">Feeding Count</label>
-                    <div className="flex justify-between gap-2 bg-zinc-100 dark:bg-zinc-800/50 p-2 rounded-2xl">
-                       {[1, 2, 3, 4].map(v => (
-                         <button 
-                           key={v}
-                           onClick={() => onUpdateLog(today, { feedingCount: v })}
-                           className={`flex-1 py-3 rounded-xl font-black text-xs transition-all border-2 ${
-                             currentLogData?.feedingCount === v 
-                               ? 'bg-emerald-500 border-white text-white shadow-md' 
-                               : 'bg-transparent border-transparent text-zinc-500 dark:text-zinc-400'
-                           }`}
-                         >
-                           {v}
-                         </button>
-                       ))}
-                    </div>
-                 </div>
+                {/* 2. Meals */}
+                <div className="space-y-3">
+                  <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest ml-1">Meals</span>
+                  <div className="flex justify-between items-center gap-3 px-1">
+                    {[1, 2, 3, 4].map(v => (
+                      <button 
+                        key={v}
+                        onClick={() => onUpdateLog(today, { feedingCount: v })}
+                        className={`w-12 h-12 rounded-full flex items-center justify-center text-xs font-black transition-all border-2 border-white dark:border-black hover:scale-110 active:scale-90 ${
+                          currentLogData?.feedingCount === v 
+                            ? 'bg-emerald-500 text-white shadow-lg animate-pulse' 
+                            : 'bg-zinc-200/50 dark:bg-zinc-800/40 text-zinc-400 dark:text-zinc-600 hover:bg-zinc-300/50 dark:hover:bg-zinc-700/50'
+                        }`}
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-                 <button 
-                  onClick={() => setShowLogModal(false)} 
-                  className="w-full py-5 bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 rounded-[2.2rem] font-black uppercase tracking-[0.25em] text-[11px] shadow-xl hover:brightness-110 active:scale-95 transition-all border border-white/10"
-                 >
-                   Save Update
-                 </button>
+                {/* 3. Vibe Selection */}
+                <div className="space-y-3">
+                  <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest ml-1">Vibe</span>
+                  <div className="flex bg-zinc-200/30 dark:bg-zinc-800/20 p-2 rounded-2xl border border-white dark:border-zinc-800/40">
+                    {[1, 2, 3, 4, 5].map(v => (
+                      <button 
+                        key={v}
+                        onClick={() => onUpdateLog(today, { moodRating: v })}
+                        className={`flex-1 py-2 text-xl transition-all rounded-xl hover:scale-110 active:scale-95 ${
+                          currentLogData?.moodRating === v 
+                            ? 'bg-white/80 dark:bg-zinc-700/80 shadow-sm scale-110 z-10' 
+                            : 'opacity-40 grayscale hover:opacity-100 hover:grayscale-0'
+                        }`}
+                      >
+                        {['😢', '😕', '😐', '🙂', '🤩'][v-1]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
-           </div>
+
+              {/* Save Record Button */}
+              <div className="pt-2">
+                <button 
+                  onClick={() => setShowLogModal(false)}
+                  className="w-full py-5 bg-orange-500 text-white rounded-[2rem] font-black uppercase tracking-[0.4em] text-[11px] transition-all active:scale-[0.96] border-4 border-white dark:border-black shadow-xl hover:brightness-110"
+                >
+                  Save Record
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
+      {/* Routine Add Modal - Glass Card Pattern with High-Quality Light Blue Theme */}
       {showAddRoutine && !readOnly && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/30 animate-in fade-in">
-          <div className="bg-white/95 dark:bg-zinc-900/90 backdrop-blur-3xl border border-white dark:border-zinc-800 w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 space-y-6">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-transparent pointer-events-none animate-in fade-in duration-300">
+          <div 
+            className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-3xl border-4 border-white dark:border-zinc-950 w-full max-w-sm rounded-[3.5rem] p-10 shadow-2xl animate-in zoom-in-95 duration-500 space-y-8 pointer-events-auto"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between">
-              <h4 className="font-lobster text-3xl text-orange-600">New Task</h4>
-              <button onClick={() => setShowAddRoutine(false)} className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500"><i className="fa-solid fa-xmark"></i></button>
+              <h4 className="font-lobster text-4xl text-sky-500 drop-shadow-sm">New Task</h4>
+              <button 
+                onClick={() => setShowAddRoutine(false)} 
+                className="w-12 h-12 bg-white/50 dark:bg-zinc-800/50 rounded-2xl flex items-center justify-center text-zinc-500 hover:text-rose-500 transition-all active:scale-90 border-2 border-white dark:border-zinc-700"
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <input type="time" className="w-full p-4 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-none outline-none font-bold text-zinc-900 dark:text-zinc-100" value={newRoutine.time} onChange={e => setNewRoutine({...newRoutine, time: e.target.value})} />
-              <select className="w-full p-4 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-none outline-none font-bold text-zinc-900 dark:text-zinc-100" value={newRoutine.category} onChange={e => setNewRoutine({...newRoutine, category: e.target.value as any})}>
-                <option value="Food">Food 🍖</option>
-                <option value="Walk">Walk 🦮</option>
-                <option value="Medication">Meds 💊</option>
-                <option value="Play">Play 🎾</option>
-              </select>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 ml-2">Time</span>
+                <input 
+                  type="time" 
+                  className="w-full p-5 rounded-2xl bg-white/60 dark:bg-zinc-800/60 border-2 border-transparent focus:border-sky-300 outline-none font-bold text-zinc-900 dark:text-zinc-100 transition-all" 
+                  value={newRoutine.time} 
+                  onChange={e => setNewRoutine({...newRoutine, time: e.target.value})} 
+                />
+              </div>
+              <div className="space-y-2">
+                <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 ml-2">Category</span>
+                <select 
+                  className="w-full p-5 rounded-2xl bg-white/60 dark:bg-zinc-800/60 border-2 border-transparent focus:border-sky-300 outline-none font-bold text-zinc-900 dark:text-zinc-100 transition-all" 
+                  value={newRoutine.category} 
+                  onChange={e => setNewRoutine({...newRoutine, category: e.target.value as any})}
+                >
+                  <option value="Food">Food 🍖</option>
+                  <option value="Walk">Walk 🦮</option>
+                  <option value="Medication">Meds 💊</option>
+                  <option value="Play">Play 🎾</option>
+                </select>
+              </div>
             </div>
-            <input type="text" placeholder="Task description..." className="w-full p-4 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-none outline-none font-bold text-zinc-900 dark:text-zinc-100 shadow-inner" value={newRoutine.title} onChange={e => setNewRoutine({...newRoutine, title: e.target.value})} />
-            <button onClick={handleAddRoutine} className="w-full bg-orange-500 text-white py-4 rounded-xl font-black uppercase tracking-widest text-[11px] shadow-xl hover:brightness-110 active:scale-95 transition-all">Create Goal</button>
+
+            <div className="space-y-2">
+              <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 ml-2">Goal Details</span>
+              <input 
+                type="text" 
+                placeholder="Task description..." 
+                className="w-full p-6 rounded-2xl bg-white/60 dark:bg-zinc-800/60 border-2 border-transparent focus:border-sky-300 outline-none font-bold text-zinc-900 dark:text-zinc-100 shadow-inner transition-all" 
+                value={newRoutine.title} 
+                onChange={e => setNewRoutine({...newRoutine, title: e.target.value})} 
+              />
+            </div>
+
+            <button 
+              onClick={handleAddRoutine} 
+              className="w-full bg-sky-500 text-white py-6 rounded-[2.5rem] font-black uppercase tracking-[0.4em] text-[11px] transition-all hover:scale-[1.03] hover:brightness-110 active:scale-95 border-4 border-white dark:border-zinc-950 shadow-[0_15px_30px_-5px_rgba(0,0,0,0.3),0_0_20px_rgba(14,165,233,0.4)]"
+            >
+              Add Goal
+            </button>
           </div>
         </div>
       )}
@@ -367,7 +427,7 @@ const CheckTile: React.FC<{
   return (
     <button 
       onClick={() => !readOnly && onClick()}
-      className={`flex flex-col items-center justify-center gap-3 p-6 rounded-[2rem] transition-all duration-500 relative overflow-hidden group border-4 ${
+      className={`flex flex-col items-center justify-center gap-3 p-6 rounded-[2.5rem] transition-all duration-500 relative overflow-hidden group border-4 ${
         active 
           ? `${bgMap[color]} ${intenseShadowMap[color]} text-white border-white dark:border-zinc-950 scale-[0.98]` 
           : 'bg-white dark:bg-zinc-900 border-zinc-50 dark:border-zinc-800 shadow-sm'

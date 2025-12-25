@@ -6,6 +6,8 @@ import TimelineScreen from './TimelineScreen';
 import DocumentsScreen from './DocumentsScreen';
 import ProfileScreen from './ProfileScreen';
 import DoctorProfileScreen from './DoctorProfileScreen';
+import DoctorSearchScreen from './DoctorSearchScreen';
+import DoctorPatientsScreen from './DoctorPatientsScreen';
 
 interface PriorityItemData {
   id: string;
@@ -39,6 +41,10 @@ interface DoctorDashboardProps {
   setPatientSubTab: (tab: 'profile' | 'timeline' | 'docs' | 'identity') => void;
 }
 
+/**
+ * DoctorDashboard component provides the main interface for veterinarians.
+ * It handles patient searches, clinical notes, and medical record viewing.
+ */
 const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ 
   doctor, 
   petData, 
@@ -57,16 +63,15 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   const [searchId, setSearchId] = useState('');
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [noteContent, setNoteContent] = useState('');
-  const [doctorProfile] = useState(doctor.doctorDetails!);
   
   const [visitedPatientIds, setVisitedPatientIds] = useState<Set<string>>(new Set());
   const [priorityItems, setPriorityItems] = useState<PriorityItemData[]>([]);
 
+  // Function to handle patient record search
   const handleSearch = (id?: string) => {
     const targetId = (id || searchId).toUpperCase();
     
     if (targetId === petData.pet.id || targetId.startsWith('PET-')) {
-      const isNewVisit = !visitedPatientIds.has(targetId);
       setVisitedPatientIds(prev => new Set([...Array.from(prev), targetId]));
       
       if (targetId === petData.pet.id) {
@@ -83,10 +88,10 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
           .filter(newItem => !priorityItems.some(existing => existing.title === newItem.title));
         
         setPriorityItems(prev => [...prev, ...newItems]);
-      } else if (isNewVisit) {
+      } else {
         const mockItem: PriorityItemData = {
           id: `p-${targetId}-${Date.now()}`,
-          title: `${targetId.split('-')[1]}'s Follow-up`,
+          title: `${targetId.split('-')[1] || 'Patient'}'s Follow-up`,
           detail: "Check recent lab reports",
           type: "Review",
           color: "bg-amber-100 text-amber-600 border-amber-200",
@@ -101,6 +106,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
     }
   };
 
+  // Function to save a clinical note for a patient
   const handleLeaveNote = () => {
     if (!noteContent.trim()) return;
     const newNote: DoctorNote = {
@@ -122,6 +128,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
     setPriorityItems(prev => prev.filter(item => item.id !== id));
   };
 
+  // Render the specific view for an opened patient record
   const renderPetView = () => (
     <div className="flex flex-col h-full bg-[#FFFAF3] dark:bg-zinc-950 animate-in fade-in duration-500 relative overflow-hidden">
       {/* Mobile-Only Header */}
@@ -150,17 +157,40 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
            <div className="flex gap-4">
               <button 
                 onClick={() => setShowNoteModal(true)}
-                className="px-6 py-3 rounded-2xl bg-indigo-600/90 text-white font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-[0_0_20px_rgba(255,255,255,0.4)] dark:shadow-[0_0_25px_rgba(0,0,0,0.8)] hover:scale-105 active:scale-95 flex items-center gap-2"
+                className="px-6 py-3 rounded-2xl bg-indigo-600/90 text-white font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-xl hover:scale-105 active:scale-95 flex items-center gap-2"
               >
                 <i className="fa-solid fa-pen-fancy"></i> Leave Clinical Note
               </button>
               <button 
                 onClick={() => setIsViewingPatient(false)}
-                className="px-6 py-3 rounded-2xl bg-white dark:bg-zinc-900 text-zinc-950 dark:text-white font-black text-[10px] uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(255,255,255,0.2)] dark:shadow-[0_0_15_rgba(0,0,0,0.4)] hover:scale-105 active:scale-95"
+                className="px-6 py-3 rounded-2xl bg-white dark:bg-zinc-900 text-zinc-950 dark:text-white font-black text-[10px] uppercase tracking-widest transition-all shadow-md hover:scale-105 active:scale-95"
               >
                 Exit Record
               </button>
            </div>
+        </div>
+
+        {/* Patient View Sub-Navigation */}
+        <div className="flex gap-4 p-8 overflow-x-auto no-scrollbar border-b border-zinc-100 dark:border-zinc-800">
+           {[
+             { id: 'profile', label: 'Dashboard', icon: 'chart-line' },
+             { id: 'timeline', label: 'Journal', icon: 'book-medical' },
+             { id: 'docs', label: 'Files', icon: 'folder-open' },
+             { id: 'identity', label: 'Identity', icon: 'paw' }
+           ].map(tab => (
+             <button
+               key={tab.id}
+               onClick={() => setPatientSubTab(tab.id as any)}
+               className={`flex items-center gap-3 px-6 py-3 rounded-2xl whitespace-nowrap transition-all font-bold text-xs ${
+                 patientSubTab === tab.id 
+                   ? 'bg-orange-500 text-white shadow-lg' 
+                   : 'bg-white dark:bg-zinc-900 text-zinc-500 border border-zinc-100 dark:border-zinc-800'
+               }`}
+             >
+               <i className={`fa-solid fa-${tab.icon}`}></i>
+               {tab.label}
+             </button>
+           ))}
         </div>
 
         <div className="relative md:p-10 pb-44 md:pb-12">
@@ -212,38 +242,36 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         </div>
       </div>
 
-      {/* Note Modal for Doctor - REDESIGNED WITH TRANSPARENT BACKDROP AND LOCALIZED BLUR */}
+      {/* Note Modal - Glass Card Pattern */}
       {showNoteModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-transparent" onClick={() => setShowNoteModal(false)}>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-transparent pointer-events-none" onClick={() => setShowNoteModal(false)}>
            <div 
-             className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-[60px] p-8 rounded-[3.5rem] border-4 border-white dark:border-zinc-950 shadow-[0_0_80px_rgba(255,255,255,0.2)] dark:shadow-[0_0_80px_rgba(0,0,0,0.8)] w-full max-w-md animate-in zoom-in-95" 
+             className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-3xl p-8 rounded-[3rem] border-4 border-white dark:border-zinc-950 shadow-2xl w-full max-w-md animate-in zoom-in-95 pointer-events-auto" 
              onClick={e => e.stopPropagation()}
            >
-              <div className="flex justify-between items-center mb-8">
+              <div className="flex justify-between items-center mb-6">
                  <div>
-                    <h4 className="font-lobster text-4xl text-indigo-600 dark:text-indigo-400 leading-none">Clinical Advice</h4>
-                    <p className="text-[10px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-[0.2em] mt-2 opacity-60">Direct note to {petData.pet.name}'s Owner</p>
+                    <h4 className="font-lobster text-3xl text-indigo-600 dark:text-indigo-400">Clinical Advice</h4>
+                    <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mt-1">Direct note to {petData.pet.name}'s Family</p>
                  </div>
-                 <button onClick={() => setShowNoteModal(false)} className="w-12 h-12 rounded-2xl bg-white/20 dark:bg-zinc-800/40 text-zinc-900 dark:text-white flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm border-4 border-white dark:border-zinc-950">
+                 <button onClick={() => setShowNoteModal(false)} className="w-10 h-10 rounded-full bg-white/40 dark:bg-zinc-800/40 text-zinc-500 hover:text-rose-500 transition-all border border-zinc-200 dark:border-zinc-700">
                     <i className="fa-solid fa-xmark"></i>
                  </button>
               </div>
               
-              <div className="relative group">
-                <textarea 
-                  className="w-full h-48 p-6 rounded-[2rem] bg-white/40 dark:bg-black/20 border-4 border-white/40 dark:border-zinc-800/60 focus:border-indigo-500 dark:focus:border-indigo-400 outline-none font-bold text-zinc-900 dark:text-zinc-100 transition-all resize-none shadow-inner text-sm leading-relaxed"
-                  placeholder="e.g., Luna's heart rate is stable. Ensure she finishes her current course of antibiotics and limit intense activity for 48 hours."
-                  value={noteContent}
-                  onChange={e => setNoteContent(e.target.value)}
-                />
-              </div>
+              <textarea 
+                className="w-full h-40 p-5 rounded-2xl bg-white/50 dark:bg-black/20 border-2 border-transparent focus:border-indigo-500 outline-none font-bold text-zinc-900 dark:text-zinc-100 transition-all resize-none shadow-inner"
+                placeholder="Share your medical observations and advice..."
+                value={noteContent}
+                onChange={e => setNoteContent(e.target.value)}
+              />
 
-              <div className="mt-10">
+              <div className="mt-8">
                  <button 
                   onClick={handleLeaveNote}
-                  className="w-full py-6 bg-indigo-600 text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-[11px] shadow-[0_15px_30px_rgba(79,70,229,0.3)] hover:brightness-110 active:scale-95 transition-all border-4 border-white dark:border-zinc-950"
+                  className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl hover:brightness-110 active:scale-95 transition-all border-4 border-white dark:border-zinc-950"
                  >
-                   Sync Advice to Owner
+                   Send Note
                  </button>
               </div>
            </div>
@@ -252,155 +280,138 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
     </div>
   );
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'profile':
-        return <DoctorProfileScreen doctorProfile={doctorProfile} doctorId={doctor.id} />;
-      case 'patients':
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-500 pb-60">
-             <div 
-               onClick={() => handleSearch(petData.pet.id)}
-               className="bg-white dark:bg-zinc-900 p-8 rounded-[3rem] border-4 border-white dark:border-zinc-800 flex items-center gap-6 shadow-xl cursor-pointer hover:border-orange-500/30 transition-all group"
-             >
-                <img src={petData.pet.avatar} className="w-20 h-20 rounded-2xl border-4 border-zinc-50 dark:border-zinc-800 shadow-md group-hover:rotate-6 transition-transform" alt="pet" />
-                <div className="flex-1">
-                   <h4 className="font-bold text-2xl text-zinc-900 dark:text-zinc-100">{petData.pet.name}</h4>
-                   <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest">{petData.pet.id}</p>
+  return (
+    <div className={`h-screen flex flex-col md:flex-row bg-[#FFFAF3] dark:bg-zinc-950 transition-colors duration-500 overflow-hidden ${darkMode ? 'dark' : ''}`}>
+      {/* Desktop Sidebar for Doctor */}
+      <aside className="hidden md:flex flex-col w-72 h-full bg-white dark:bg-zinc-900 border-r border-zinc-100 dark:border-zinc-800 shadow-xl p-8 shrink-0 z-[100]">
+        <div className="flex items-center gap-3 mb-16 justify-center">
+          <div className="w-11 h-11 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg"><i className="fa-solid fa-user-md text-lg"></i></div>
+          <h1 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50">Pluto <span className="text-indigo-600">MD</span></h1>
+        </div>
+        <nav className="flex-1 space-y-3">
+          {[
+            { id: 'discover', label: 'Discover', icon: 'magnifying-glass' },
+            { id: 'patients', label: 'Patient Logs', icon: 'clipboard-list' },
+            { id: 'profile', label: 'Identity', icon: 'id-card-clip' },
+          ].map(item => (
+            <button
+              key={item.id}
+              onClick={() => { setActiveTab(item.id as any); setIsViewingPatient(false); }}
+              className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all ${
+                activeTab === item.id && !isViewingPatient
+                  ? 'bg-indigo-600 text-white shadow-xl' 
+                  : 'text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+              }`}
+            >
+              <i className={`fa-solid fa-${item.icon} text-sm`}></i>
+              <span className="font-black text-[10px] uppercase tracking-widest">{item.label}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="pt-8 border-t border-zinc-100 dark:border-zinc-800 flex flex-col gap-3">
+          <button onClick={() => setDarkMode(!darkMode)} className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-zinc-500 hover:text-indigo-600 transition-colors">
+            <i className={`fa-solid fa-${darkMode ? 'sun' : 'moon'} text-sm`}></i>
+            <span className="font-black text-[10px] uppercase tracking-widest">Theme</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-y-auto no-scrollbar relative">
+        {isViewingPatient ? renderPetView() : (
+          <div className="p-8 md:p-12 max-w-6xl mx-auto space-y-12">
+            {activeTab === 'discover' && (
+              <>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                  <div>
+                    <h2 className="text-4xl font-lobster text-zinc-900 dark:text-zinc-50">Discovery Hub</h2>
+                    <p className="text-[11px] font-black text-zinc-500 uppercase tracking-widest mt-1">Medical search & priority alerts</p>
+                  </div>
                 </div>
-                <i className="fa-solid fa-chevron-right text-zinc-200 group-hover:text-orange-500 transition-transform group-hover:translate-x-1"></i>
-             </div>
-          </div>
-        );
-      case 'discover':
-      default:
-        return (
-          <div className="space-y-12 animate-in fade-in duration-500 pb-60 max-w-5xl mx-auto">
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <StatCard 
-                  label="Active Patients" 
-                  value={visitedPatientIds.size} 
-                  icon="users-medical" 
-                  color="bg-emerald-500" 
-                  glowColor="rgba(16,185,129,0.3)" 
-                />
-                <StatCard 
-                  label="Urgent Medical Alerts" 
-                  value={priorityItems.length} 
-                  icon="bolt-lightning" 
-                  color="bg-orange-500" 
-                  glowColor="rgba(249,115,22,0.3)" 
-                />
-             </div>
 
-             <section className="space-y-6">
-                <h3 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide px-2">Practice Queue</h3>
-                {priorityItems.length === 0 ? (
-                  <div className="backdrop-blur-xl bg-white/40 dark:bg-zinc-900/40 p-16 rounded-[3rem] border-4 border-dashed border-zinc-100 dark:border-zinc-800 text-center flex flex-col items-center shadow-xl">
-                    <div className="w-20 h-24 bg-emerald-50 dark:bg-emerald-950/20 rounded-full flex items-center justify-center text-emerald-200 dark:text-emerald-900 text-4xl mb-6 shadow-inner">
-                      <i className="fa-solid fa-clipboard-check"></i>
-                    </div>
-                    <p className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">Medical Slate Clear</p>
-                    <p className="text-sm text-zinc-300 dark:text-zinc-600 mt-2 font-bold max-w-xs leading-relaxed">Scan a Patient ID to begin high-priority care tracking.</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     {priorityItems.map(item => (
-                       <PriorityItem key={item.id} title={item.title} detail={item.detail} type={item.type} color={item.color} onClick={() => handleSearch(item.targetId)} onRemove={(e) => removePriorityItem(item.id, e)} />
-                     ))}
-                  </div>
-                )}
-             </section>
-
-             <div className="max-w-4xl mx-auto w-full pt-6">
-                <section className="space-y-6">
-                  <h3 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50 px-2">Patient Lookup</h3>
-                  <div className="bg-zinc-900 dark:bg-zinc-800 rounded-[3rem] p-8 text-white shadow-2xl relative overflow-hidden border-4 border-zinc-800 dark:border-zinc-700">
-                    <div className="absolute -right-10 -top-10 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl animate-pulse"></div>
-                    <div className="relative z-10">
-                      <div className="flex gap-3">
-                        <input 
-                          type="text" 
-                          placeholder="PET-LUNA-123"
-                          className="flex-1 p-5 rounded-2xl bg-white/5 border-2 border-white/10 outline-none font-bold text-white placeholder:text-zinc-600 focus:border-emerald-500/50 transition-all uppercase tracking-wider"
-                          value={searchId}
-                          onChange={e => setSearchId(e.target.value)}
-                          onKeyPress={e => e.key === 'Enter' && handleSearch()}
-                        />
-                        <button 
-                          onClick={() => handleSearch()}
-                          className="w-16 h-16 bg-white text-zinc-900 rounded-2xl flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all"
-                        >
-                          <i className="fa-solid fa-magnifying-glass text-xl"></i>
-                        </button>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                  <div className="lg:col-span-8 space-y-10">
+                    <DoctorSearchScreen searchId={searchId} setSearchId={setSearchId} handleSearch={handleSearch} />
+                    
+                    <div className="space-y-6">
+                      <h3 className="text-2xl font-lobster text-zinc-900 dark:text-zinc-50 px-2">Priority Alerts</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {priorityItems.length > 0 ? priorityItems.map(item => (
+                          <div key={item.id} className={`${item.color} p-5 rounded-3xl border-2 flex items-start justify-between group animate-in slide-in-from-bottom-2`}>
+                            <div>
+                              <p className="text-[8px] font-black uppercase tracking-widest mb-1 opacity-70">{item.type}</p>
+                              <h4 className="font-bold text-sm">{item.title}</h4>
+                              <p className="text-[10px] mt-1 font-medium">{item.detail}</p>
+                            </div>
+                            <button onClick={(e) => removePriorityItem(item.id, e)} className="text-zinc-400 hover:text-zinc-900 transition-colors">
+                              <i className="fa-solid fa-circle-xmark"></i>
+                            </button>
+                          </div>
+                        )) : (
+                          <div className="md:col-span-2 py-12 text-center border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-[2.5rem]">
+                            <i className="fa-solid fa-check-double text-zinc-200 text-4xl mb-4"></i>
+                            <p className="text-zinc-400 font-bold text-sm">No pending priority alerts</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
-                </section>
-             </div>
-          </div>
-        );
-    }
-  };
 
-  return (
-    <div className="flex-1 flex flex-col h-full bg-transparent relative no-scrollbar">
-      {isViewingPatient ? renderPetView() : (
-        <div className="flex-1 p-6 md:p-12 space-y-12 overflow-y-auto no-scrollbar">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-4xl md:text-5xl font-lobster text-zinc-900 dark:text-zinc-50 leading-tight tracking-wide">Command Center</h2>
-              <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] mt-1">
-                 Practice Management Terminal
-              </p>
-            </div>
-            <button 
-              onClick={() => setActiveTab('profile')}
-              className="w-20 h-20 bg-white dark:bg-zinc-900 border-4 border-orange-50 dark:border-zinc-800 rounded-[2.5rem] flex items-center justify-center text-orange-600 shadow-2xl transition-all hover:scale-105 active:rotate-6 group"
-            >
-              <i className="fa-solid fa-user-md text-3xl group-hover:animate-pulse"></i>
-            </button>
+                  <div className="lg:col-span-4 space-y-8">
+                     <div className="bg-indigo-600 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
+                        <h4 className="text-2xl font-lobster mb-4">Daily Focus</h4>
+                        <div className="space-y-4">
+                           <div className="flex items-center gap-4 bg-white/10 p-4 rounded-2xl">
+                              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-black">4</div>
+                              <p className="text-xs font-bold">Planned Consults</p>
+                           </div>
+                           <div className="flex items-center gap-4 bg-white/10 p-4 rounded-2xl">
+                              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-black">12</div>
+                              <p className="text-xs font-bold">Files to Review</p>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                </div>
+              </>
+            )}
+            {activeTab === 'patients' && (
+              <DoctorPatientsScreen 
+                patients={Array.from(visitedPatientIds).map(id => ({ id, name: id.split('-')[1] || 'Patient', breed: 'N/A' }))} 
+                onSelectPatient={(id) => handleSearch(id)} 
+              />
+            )}
+            {activeTab === 'profile' && (
+              <DoctorProfileScreen doctorProfile={doctor.doctorDetails!} doctorId={doctor.id} />
+            )}
           </div>
-          {renderContent()}
-        </div>
+        )}
+      </main>
+
+      {/* Mobile Footer Navigation for Doctor */}
+      {!isViewingPatient && (
+        <nav className="md:hidden fixed bottom-6 left-6 right-6 h-20 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl rounded-[2.5rem] border border-white/20 dark:border-zinc-800/20 shadow-2xl z-[100] flex items-center justify-around px-4">
+          {[
+            { id: 'discover', icon: 'magnifying-glass', label: 'Search' },
+            { id: 'patients', icon: 'clipboard-list', label: 'History' },
+            { id: 'profile', icon: 'id-card-clip', label: 'Profile' },
+          ].map(item => (
+            <button 
+              key={item.id}
+              onClick={() => setActiveTab(item.id as any)}
+              className="flex flex-col items-center gap-1"
+            >
+              <div className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${activeTab === item.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-zinc-400'}`}>
+                <i className={`fa-solid fa-${item.icon} text-lg`}></i>
+              </div>
+              <span className={`text-[8px] font-black uppercase tracking-widest ${activeTab === item.id ? 'text-indigo-600' : 'text-zinc-500'}`}>{item.label}</span>
+            </button>
+          ))}
+        </nav>
       )}
     </div>
   );
 };
-
-const StatCard: React.FC<{ label: string, value: number, icon: string, color: string, glowColor: string }> = ({ label, value, icon, color, glowColor }) => (
-  <div 
-    className={`${color} p-10 rounded-[3.5rem] text-white relative overflow-hidden group transition-all duration-700 hover:scale-[1.03] border-4 border-white dark:border-zinc-800 shadow-xl`}
-    style={{ boxShadow: `0 20px 40px -10px ${glowColor}` }}
-  >
-    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
-    <i className={`fa-solid fa-${icon} text-3xl mb-4 opacity-50`}></i>
-    <p className="text-5xl font-black drop-shadow-md tracking-tighter">{value}</p>
-    <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mt-2">{label}</p>
-  </div>
-);
-
-const PriorityItem: React.FC<{ 
-  title: string, 
-  detail: string, 
-  type: string, 
-  color: string, 
-  onClick: () => void,
-  onRemove: (e: React.MouseEvent) => void
-}> = ({ title, detail, type, color, onClick, onRemove }) => (
-  <button onClick={onClick} className="w-full bg-white dark:bg-zinc-900 p-6 rounded-[2.5rem] border-4 border-zinc-50 dark:border-zinc-800 flex items-center gap-5 text-left hover:border-orange-500/20 shadow-xl transition-all group active:scale-[0.98] relative overflow-hidden">
-     <div className={`px-4 py-2 rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-md ${color}`}>{type}</div>
-     <div className="flex-1">
-        <h5 className="font-bold text-zinc-900 dark:text-zinc-100 text-lg">{title}</h5>
-        <p className="text-[11px] text-zinc-400 font-bold">{detail}</p>
-     </div>
-     <div className="flex items-center gap-2">
-        <button onClick={onRemove} className="w-10 h-10 rounded-2xl bg-zinc-50 dark:bg-zinc-800 text-zinc-300 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center">
-           <i className="fa-solid fa-trash-can text-xs"></i>
-        </button>
-        <i className="fa-solid fa-chevron-right text-zinc-200 group-hover:text-orange-500 transition-transform"></i>
-     </div>
-  </button>
-);
 
 export default DoctorDashboard;

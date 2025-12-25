@@ -56,7 +56,7 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
   };
 
   return (
-    <div className="p-5 md:p-10 space-y-8 animate-in fade-in duration-500 pb-44 relative min-h-full">
+    <div className="p-5 md:p-10 space-y-8 animate-in fade-in duration-500 pb-60 relative">
       <div className="flex items-center justify-between px-1">
         <div>
           <h2 className="text-2xl md:text-3xl font-bold font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide">Document Safe</h2>
@@ -102,17 +102,18 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
         </div>
       )}
 
+      {/* Document View Glass Card */}
       {selectedDoc && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-black/30 animate-in fade-in duration-300" onClick={() => setSelectedDoc(null)}>
-          <div className="bg-white/95 dark:bg-zinc-950/90 backdrop-blur-[40px] border-2 border-white dark:border-zinc-800 w-full max-w-md rounded-[3rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-500 p-8 text-center space-y-6" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-transparent pointer-events-none animate-in fade-in duration-300" onClick={() => setSelectedDoc(null)}>
+          <div className="bg-white/70 dark:bg-zinc-950/70 backdrop-blur-2xl border-4 border-white dark:border-zinc-800 w-full max-w-md rounded-[3rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-500 p-8 text-center space-y-6 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-3xl font-lobster">{selectedDoc.name}</h3>
             <p className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-[0.2em]">{selectedDoc.type} • {selectedDoc.fileSize}</p>
-            <div className="bg-zinc-50 dark:bg-zinc-900 rounded-[2rem] h-48 flex items-center justify-center border-2 border-dashed border-zinc-200 dark:border-zinc-700">
+            <div className="bg-white/40 dark:bg-zinc-900/40 rounded-[2rem] h-48 flex items-center justify-center border-2 border-dashed border-zinc-200 dark:border-zinc-700">
                <i className="fa-solid fa-file-pdf text-5xl text-rose-500 opacity-50"></i>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <button onClick={handleShare} className="py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 font-black text-[10px] uppercase tracking-widest">{shareStatus || 'Share'}</button>
-              <button onClick={() => setSelectedDoc(null)} className="py-4 rounded-2xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-black text-[10px] uppercase tracking-widest">Close</button>
+              <button onClick={handleShare} className="py-4 rounded-2xl bg-white/50 dark:bg-zinc-800/50 border-2 border-white dark:border-zinc-700 font-black text-[10px] uppercase tracking-widest">{shareStatus || 'Share'}</button>
+              <button onClick={() => setSelectedDoc(null)} className="py-4 rounded-2xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-black text-[10px] uppercase tracking-widest border-2 border-white dark:border-zinc-950">Close</button>
             </div>
           </div>
         </div>
