@@ -9,6 +9,7 @@ interface RegisterScreenProps {
 
 export const RegisterScreen: React.FC<RegisterScreenProps> = ({ onNavigate, onRegister }) => {
   const [role, setRole] = useState<UserRole>('PET_OWNER');
+  const [isRunning, setIsRunning] = useState(false);
   
   // Auth Fields
   const [username, setUsername] = useState('');
@@ -80,6 +81,34 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ onNavigate, onRe
 
   return (
     <div className={`fixed inset-0 w-full h-full bg-${theme}-50 dark:bg-zinc-950 overflow-y-auto overflow-x-hidden no-scrollbar animate-in fade-in slide-in-from-right-10 duration-500`}>
+       
+       {/* Custom Animations */}
+       <style>{`
+        @keyframes happy-bounce {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-10px) scale(1.1); }
+        }
+        
+        /* Crazy Run Animation */
+        @keyframes runAround {
+          0% { transform: translate(0, 0) scaleX(1); }
+          10% { transform: translate(35vw, -10vh) scaleX(1) rotate(10deg); } /* Dash Top-Right */
+          25% { transform: translate(40vw, 20vh) scaleX(1) rotate(90deg); } /* Down Right Side */
+          40% { transform: translate(0, 35vh) scaleX(-1) rotate(10deg); } /* Bottom Center (Turned) */
+          60% { transform: translate(-40vw, 20vh) scaleX(-1) rotate(-10deg); } /* Bottom Left Side */
+          80% { transform: translate(-35vw, -20vh) scaleX(-1) rotate(-45deg); } /* Top Left */
+          100% { transform: translate(0, 0) scaleX(1) rotate(0deg); } /* Home */
+        }
+
+        .animate-puppy-idle {
+          animation: happy-bounce 2s ease-in-out infinite;
+        }
+        .animate-puppy-run {
+          animation: runAround 3s ease-in-out forwards;
+          z-index: 100;
+        }
+      `}</style>
+
        {/* Back Button */}
        <button 
         onClick={() => onNavigate('START')}
@@ -89,8 +118,23 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ onNavigate, onRe
       </button>
 
       <div className="w-full min-h-full flex flex-col items-center py-10 px-6 md:px-12 pb-40">
-         <div className="text-center mb-10 space-y-2 mt-12 md:mt-0">
-           <h2 className={`text-4xl md:text-5xl font-lobster text-${theme}-600 dark:text-${theme}-400`}>New {role === 'PET_OWNER' ? 'Family' : 'Professional'}</h2>
+         <div className="text-center mb-10 space-y-2 mt-12 md:mt-0 flex flex-col items-center">
+           
+           {/* Header with Inline Animated Puppy */}
+           <div className="flex items-center justify-center gap-4 mb-2">
+             <button 
+               key={role} // Force re-render to trigger initial bounce on toggle
+               onClick={() => setIsRunning(true)}
+               onAnimationEnd={() => setIsRunning(false)}
+               className={`text-3xl text-${theme}-500 drop-shadow-xl filter cursor-pointer transition-all duration-300 hover:text-${theme}-600 hover:scale-110 ${isRunning ? 'animate-puppy-run pointer-events-none' : 'animate-puppy-idle'}`}
+               title={`Hi! I'm your ${role === 'PET_OWNER' ? 'new friend' : 'assistant'}!`}
+             >
+                <i className="fa-solid fa-dog"></i>
+             </button>
+
+             <h2 className={`text-4xl md:text-5xl font-lobster text-${theme}-600 dark:text-${theme}-400`}>New {role === 'PET_OWNER' ? 'Family' : 'Professional'}</h2>
+           </div>
+
            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Create your Pluto identity</p>
          </div>
 
