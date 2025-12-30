@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   PetProfile, 
@@ -23,48 +22,7 @@ import AIScreen from './screens/AIScreen';
 import AuthScreen from './screens/AuthScreen';
 import DoctorDashboard from './screens/DoctorDashboard';
 import { NavButton } from './components/NavButton';
-
-const MOCK_PET: PetProfile = {
-  id: 'PET-LUNA-123',
-  name: 'Luna',
-  species: Species.Dog,
-  breed: 'Golden Retriever',
-  dateOfBirth: '2021-06-15',
-  gender: Gender.Female,
-  weight: '28',
-  avatar: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=400&h=400'
-};
-
-const MOCK_CONSULTED_DOCTORS: Doctor[] = [
-  { 
-    id: 'DOC-SMITH-45', 
-    name: 'Dr. Sarah Smith', 
-    specialization: 'Cardiology Specialist', 
-    qualification: 'DVM, PhD Cardiology',
-    registrationId: 'VET-TX-99881',
-    experience: '12 Years',
-    clinic: 'Green Valley Clinic', 
-    address: '123 Pawsome Way, Austin, TX',
-    contact: '555-0102',
-    emergencyContact: '555-0191',
-    consultationHours: '08:00 - 18:00',
-    medicalFocus: 'Cardiac surgery and heart murmurs'
-  },
-  { 
-    id: 'DOC-WONG-99', 
-    name: 'Dr. Mike Wong', 
-    specialization: 'Dental Vet', 
-    qualification: 'DVM, DDSV',
-    registrationId: 'VET-TX-11223',
-    experience: '8 Years',
-    clinic: 'Smile Pet Center', 
-    address: '88 Bark Blvd, Austin, TX',
-    contact: '555-0199',
-    emergencyContact: '555-0192',
-    consultationHours: '09:00 - 17:00',
-    medicalFocus: 'Canine orthodontics and periodontics'
-  }
-];
+import { api } from './lib/api';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -73,15 +31,12 @@ const App: React.FC = () => {
   const [documents, setDocuments] = useState<PetDocument[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [checklist, setChecklist] = useState<DailyChecklist>({ 
-    food: false, water: true, walk: false, medication: false, lastReset: new Date().toISOString() 
+    food: false, water: false, walk: false, medication: false, lastReset: new Date().toISOString() 
   });
-  const [routine, setRoutine] = useState<RoutineItem[]>([
-    { id: '1', title: 'Morning Kibble', time: '08:00', completed: true, category: 'Food' },
-    { id: '2', title: 'Park Adventure', time: '17:30', completed: false, category: 'Walk' }
-  ]);
+  const [routine, setRoutine] = useState<RoutineItem[]>([]);
   const [dailyLogs, setDailyLogs] = useState<Record<string, DailyLog>>({});
   const [doctorNotes, setDoctorNotes] = useState<DoctorNote[]>([]);
-  const [consultedDoctors, setConsultedDoctors] = useState<Doctor[]>(MOCK_CONSULTED_DOCTORS);
+  const [consultedDoctors, setConsultedDoctors] = useState<Doctor[]>([]);
   
   const [activeTab, setActiveTab] = useState<'dashboard' | 'profile' | 'timeline' | 'documents' | 'ai'>('dashboard');
   const [darkMode, setDarkMode] = useState(false);
@@ -100,102 +55,119 @@ const App: React.FC = () => {
     }
   }, [darkMode]);
 
-  // Initialize with rich demo data OR registered user data
-  useEffect(() => {
-    if (user && !pet) {
-      if (user.role === 'PET_OWNER' && user.petDetails) {
-        // Use registered pet details
-        setPet(user.petDetails);
-      } else {
-        // Fallback to mock data
-        setPet(MOCK_PET);
-      }
-
-      setTimeline([
-        { id: '1', date: '2024-03-10', type: EntryType.VetVisit, title: 'Annual Checkup', notes: 'Heart rate perfect. Recommended dental cleaning next month.' },
-        { id: '2', date: '2024-02-15', type: EntryType.Vaccination, title: 'Rabies Booster', notes: 'Given at Green Valley Clinic.' }
-      ]);
-      setDocuments([
-        { id: 'D1', name: 'Bloodwork_Report', type: 'Report', date: '2024-03-10', fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileSize: '1.2 MB' },
-        { id: 'D2', name: 'Vet_Invoice_March', type: 'Bill', date: '2024-03-10', fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileSize: '450 KB' },
-        { id: 'D3', name: 'Daily_Diet_Notes', type: 'Note', date: '2024-03-12', fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileSize: '12 KB' },
-        { id: 'D4', name: 'Antibiotic_Script', type: 'Prescription', date: '2024-03-11', fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileSize: '85 KB' }
-      ]);
-      setReminders([
-        { id: 'R1', title: 'Heartworm Pill', date: '2024-04-01', type: 'Medication', completed: false },
-        { id: 'R2', title: 'Dental Clean', date: '2024-04-15', type: 'Vet follow-up', completed: false }
-      ]);
-
-      // Generate 7 days of health trends data
-      const logs: Record<string, DailyLog> = {};
-      const activities = [45, 60, 30, 85, 40, 55, 70];
-      const moods = [4, 5, 3, 5, 4, 4, 5];
-      const feedings = [2, 2, 2, 3, 2, 2, 3];
+  // Fetch data from Mock API for the logged-in pet
+  const fetchPetRecords = async (petId: string) => {
+    try {
+      const data = await api.getPetRecords(petId);
       
-      for (let i = 0; i < 7; i++) {
-        const d = new Date();
-        d.setDate(d.getDate() - (6 - i));
-        const dateStr = d.toISOString().split('T')[0];
-        logs[dateStr] = {
-          activityMinutes: activities[i],
-          moodRating: moods[i],
-          feedingCount: feedings[i]
-        };
+      if (data.timeline) setTimeline(data.timeline);
+      if (data.reminders) setReminders(data.reminders);
+      if (data.documents) setDocuments(data.documents);
+      if (data.doctorNotes) setDoctorNotes(data.doctorNotes);
+      if (data.checklist) setChecklist(data.checklist);
+      if (data.dailyLogs) setDailyLogs(data.dailyLogs);
+      if (data.routines) setRoutine(data.routines);
+      
+    } catch (err) {
+      console.error("[App] Error fetching records:", err);
+    }
+  };
+
+  // Sync state when user logs in
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'PET_OWNER' && user.petDetails) {
+        setPet(user.petDetails);
+        fetchPetRecords(user.petDetails.id || user.petDetails._id || '');
+      } else if (user.role === 'DOCTOR' && user.doctorDetails) {
+        setPet(null);
       }
-      setDailyLogs(logs);
+    } else {
+      setPet(null);
+      setTimeline([]);
+      setDocuments([]);
+      setReminders([]);
+      setChecklist({ food: false, water: false, walk: false, medication: false, lastReset: new Date().toISOString() });
+      setRoutine([]);
+      setDailyLogs({});
+      setDoctorNotes([]);
+      setConsultedDoctors([]);
     }
   }, [user]);
 
   const handleUpdatePet = (updated: PetProfile) => setPet(updated);
-  const handleUpdateChecklist = (newC: DailyChecklist) => setChecklist(newC);
-  const handleUpdateVitals = (date: string, data: Partial<DailyLog>) => {
-    setDailyLogs(prev => ({
-      ...prev,
-      [date]: { ...(prev[date] || { activityMinutes: 0, moodRating: 3, feedingCount: 0 }), ...data }
-    }));
+  
+  const handleUpdateChecklist = async (newC: DailyChecklist) => {
+    setChecklist(newC);
+    if (pet) {
+      const petId = pet.id || pet._id;
+      if (petId) await api.updateChecklist(petId, newC);
+    }
   };
 
-  const handleCompleteReminder = (id: string) => {
-    const reminder = reminders.find(r => r.id === id);
-    if (reminder) {
-      setReminders(prev => prev.filter(r => r.id !== id));
-      const newEntry: TimelineEntry = {
-        id: `TL-AUTO-${Date.now()}`,
+  const handleUpdateVitals = async (date: string, data: Partial<DailyLog>) => {
+    const updatedLog = { ...(dailyLogs[date] || { activityMinutes: 0, moodRating: 3, feedingCount: 0 }), ...data };
+    setDailyLogs(prev => ({ ...prev, [date]: updatedLog }));
+    if (pet) {
+      const petId = pet.id || pet._id;
+      if (petId) await api.updateDailyLog(petId, date, updatedLog);
+    }
+  };
+
+  const handleCompleteReminder = async (id: string) => {
+    const reminder = reminders.find(r => r.id === id || r._id === id);
+    if (reminder && pet) {
+      const petId = pet.id || pet._id;
+      if (!petId) return;
+
+      setReminders(prev => prev.filter(r => r.id !== id && r._id !== id));
+      await api.deleteReminder(id);
+
+      const newEntry: Partial<TimelineEntry> = {
         date: new Date().toISOString().split('T')[0],
         type: reminder.type === 'Medication' ? EntryType.Medication : 
               reminder.type === 'Vaccination' ? EntryType.Vaccination : EntryType.VetVisit,
         title: reminder.title,
         notes: `Completed from planned care schedule.`
       };
-      setTimeline(prev => [newEntry, ...prev]);
+      
+      const savedEntry = await api.addTimelineEntry(petId, newEntry);
+      setTimeline(prev => [savedEntry, ...prev]);
     }
   };
 
   const handleDoctorVisit = (doctor: Doctor) => {
     setConsultedDoctors(prev => {
-      // Avoid duplicates
       if (prev.some(d => d.id === doctor.id)) return prev;
       return [doctor, ...prev];
     });
   };
 
-  const handleDeleteDoctorNote = (noteId: string) => {
-    setDoctorNotes(prev => prev.filter(n => n.id !== noteId));
+  const handleDeleteDoctorNote = async (noteId: string) => {
+    setDoctorNotes(prev => prev.filter(n => (n.id !== noteId && n._id !== noteId)));
+    await api.deleteDoctorNote(noteId);
   };
 
   if (!user) return <AuthScreen onLogin={setUser} darkMode={darkMode} setDarkMode={setDarkMode} />;
 
-  // DOCTOR DASHBOARD ROUTING
   if (user.role === 'DOCTOR') {
-    if (!pet) return <div className="h-screen w-full flex items-center justify-center bg-[#FFFAF3] dark:bg-zinc-950"><i className="fa-solid fa-circle-notch fa-spin text-4xl text-orange-500"></i></div>;
-    
     return (
       <DoctorDashboard 
         doctor={user}
-        petData={{ pet, timeline, documents, checklist, routine, reminders }}
+        petData={{ 
+          pet: pet || { id: 'PENDING', name: 'No Patient', species: Species.Other, breed: '', dateOfBirth: '', gender: Gender.Unknown }, 
+          timeline, 
+          documents, 
+          checklist, 
+          routine, 
+          reminders 
+        }}
         dailyLogs={dailyLogs}
         doctorNotes={doctorNotes}
-        onAddNote={(note) => setDoctorNotes(prev => [note, ...prev])}
+        onAddNote={async (note) => {
+          const saved = await api.addDoctorNote(note);
+          if (saved) setDoctorNotes(prev => [saved, ...prev]);
+        }}
         onDeleteNote={handleDeleteDoctorNote}
         onVisitPatient={() => handleDoctorVisit(user.doctorDetails!)}
         consultedDoctors={consultedDoctors}
@@ -224,14 +196,27 @@ const App: React.FC = () => {
     switch (activeTab) {
       case 'dashboard': return <Dashboard pet={pet!} reminders={reminders} checklist={checklist} setChecklist={handleUpdateChecklist} routine={routine} setRoutine={setRoutine} onCompleteReminder={handleCompleteReminder} timeline={timeline} dailyLogs={dailyLogs} onUpdateLog={handleUpdateVitals} doctorNotes={doctorNotes} onDeleteNote={handleDeleteDoctorNote} />;
       case 'profile': return <ProfileScreen pet={pet!} setPet={handleUpdatePet} reminders={reminders} onNavigate={setActiveTab} />;
-      case 'timeline': return <TimelineScreen timeline={timeline} setTimeline={setTimeline} documents={documents} reminders={reminders} setReminders={setReminders} dailyLogs={dailyLogs} onUpdateLog={() => {}} petName={pet?.name} doctorNotes={doctorNotes} onDeleteNote={handleDeleteDoctorNote} consultedDoctors={consultedDoctors} />;
+      case 'timeline': return (
+        <TimelineScreen 
+          timeline={timeline} 
+          setTimeline={() => {}} 
+          documents={documents} 
+          reminders={reminders} 
+          setReminders={() => {}} 
+          dailyLogs={dailyLogs} 
+          onUpdateLog={() => {}} 
+          petName={pet?.name} 
+          doctorNotes={doctorNotes} 
+          onDeleteNote={handleDeleteDoctorNote} 
+          consultedDoctors={consultedDoctors} 
+        />
+      );
       case 'documents': return <DocumentsScreen documents={documents} setDocuments={setDocuments} petName={pet?.name} />;
       case 'ai': return <AIScreen pet={pet!} timeline={timeline} documents={documents} reminders={reminders} />;
       default: return null;
     }
   };
 
-  // Mobile navigation configuration
   const navItems: { id: string, icon: string, label: string, isAction?: boolean, color: 'orange' | 'emerald' | 'amber' | 'rose' | 'indigo' }[] = [
     { id: 'dashboard', icon: 'house', label: 'Home', color: 'orange' },
     { id: 'timeline', icon: 'calendar-days', label: 'Journal', color: 'emerald' },
@@ -242,7 +227,6 @@ const App: React.FC = () => {
 
   return (
     <div className={`h-screen flex flex-col md:flex-row transition-colors duration-500 overflow-hidden ${darkMode ? 'dark' : ''}`}>
-      {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 lg:w-72 h-full bg-white dark:bg-zinc-900 border-r border-zinc-100 dark:border-zinc-800 shadow-xl p-8 shrink-0 z-[100]">
         <button 
           onClick={() => setActiveTab('dashboard')} 
@@ -289,7 +273,6 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      {/* Mobile Header */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md z-[100] px-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
         <button 
           className="flex items-center gap-2 hover:scale-105 active:scale-95 hover:-rotate-2 transition-all group"
@@ -315,12 +298,10 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 overflow-y-auto no-scrollbar relative bg-[#FFFAF3] dark:bg-zinc-950 pt-16 md:pt-0 md:pb-0">
         {renderContent()}
       </main>
 
-      {/* Mobile Floating Frosted Nav */}
       <nav className="md:hidden fixed bottom-6 left-6 right-6 h-20 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl rounded-[2.5rem] border border-white/40 dark:border-zinc-800/40 shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-[100] flex items-center justify-around px-2">
         {navItems.map((item) => (
           <NavButton

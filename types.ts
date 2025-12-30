@@ -13,6 +13,8 @@ export enum Gender {
 
 export interface PetProfile {
   id: string;
+  // Internal MongoDB ID support
+  _id?: string;
   name: string;
   species: Species;
   breed: string;
@@ -33,6 +35,8 @@ export enum EntryType {
 
 export interface TimelineEntry {
   id: string;
+  // Internal MongoDB ID support
+  _id?: string;
   date: string;
   type: EntryType;
   title: string;
@@ -42,6 +46,8 @@ export interface TimelineEntry {
 
 export interface PetDocument {
   id: string;
+  // Internal MongoDB ID support
+  _id?: string;
   name: string;
   type: 'Prescription' | 'Bill' | 'Report' | 'Note';
   date: string;
@@ -53,6 +59,8 @@ export interface PetDocument {
 
 export interface Reminder {
   id: string;
+  // Internal MongoDB ID support
+  _id?: string;
   title: string;
   date: string;
   type: 'Vaccination' | 'Medication' | 'Vet follow-up';
@@ -69,6 +77,8 @@ export interface DailyChecklist {
 
 export interface RoutineItem {
   id: string;
+  // Internal MongoDB ID support
+  _id?: string;
   title: string;
   time: string;
   completed: boolean;
@@ -86,6 +96,8 @@ export type UserRole = 'PET_OWNER' | 'DOCTOR';
 // Added missing properties to the Doctor interface to fix TypeScript errors
 export interface Doctor {
   id: string;
+  // Internal MongoDB ID support
+  _id?: string;
   name: string;
   specialization: string;
   qualification: string;
@@ -101,6 +113,8 @@ export interface Doctor {
 
 export interface DoctorNote {
   id: string;
+  // Internal MongoDB ID support
+  _id?: string;
   doctorId: string;
   doctorName: string;
   petId: string;
