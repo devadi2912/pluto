@@ -239,15 +239,26 @@ const TimelineScreen: React.FC<TimelineProps> = ({
 
          <div className="space-y-4">
             {doctorNotes && doctorNotes.length > 0 ? doctorNotes.map(note => (
-               <div key={note.id} className="bg-indigo-50/60 dark:bg-indigo-900/10 p-8 rounded-[2.5rem] border border-indigo-100 dark:border-indigo-900/30">
-                  <div className="flex items-center gap-4 mb-4">
-                     <div className="w-10 h-10 rounded-full bg-indigo-200 dark:bg-indigo-800 flex items-center justify-center text-indigo-600 dark:text-indigo-300">
-                        <i className="fa-solid fa-user-md"></i>
-                     </div>
-                     <div>
-                        <h5 className="font-bold text-zinc-900 dark:text-zinc-100">{note.doctorName}</h5>
-                        <p className="text-[10px] font-black uppercase text-zinc-400">{new Date(note.date).toLocaleDateString()} • {new Date(note.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-                     </div>
+               <div key={note.id} className="bg-indigo-50/60 dark:bg-indigo-900/10 p-8 rounded-[2.5rem] border border-indigo-100 dark:border-indigo-900/30 group relative transition-all hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 rounded-full bg-indigo-200 dark:bg-indigo-800 flex items-center justify-center text-indigo-600 dark:text-indigo-300">
+                          <i className="fa-solid fa-user-md"></i>
+                       </div>
+                       <div>
+                          <h5 className="font-bold text-zinc-900 dark:text-zinc-100">{note.doctorName}</h5>
+                          <p className="text-[10px] font-black uppercase text-zinc-400">{new Date(note.date).toLocaleDateString()} • {new Date(note.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                       </div>
+                    </div>
+                    {!readOnly && (
+                      <button 
+                        onClick={() => onDeleteNote && onDeleteNote(note.id)} 
+                        className="w-10 h-10 bg-rose-500 text-white rounded-2xl flex items-center justify-center shadow-lg hover:shadow-rose-500/30 hover:-translate-y-1 active:scale-95 transition-all opacity-0 group-hover:opacity-100"
+                        title="Delete Note"
+                      >
+                        <i className="fa-solid fa-trash text-xs"></i>
+                      </button>
+                    )}
                   </div>
                   <p className="text-sm font-bold text-zinc-600 dark:text-zinc-300 italic leading-relaxed">"{note.content}"</p>
                </div>
@@ -255,6 +266,33 @@ const TimelineScreen: React.FC<TimelineProps> = ({
                <div className="w-full py-10 text-center border-4 border-dashed border-zinc-100 dark:border-zinc-800 rounded-[3rem] text-zinc-400">
                   <i className="fa-solid fa-file-medical text-4xl mb-3 opacity-30"></i>
                   <p className="text-xs font-bold">No clinical notes recorded.</p>
+               </div>
+            )}
+         </div>
+      </section>
+
+      {/* 4. Visited Doctors Section */}
+      <section className="space-y-6 pt-12 border-t border-zinc-100 dark:border-zinc-800">
+         <div className="px-2">
+            <h2 className="text-4xl font-lobster text-rose-500 dark:text-rose-400">Medical Network</h2>
+            <p className="text-[11px] font-black uppercase text-zinc-500 tracking-widest mt-1">Professionals who accessed these records</p>
+         </div>
+
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {consultedDoctors && consultedDoctors.length > 0 ? consultedDoctors.map(doctor => (
+               <div key={doctor.id} className="bg-rose-50/50 dark:bg-rose-950/10 border-2 border-rose-100/50 dark:border-rose-900/20 p-6 rounded-[2.5rem] flex items-center gap-6 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all group">
+                  <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 flex items-center justify-center text-2xl group-hover:rotate-6 transition-transform">
+                    <i className="fa-solid fa-user-doctor"></i>
+                  </div>
+                  <div className="flex-1">
+                    <h5 className="text-lg font-bold text-zinc-950 dark:text-zinc-200">{doctor.name}</h5>
+                    <p className="text-[11px] font-black text-rose-700 dark:text-rose-500 uppercase tracking-widest mt-1">{doctor.clinic} • {doctor.specialization}</p>
+                  </div>
+               </div>
+            )) : (
+              <div className="md:col-span-2 py-10 text-center border-4 border-dashed border-zinc-100 dark:border-zinc-800 rounded-[3rem] text-zinc-400">
+                  <i className="fa-solid fa-users-medical text-4xl mb-3 opacity-30"></i>
+                  <p className="text-xs font-bold">No verified medical visits yet.</p>
                </div>
             )}
          </div>

@@ -9,7 +9,9 @@ interface DashboardProps {
   checklist: DailyChecklist;
   setChecklist: (checklist: DailyChecklist) => void;
   routine: RoutineItem[];
-  setRoutine: React.Dispatch<React.SetStateAction<RoutineItem[]>>;
+  onAddRoutine?: (item: Partial<RoutineItem>) => void;
+  onUpdateRoutine?: (id: string, updates: Partial<RoutineItem>) => void;
+  onDeleteRoutine?: (id: string) => void;
   onCompleteReminder: (id: string) => void;
   timeline: TimelineEntry[];
   dailyLogs: Record<string, DailyLog>;
@@ -25,7 +27,9 @@ const Dashboard: React.FC<DashboardProps> = ({
   checklist, 
   setChecklist, 
   routine, 
-  setRoutine,
+  onAddRoutine,
+  onUpdateRoutine,
+  onDeleteRoutine,
   onCompleteReminder,
   timeline,
   dailyLogs,
@@ -36,6 +40,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const [showAddRoutine, setShowAddRoutine] = useState(false);
   const [showLogModal, setShowLogModal] = useState(false);
+  const [editingRoutine, setEditingRoutine] = useState<RoutineItem | null>(null);
+  
   const today = new Date().toISOString().split('T')[0];
   
   const [newRoutine, setNewRoutine] = useState<{ title: string, time: string, category: RoutineItem['category'] }>({
@@ -48,36 +54,39 @@ const Dashboard: React.FC<DashboardProps> = ({
     return dailyLogs[today] || { activityMinutes: 0, moodRating: 3, feedingCount: 0 };
   }, [today, dailyLogs]);
 
-  const latestNote = useMemo(() => {
-    return doctorNotes.find(note => note.petId === pet.id);
-  }, [doctorNotes, pet.id]);
-
   const toggleCheck = (key: keyof Omit<DailyChecklist, 'lastReset'>) => {
     if (readOnly) return;
     setChecklist({ ...checklist, [key]: !checklist[key] });
   };
 
-  const toggleRoutine = (id: string) => {
+  const toggleRoutine = (item: RoutineItem) => {
     if (readOnly) return;
-    setRoutine(prev => prev.map(item => item.id === id ? { ...item, completed: !item.completed } : item));
+    onUpdateRoutine?.(item.id, { completed: !item.completed });
   };
 
   const handleAddRoutine = () => {
     if (!newRoutine.title || readOnly) return;
-    const item: RoutineItem = {
-      id: Date.now().toString(),
-      ...newRoutine,
-      completed: false
-    };
-    setRoutine(prev => [...prev, item].sort((a, b) => a.time.localeCompare(b.time)));
+    onAddRoutine?.(newRoutine);
     setShowAddRoutine(false);
     setNewRoutine({ title: '', time: '09:00', category: 'Food' });
+  };
+
+  const handleUpdateRoutineSubmit = () => {
+    if (!editingRoutine || readOnly) return;
+    onUpdateRoutine?.(editingRoutine.id, editingRoutine);
+    setEditingRoutine(null);
+  };
+
+  const handleDeleteRoutineSubmit = (id: string) => {
+    if (readOnly) return;
+    onDeleteRoutine?.(id);
+    setEditingRoutine(null);
   };
 
   const progressPercent = useMemo(() => {
     const totalItems = routine.length + 4;
     const completedItems = routine.filter(r => r.completed).length + Object.values(checklist).filter(v => typeof v === 'boolean' && v).length;
-    return Math.round((completedItems / totalItems) * 100);
+    return totalItems === 0 ? 0 : Math.round((completedItems / totalItems) * 100);
   }, [routine, checklist]);
 
   const upcomingEvents = useMemo(() => {
@@ -86,6 +95,28 @@ const Dashboard: React.FC<DashboardProps> = ({
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .slice(0, 5);
   }, [reminders]);
+
+  const getRoutineIcon = (category: string) => {
+    switch (category) {
+      case 'Food': return 'fa-bowl-food';
+      case 'Walk': return 'fa-dog';
+      case 'Medication': return 'fa-pills';
+      case 'Play': return 'fa-baseball-ball';
+      case 'Sleep': return 'fa-moon';
+      default: return 'fa-star';
+    }
+  };
+
+  const getRoutineColor = (category: string) => {
+    switch (category) {
+      case 'Food': return 'bg-orange-50 text-orange-600';
+      case 'Walk': return 'bg-emerald-50 text-emerald-600';
+      case 'Medication': return 'bg-rose-50 text-rose-600';
+      case 'Play': return 'bg-amber-50 text-amber-600';
+      case 'Sleep': return 'bg-indigo-50 text-indigo-600';
+      default: return 'bg-zinc-50 text-zinc-600';
+    }
+  };
 
   return (
     <div className="p-5 md:p-10 space-y-10 animate-in fade-in duration-700 pb-44 no-scrollbar">
@@ -153,22 +184,32 @@ const Dashboard: React.FC<DashboardProps> = ({
             {routine.map((item, idx) => (
               <div key={item.id} className="animate-in slide-in-from-left-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
                 <div 
-                  onClick={() => toggleRoutine(item.id)}
-                  className={`flex items-center gap-4 md:gap-6 p-5 md:p-6 rounded-[2rem] border-2 transition-all duration-300 group ${item.completed ? 'bg-zinc-50/50 dark:bg-zinc-900/50 border-transparent opacity-60' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 shadow-lg'} ${!readOnly ? 'cursor-pointer' : 'cursor-default'}`}
+                  className={`flex items-center gap-4 md:gap-6 p-5 md:p-6 rounded-[2rem] border-2 transition-all duration-300 group ${item.completed ? 'bg-zinc-50/50 dark:bg-zinc-900/50 border-transparent opacity-60' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 shadow-lg'}`}
                 >
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform ${item.category === 'Food' ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                    <i className={`fa-solid ${item.category === 'Food' ? 'fa-bowl-food' : 'fa-dog'}`}></i>
+                  <div 
+                    onClick={() => toggleRoutine(item)}
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform cursor-pointer ${getRoutineColor(item.category)}`}
+                  >
+                    <i className={`fa-solid ${getRoutineIcon(item.category)}`}></i>
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 cursor-pointer" onClick={() => !readOnly && setEditingRoutine(item)}>
                     <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">{item.time}</p>
                     <h4 className={`text-lg font-bold ${item.completed ? 'line-through text-zinc-400' : 'text-zinc-900 dark:text-zinc-100'}`}>{item.title}</h4>
                   </div>
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all border-4 ${item.completed ? 'bg-emerald-500 border-white text-white rotate-[360deg]' : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 text-transparent'}`}>
+                  <div 
+                    onClick={() => toggleRoutine(item)}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all border-4 cursor-pointer ${item.completed ? 'bg-emerald-500 border-white text-white rotate-[360deg]' : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 text-transparent'}`}
+                  >
                     <i className="fa-solid fa-check text-sm"></i>
                   </div>
                 </div>
               </div>
             ))}
+            {routine.length === 0 && (
+              <div className="py-10 text-center border-4 border-dashed border-zinc-100 dark:border-zinc-800 rounded-[2.5rem] text-zinc-300">
+                 <p className="text-[10px] font-black uppercase tracking-widest">No routine items set</p>
+              </div>
+            )}
           </div>
         </section>
 
@@ -183,7 +224,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </section>
       </div>
 
-      {/* Upcoming Events Section - STACKED VERTICALLY AT BOTTOM */}
+      {/* Upcoming Events Section */}
       <section className="space-y-6 pt-10 border-t border-zinc-100 dark:border-zinc-800">
         <div className="flex items-center justify-between px-2">
           <div>
@@ -213,7 +254,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </p>
                 </div>
                 
-                {/* Complete & Add to Journal Button */}
                 {!readOnly && (
                   <button 
                     onClick={() => onCompleteReminder(reminder.id)}
@@ -236,112 +276,74 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </section>
 
-      {/* Activity Log - Glass Card Pattern */}
-      {showLogModal && !readOnly && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-transparent pointer-events-none transition-all duration-300 animate-in fade-in">
+      {/* Routine Edit/Delete Modal */}
+      {editingRoutine && !readOnly && (
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-6 bg-transparent pointer-events-none animate-in fade-in duration-300">
           <div 
-            className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl w-full max-w-[380px] rounded-[3.5rem] shadow-2xl border-4 border-white dark:border-zinc-950 animate-in zoom-in-95 duration-500 overflow-hidden pointer-events-auto" 
+            className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-3xl border-4 border-white dark:border-zinc-950 w-full max-w-sm rounded-[3.5rem] p-10 shadow-2xl animate-in zoom-in-95 duration-500 space-y-8 pointer-events-auto"
             onClick={e => e.stopPropagation()}
           >
-            <div className="p-6 md:p-10 space-y-8">
-              {/* Header */}
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-orange-500 flex items-center justify-center text-white shadow-lg">
-                  <i className="fa-solid fa-paw text-lg"></i>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-lobster text-3xl text-zinc-900 dark:text-zinc-50 truncate leading-none">Activity Log</h4>
-                  <p className="text-[9px] font-black text-orange-600 uppercase tracking-[0.2em] mt-1.5 opacity-60">Status: {pet.name}</p>
-                </div>
-                <button onClick={() => setShowLogModal(false)} className="text-zinc-400 hover:text-rose-500 transition-colors">
-                  <i className="fa-solid fa-xmark text-lg"></i>
-                </button>
+            <div className="flex items-center justify-between">
+              <h4 className="font-lobster text-3xl text-sky-500">Edit Task</h4>
+              <button onClick={() => setEditingRoutine(null)} className="w-10 h-10 bg-white/50 dark:bg-zinc-800/50 rounded-xl flex items-center justify-center text-zinc-500 hover:text-rose-500 border-2 border-transparent hover:border-zinc-200"><i className="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 ml-2">Time</span>
+                <input 
+                  type="time" 
+                  className="w-full p-4 rounded-xl bg-white/60 dark:bg-zinc-800/60 border-2 border-transparent focus:border-sky-300 outline-none font-bold text-zinc-900 dark:text-zinc-100" 
+                  value={editingRoutine.time} 
+                  onChange={e => setEditingRoutine({...editingRoutine, time: e.target.value})} 
+                />
               </div>
-
-              {/* Status Controls */}
-              <div className="space-y-8">
-                
-                {/* 1. Activity Strip */}
-                <div className="bg-zinc-100/50 dark:bg-black/20 p-5 rounded-3xl border border-white dark:border-zinc-800 space-y-3 group">
-                  <div className="flex justify-between items-center px-1">
-                    <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Active Time</span>
-                    <span className="text-xs font-black text-orange-600">{currentLogData?.activityMinutes || 0}m</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <button 
-                      onClick={() => onUpdateLog(today, { activityMinutes: Math.max(0, (currentLogData?.activityMinutes || 0) - 15) })}
-                      className="w-10 h-10 rounded-xl bg-white/80 dark:bg-zinc-800/80 border-2 border-transparent hover:border-orange-500 transition-all text-zinc-400 hover:text-orange-500 active:scale-90 shadow-sm"
-                    >
-                      <i className="fa-solid fa-minus text-[10px]"></i>
-                    </button>
-                    <div className="flex-1 h-2.5 bg-zinc-200/50 dark:bg-zinc-700/50 rounded-full overflow-hidden">
-                      <div className="h-full bg-orange-500 transition-all duration-700 ease-out shadow-[0_0_10px_rgba(249,115,22,0.4)]" style={{ width: `${Math.min(100, ((currentLogData?.activityMinutes || 0) / 120) * 100)}%` }}></div>
-                    </div>
-                    <button 
-                      onClick={() => onUpdateLog(today, { activityMinutes: (currentLogData?.activityMinutes || 0) + 15 })}
-                      className="w-10 h-10 rounded-xl bg-white/80 dark:bg-zinc-800/80 border-2 border-transparent hover:border-orange-500 transition-all text-zinc-400 hover:text-orange-500 active:scale-90 shadow-sm"
-                    >
-                      <i className="fa-solid fa-plus text-[10px]"></i>
-                    </button>
-                  </div>
-                </div>
-
-                {/* 2. Meals */}
-                <div className="space-y-3">
-                  <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest ml-1">Meals</span>
-                  <div className="flex justify-between items-center gap-3 px-1">
-                    {[1, 2, 3, 4].map(v => (
-                      <button 
-                        key={v}
-                        onClick={() => onUpdateLog(today, { feedingCount: v })}
-                        className={`w-12 h-12 rounded-full flex items-center justify-center text-xs font-black transition-all border-2 border-white dark:border-black hover:scale-110 active:scale-90 ${
-                          currentLogData?.feedingCount === v 
-                            ? 'bg-emerald-500 text-white shadow-lg animate-pulse' 
-                            : 'bg-zinc-200/50 dark:bg-zinc-800/40 text-zinc-400 dark:text-zinc-600 hover:bg-zinc-300/50 dark:hover:bg-zinc-700/50'
-                        }`}
-                      >
-                        {v}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 3. Vibe Selection */}
-                <div className="space-y-3">
-                  <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest ml-1">Vibe</span>
-                  <div className="flex bg-zinc-200/30 dark:bg-zinc-800/20 p-2 rounded-2xl border border-white dark:border-zinc-800/40">
-                    {[1, 2, 3, 4, 5].map(v => (
-                      <button 
-                        key={v}
-                        onClick={() => onUpdateLog(today, { moodRating: v })}
-                        className={`flex-1 py-2 text-xl transition-all rounded-xl hover:scale-110 active:scale-95 ${
-                          currentLogData?.moodRating === v 
-                            ? 'bg-white/80 dark:bg-zinc-700/80 shadow-sm scale-110 z-10' 
-                            : 'opacity-40 grayscale hover:opacity-100 hover:grayscale-0'
-                        }`}
-                      >
-                        {['😢', '😕', '😐', '🙂', '🤩'][v-1]}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Save Record Button */}
-              <div className="pt-2">
-                <button 
-                  onClick={() => setShowLogModal(false)}
-                  className="w-full py-5 bg-orange-500 text-white rounded-[2rem] font-black uppercase tracking-[0.4em] text-[11px] transition-all active:scale-[0.96] border-4 border-white dark:border-black shadow-xl hover:brightness-110"
+              <div className="space-y-2">
+                <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 ml-2">Category</span>
+                <select 
+                  className="w-full p-4 rounded-xl bg-white/60 dark:bg-zinc-800/60 border-2 border-transparent focus:border-sky-300 outline-none font-bold text-zinc-900 dark:text-zinc-100" 
+                  value={editingRoutine.category} 
+                  onChange={e => setEditingRoutine({...editingRoutine, category: e.target.value as any})}
                 >
-                  Save Record
-                </button>
+                  <option value="Food">Food 🍖</option>
+                  <option value="Walk">Walk 🦮</option>
+                  <option value="Medication">Meds 💊</option>
+                  <option value="Play">Play 🎾</option>
+                  <option value="Sleep">Sleep 😴</option>
+                  <option value="Other">Other ⭐</option>
+                </select>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 ml-2">Description</span>
+              <input 
+                type="text" 
+                className="w-full p-4 rounded-xl bg-white/60 dark:bg-zinc-800/60 border-2 border-transparent focus:border-sky-300 outline-none font-bold text-zinc-900 dark:text-zinc-100" 
+                value={editingRoutine.title} 
+                onChange={e => setEditingRoutine({...editingRoutine, title: e.target.value})} 
+              />
+            </div>
+
+            <div className="space-y-3 pt-4">
+               <button 
+                 onClick={handleUpdateRoutineSubmit} 
+                 className="w-full bg-sky-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg shadow-sky-500/30 hover:brightness-110 active:scale-95 transition-all"
+               >
+                 Save Changes
+               </button>
+               <button 
+                 onClick={() => handleDeleteRoutineSubmit(editingRoutine.id)} 
+                 className="w-full bg-rose-50 dark:bg-rose-900/20 text-rose-500 py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] border-2 border-rose-100 dark:border-rose-900/40 hover:bg-rose-100 dark:hover:bg-rose-900/40 active:scale-95 transition-all"
+               >
+                 Delete Task
+               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Routine Add Modal - Glass Card Pattern with High-Quality Light Blue Theme */}
+      {/* Routine Add Modal */}
       {showAddRoutine && !readOnly && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-transparent pointer-events-none animate-in fade-in duration-300">
           <div 
@@ -400,6 +402,104 @@ const Dashboard: React.FC<DashboardProps> = ({
             >
               Add Goal
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Activity Log Modal */}
+      {showLogModal && !readOnly && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-transparent pointer-events-none transition-all duration-300 animate-in fade-in">
+          <div 
+            className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl w-full max-w-[380px] rounded-[3.5rem] shadow-2xl border-4 border-white dark:border-zinc-950 animate-in zoom-in-95 duration-500 overflow-hidden pointer-events-auto" 
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="p-6 md:p-10 space-y-8">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-orange-500 flex items-center justify-center text-white shadow-lg">
+                  <i className="fa-solid fa-paw text-lg"></i>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-lobster text-3xl text-zinc-900 dark:text-zinc-50 truncate leading-none">Activity Log</h4>
+                  <p className="text-[9px] font-black text-orange-600 uppercase tracking-[0.2em] mt-1.5 opacity-60">Status: {pet.name}</p>
+                </div>
+                <button onClick={() => setShowLogModal(false)} className="text-zinc-400 hover:text-rose-500 transition-colors">
+                  <i className="fa-solid fa-xmark text-lg"></i>
+                </button>
+              </div>
+
+              <div className="space-y-8">
+                <div className="bg-zinc-100/50 dark:bg-black/20 p-5 rounded-3xl border border-white dark:border-zinc-800 space-y-3 group">
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Active Time</span>
+                    <span className="text-xs font-black text-orange-600">{currentLogData?.activityMinutes || 0}m</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button 
+                      onClick={() => onUpdateLog(today, { activityMinutes: Math.max(0, (currentLogData?.activityMinutes || 0) - 15) })}
+                      className="w-10 h-10 rounded-xl bg-white/80 dark:bg-zinc-800/80 border-2 border-transparent hover:border-orange-500 transition-all text-zinc-400 hover:text-orange-500 active:scale-90 shadow-sm"
+                    >
+                      <i className="fa-solid fa-minus text-[10px]"></i>
+                    </button>
+                    <div className="flex-1 h-2.5 bg-zinc-200/50 dark:bg-zinc-700/50 rounded-full overflow-hidden">
+                      <div className="h-full bg-orange-500 transition-all duration-700 ease-out shadow-[0_0_10px_rgba(249,115,22,0.4)]" style={{ width: `${Math.min(100, ((currentLogData?.activityMinutes || 0) / 120) * 100)}%` }}></div>
+                    </div>
+                    <button 
+                      onClick={() => onUpdateLog(today, { activityMinutes: (currentLogData?.activityMinutes || 0) + 15 })}
+                      className="w-10 h-10 rounded-xl bg-white/80 dark:bg-zinc-800/80 border-2 border-transparent hover:border-orange-500 transition-all text-zinc-400 hover:text-orange-500 active:scale-90 shadow-sm"
+                    >
+                      <i className="fa-solid fa-plus text-[10px]"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest ml-1">Meals</span>
+                  <div className="flex justify-between items-center gap-3 px-1">
+                    {[1, 2, 3, 4].map(v => (
+                      <button 
+                        key={v}
+                        onClick={() => onUpdateLog(today, { feedingCount: v })}
+                        className={`w-12 h-12 rounded-full flex items-center justify-center text-xs font-black transition-all border-2 border-white dark:border-black hover:scale-110 active:scale-90 ${
+                          currentLogData?.feedingCount === v 
+                            ? 'bg-emerald-500 text-white shadow-lg animate-pulse' 
+                            : 'bg-zinc-200/50 dark:bg-zinc-800/40 text-zinc-400 dark:text-zinc-600 hover:bg-zinc-300/50 dark:hover:bg-zinc-700/50'
+                        }`}
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest ml-1">Vibe</span>
+                  <div className="flex bg-zinc-200/30 dark:bg-zinc-800/20 p-2 rounded-2xl border border-white dark:border-zinc-800/40">
+                    {[1, 2, 3, 4, 5].map(v => (
+                      <button 
+                        key={v}
+                        onClick={() => onUpdateLog(today, { moodRating: v })}
+                        className={`flex-1 py-2 text-xl transition-all rounded-xl hover:scale-110 active:scale-95 ${
+                          currentLogData?.moodRating === v 
+                            ? 'bg-white/80 dark:bg-zinc-700/80 shadow-sm scale-110 z-10' 
+                            : 'opacity-40 grayscale hover:opacity-100 hover:grayscale-0'
+                        }`}
+                      >
+                        {['😢', '😕', '😐', '🙂', '🤩'][v-1]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button 
+                  onClick={() => setShowLogModal(false)}
+                  className="w-full py-5 bg-orange-500 text-white rounded-[2rem] font-black uppercase tracking-[0.4em] text-[11px] transition-all active:scale-[0.96] border-4 border-white dark:border-black shadow-xl hover:brightness-110"
+                >
+                  Save Record
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

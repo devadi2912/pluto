@@ -34,7 +34,7 @@ interface DoctorDashboardProps {
   doctorNotes: DoctorNote[];
   onAddNote: (note: DoctorNote) => void;
   onDeleteNote?: (noteId: string) => void;
-  onVisitPatient?: () => void;
+  onVisitPatient?: (petId: string) => void;
   consultedDoctors?: Doctor[];
   darkMode: boolean;
   setDarkMode: (dark: boolean) => void;
@@ -64,10 +64,6 @@ const getGlowClass = (color: string) => {
   }
 };
 
-/**
- * DoctorDashboard component provides the main interface for veterinarians.
- * It handles patient searches, clinical notes, and medical record viewing.
- */
 const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ 
   doctor, 
   petData, 
@@ -94,22 +90,19 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   const [visitedPatientIds, setVisitedPatientIds] = useState<Set<string>>(new Set());
   const [priorityItems, setPriorityItems] = useState<PriorityItemData[]>([]);
 
-  // Function to handle patient record search
   const handleSearch = async (id?: string | any) => {
-    // Ensure we are working with a string, as this might be called with an event object
     const query = typeof id === 'string' ? id : searchId;
     const targetId = query.toUpperCase();
     
-    if (targetId === petData.pet.id || targetId.startsWith('PET-')) {
+    if (targetId.startsWith('PET-')) {
       setVisitedPatientIds(prev => new Set([...Array.from(prev), targetId]));
       
-      // Log the doctor visit in the backend
       if (doctor.doctorDetails?.id) {
          await api.logDoctorVisit(targetId, doctor.doctorDetails.id);
       }
 
       if (onVisitPatient) {
-        onVisitPatient();
+        onVisitPatient(targetId);
       }
 
       if (targetId === petData.pet.id) {
@@ -120,7 +113,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
             title: `${petData.pet.name}'s ${r.type}`,
             detail: `Due: ${r.title}`,
             type: "Urgent",
-            color: "bg-rose-100", // Simplified color handling, we'll enforce rose theme in UI
+            color: "bg-rose-100",
             targetId: targetId
           }))
           .filter(newItem => !priorityItems.some(existing => existing.title === newItem.title));
@@ -140,11 +133,10 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
 
       setIsViewingPatient(true);
     } else {
-      alert("Pet ID not found. Try searching for: " + petData.pet.id);
+      alert("Please enter a valid Pet ID starting with PET-");
     }
   };
 
-  // Function to save a clinical note for a patient
   const handleLeaveNote = () => {
     if (!noteContent.trim()) return;
     const newNote: DoctorNote = {
@@ -171,10 +163,8 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
     setIsViewingPatient(false);
   };
 
-  // Render the specific view for an opened patient record
   const renderPetView = () => (
     <div className="flex flex-col h-full bg-[#FFFAF3] dark:bg-zinc-950 animate-in fade-in duration-500 relative overflow-hidden">
-      {/* Mobile-Only Header for Patient View */}
       <div className="md:hidden p-4 bg-orange-500 text-white flex items-center justify-between sticky top-0 z-[50] shadow-md shrink-0">
         <div className="flex items-center gap-3">
           <button onClick={() => setIsViewingPatient(false)} className="w-10 h-10 flex items-center justify-center hover:bg-white/20 rounded-2xl transition-all">
@@ -188,7 +178,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar relative h-full">
-        {/* Desktop Title Bar for Patient View - Simplified since actions are in sidebar */}
         <div className="hidden md:flex items-center justify-between p-8 border-b border-zinc-100 dark:border-zinc-800 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl">
            <div className="flex items-center gap-4">
               <img src={petData.pet.avatar} className="w-16 h-16 rounded-2xl border-4 border-white dark:border-zinc-800 shadow-lg" alt="avatar" />
@@ -197,7 +186,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                  <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">{petData.pet.id} • Medical File</p>
               </div>
            </div>
-           {/* Actions moved to Sidebar */}
         </div>
 
         <div className="relative md:p-10 pb-44 md:pb-12">
@@ -208,7 +196,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
               checklist={petData.checklist} 
               setChecklist={() => {}} 
               routine={petData.routine} 
-              setRoutine={() => {}} 
+              // Fix: Removed non-existent 'setRoutine' prop
               onCompleteReminder={() => {}} 
               timeline={petData.timeline} 
               dailyLogs={dailyLogs} 
@@ -253,7 +241,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         </div>
       </div>
 
-      {/* Mobile Floating Footer for Patient View */}
       <nav className="md:hidden fixed bottom-6 left-6 right-6 h-20 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl rounded-[2.5rem] border border-white/40 dark:border-zinc-800/40 shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-[100] flex items-center justify-around px-2 animate-in slide-in-from-bottom-10">
         {patientNavItems.map(item => (
           <NavButton
@@ -267,7 +254,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         ))}
       </nav>
 
-      {/* Note Modal - Glass Card Pattern */}
       {showNoteModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-transparent pointer-events-none" onClick={() => setShowNoteModal(false)}>
            <div 
@@ -307,10 +293,8 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
 
   return (
     <div className={`h-screen flex flex-col md:flex-row bg-[#FFFAF3] dark:bg-zinc-950 transition-colors duration-500 overflow-hidden ${darkMode ? 'dark' : ''}`}>
-      {/* Desktop Sidebar - Context Aware */}
       <aside className="hidden md:flex flex-col w-72 h-full bg-white dark:bg-zinc-900 border-r border-zinc-100 dark:border-zinc-800 shadow-xl p-8 shrink-0 z-[100]">
         {!isViewingPatient ? (
-          // MAIN DOCTOR SIDEBAR
           <>
             <button 
               onClick={handleHomeClick}
@@ -363,7 +347,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
             </div>
           </>
         ) : (
-          // PATIENT CONTEXT SIDEBAR
           <>
              <div className="flex flex-col items-center text-center mb-10 animate-in slide-in-from-left-4 duration-500">
                 <div className="w-24 h-24 rounded-[2rem] p-1 bg-gradient-to-tr from-indigo-500 to-rose-500 shadow-xl mb-4">
@@ -409,7 +392,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                   <i className="fa-solid fa-pen-fancy text-sm"></i> Leave Note
                 </button>
 
-                {/* Footer Buttons Side-by-Side with Animations */}
                 <div className="flex gap-4">
                    <button
                       onClick={() => setDarkMode(!darkMode)}
@@ -433,7 +415,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         )}
       </aside>
 
-      {/* Mobile Header (Main View) - Matches Pet Dashboard Aesthetics */}
       {!isViewingPatient && (
         <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md z-[100] px-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
           <button 
@@ -461,7 +442,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         </header>
       )}
 
-      {/* Main Content Area */}
       <main className={`flex-1 overflow-y-auto no-scrollbar relative ${!isViewingPatient ? 'pt-16 md:pt-0' : ''}`}>
         {isViewingPatient ? renderPetView() : (
           <div className="p-8 md:p-12 max-w-6xl mx-auto space-y-12 pb-32">
@@ -505,7 +485,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                   </div>
 
                   <div className="lg:col-span-4 flex flex-col gap-6">
-                    {/* Active Patients Card (Formerly Consults) - Blue Theme */}
                     <button className="relative h-48 rounded-[3rem] p-8 text-left transition-all duration-300 hover:scale-[1.02] active:scale-95 overflow-hidden group border-2 border-transparent hover:border-indigo-400 hover:shadow-[0_0_30px_rgba(99,102,241,0.3)] bg-indigo-50/80 dark:bg-indigo-950/20 w-full">
                         <div className="absolute -right-6 -bottom-6 text-[10rem] opacity-[0.03] rotate-12 group-hover:rotate-[20deg] transition-transform text-indigo-900 dark:text-indigo-100 pointer-events-none">
                             <i className="fa-solid fa-user-clock"></i>
@@ -525,7 +504,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                         </div>
                     </button>
 
-                    {/* Pending Care Card (Formerly Inbox) - Amber Theme */}
                     <button className="relative h-48 rounded-[3rem] p-8 text-left transition-all duration-300 hover:scale-[1.02] active:scale-95 overflow-hidden group border-2 border-transparent hover:border-amber-400 hover:shadow-[0_0_30px_rgba(245,158,11,0.3)] bg-amber-50/80 dark:bg-amber-950/20 w-full">
                         <div className="absolute -right-6 -bottom-6 text-[10rem] opacity-[0.03] rotate-12 group-hover:rotate-[20deg] transition-transform text-amber-900 dark:text-amber-100 pointer-events-none">
                             <i className="fa-solid fa-bell"></i>
@@ -561,7 +539,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         )}
       </main>
 
-      {/* Mobile Floating Frosted Nav - Standardized */}
       {!isViewingPatient && (
         <nav className="md:hidden fixed bottom-6 left-6 right-6 h-20 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl rounded-[2.5rem] border border-white/40 dark:border-zinc-800/40 shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-[100] flex items-center justify-around px-2">
           {[

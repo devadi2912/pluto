@@ -11,7 +11,9 @@ import {
   AuthUser,
   DailyLog,
   DoctorNote,
-  Doctor
+  Doctor,
+  Species,
+  Gender
 } from './types';
 import Dashboard from './screens/Dashboard';
 import ProfileScreen from './screens/ProfileScreen';
@@ -19,6 +21,7 @@ import TimelineScreen from './screens/TimelineScreen';
 import DocumentsScreen from './screens/DocumentsScreen';
 import AIScreen from './screens/AIScreen';
 import AuthScreen from './screens/AuthScreen';
+import DoctorDashboard from './screens/DoctorDashboard';
 import { NavButton } from './components/NavButton';
 import { api } from './lib/api';
 import { auth } from './lib/firebase';
@@ -37,10 +40,17 @@ const App: React.FC = () => {
   const [routine, setRoutine] = useState<RoutineItem[]>([]);
   const [dailyLogs, setDailyLogs] = useState<Record<string, DailyLog>>({});
   const [doctorNotes, setDoctorNotes] = useState<DoctorNote[]>([]);
+  const [clinicalNotes, setClinicalNotes] = useState<DoctorNote[]>([]);
+  const [medicalNetworks, setMedicalNetworks] = useState<Doctor[]>([]);
   
   const [activeTab, setActiveTab] = useState<'dashboard' | 'profile' | 'timeline' | 'documents' | 'ai'>('dashboard');
   const [darkMode, setDarkMode] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+  // Doctor-specific UI state
+  const [isViewingPatient, setIsViewingPatient] = useState(false);
+  const [doctorActiveTab, setDoctorActiveTab] = useState<'profile' | 'discover' | 'patients'>('discover');
+  const [patientSubTab, setPatientSubTab] = useState<'profile' | 'timeline' | 'docs' | 'identity'>('profile');
 
   useEffect(() => {
     if (darkMode) document.documentElement.classList.add('dark');
@@ -61,6 +71,7 @@ const App: React.FC = () => {
       } else {
         setUser(null);
         setUnverifiedUser(null);
+        setPet(null);
       }
       setIsAuthLoading(false);
     });
@@ -77,6 +88,16 @@ const App: React.FC = () => {
     setDailyLogs(data.dailyLogs);
     setRoutine(data.routines);
     setDoctorNotes(data.doctorNotes);
+    setClinicalNotes(data.clinicalNotes || []);
+    setMedicalNetworks(data.medicalNetworks || []);
+
+    // If it's a doctor viewing a patient, we need the pet profile too
+    if (user?.role === 'DOCTOR') {
+       const patientProfile = await api.getUserProfile(uid);
+       if (patientProfile?.petDetails) {
+         setPet(patientProfile.petDetails);
+       }
+    }
   };
 
   useEffect(() => {
@@ -98,16 +119,48 @@ const App: React.FC = () => {
     await api.updateChecklist(user.id, newC);
   };
 
-  const handleDeleteTimelineEntry = async (id: string) => {
+  const handleUpdateLog = async (date: string, data: Partial<DailyLog>) => {
+    const targetUid = user?.role === 'PET_OWNER' ? user.id : pet?.id?.replace('PET-', '');
+    if (!targetUid) return;
+    
+    setDailyLogs(prev => ({
+      ...prev,
+      [date]: { ...(prev[date] || { activityMinutes: 0, moodRating: 3, feedingCount: 0 }), ...data }
+    }));
+    
+    await api.updateDailyLog(targetUid, date, data);
+  };
+
+  const handleAddRoutine = async (item: Partial<RoutineItem>) => {
     if (!user?.id) return;
-    if (await api.deleteTimelineEntry(user.id, id)) {
+    const saved = await api.addRoutine(user.id, item);
+    setRoutine(prev => [...prev, saved].sort((a, b) => a.time.localeCompare(b.time)));
+  };
+
+  const handleUpdateRoutine = async (id: string, updates: Partial<RoutineItem>) => {
+    if (!user?.id) return;
+    await api.updateRoutine(user.id, id, updates);
+    setRoutine(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+  };
+
+  const handleDeleteRoutine = async (id: string) => {
+    if (!user?.id) return;
+    await api.deleteRoutine(user.id, id);
+    setRoutine(prev => prev.filter(r => r.id !== id));
+  };
+
+  const handleDeleteTimelineEntry = async (id: string) => {
+    const targetUid = user?.role === 'PET_OWNER' ? user.id : pet?.id?.replace('PET-', '');
+    if (!targetUid) return;
+    if (await api.deleteTimelineEntry(targetUid, id)) {
       setTimeline(prev => prev.filter(e => e.id !== id));
     }
   };
 
   const handleDeleteReminder = async (id: string) => {
-    if (!user?.id) return;
-    if (await api.deleteReminder(user.id, id)) {
+    const targetUid = user?.role === 'PET_OWNER' ? user.id : pet?.id?.replace('PET-', '');
+    if (!targetUid) return;
+    if (await api.deleteReminder(targetUid, id)) {
       setReminders(prev => prev.filter(r => r.id !== id));
     }
   };
@@ -131,6 +184,22 @@ const App: React.FC = () => {
     setTimeline(prev => [saved, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
   };
 
+  const handleAddDoctorNote = async (note: DoctorNote) => {
+    if (!pet?.id) return;
+    const patientUid = pet.id.replace('PET-', '');
+    const saved = await api.addDoctorNote(patientUid, note);
+    setDoctorNotes(prev => [saved, ...prev]);
+    setClinicalNotes(prev => [saved, ...prev]);
+  };
+
+  const handleDeleteClinicalNote = async (id: string) => {
+    const targetUid = user?.role === 'PET_OWNER' ? user.id : pet?.id?.replace('PET-', '');
+    if (!targetUid) return;
+    await api.deleteDoctorNote(targetUid, id);
+    setDoctorNotes(prev => prev.filter(n => n.id !== id));
+    setClinicalNotes(prev => prev.filter(n => n.id !== id));
+  };
+
   if (isAuthLoading) {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-[#FFFAF3] dark:bg-black">
@@ -142,6 +211,44 @@ const App: React.FC = () => {
 
   if (!user) return <AuthScreen onLogin={setUser} darkMode={darkMode} setDarkMode={setDarkMode} unverifiedUser={unverifiedUser} />;
 
+  // DOCTOR ROUTING
+  if (user.role === 'DOCTOR') {
+    return (
+      <DoctorDashboard 
+        doctor={user}
+        petData={{
+          pet: pet || { id: '', name: 'No Patient', species: Species.Dog, breed: '', dateOfBirth: '', gender: Gender.Unknown, avatar: '' },
+          timeline,
+          documents,
+          checklist,
+          routine,
+          reminders
+        }}
+        dailyLogs={dailyLogs}
+        doctorNotes={doctorNotes}
+        onAddNote={handleAddDoctorNote}
+        onDeleteNote={handleDeleteClinicalNote}
+        onVisitPatient={(id) => {
+          if (id) {
+            const patientUid = id.replace('PET-', '');
+            hydrateData(patientUid);
+          }
+        }}
+        consultedDoctors={medicalNetworks}
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+        activeTab={doctorActiveTab}
+        setActiveTab={setDoctorActiveTab}
+        isViewingPatient={isViewingPatient}
+        setIsViewingPatient={setIsViewingPatient}
+        patientSubTab={patientSubTab}
+        setPatientSubTab={setPatientSubTab}
+        onLogout={() => api.logout()}
+      />
+    );
+  }
+
+  // PET OWNER ROUTING
   const renderContent = () => {
     if (!pet && activeTab !== 'profile') return (
        <div className="flex flex-col items-center justify-center h-full p-10 text-center space-y-6">
@@ -152,7 +259,24 @@ const App: React.FC = () => {
     );
 
     switch (activeTab) {
-      case 'dashboard': return <Dashboard pet={pet!} reminders={reminders} checklist={checklist} setChecklist={handleUpdateChecklist} routine={routine} setRoutine={setRoutine} onCompleteReminder={handleCompleteReminder} timeline={timeline} dailyLogs={dailyLogs} onUpdateLog={() => {}} doctorNotes={doctorNotes} />;
+      case 'dashboard': return (
+        <Dashboard 
+          pet={pet!} 
+          reminders={reminders} 
+          checklist={checklist} 
+          setChecklist={handleUpdateChecklist} 
+          routine={routine} 
+          onAddRoutine={handleAddRoutine}
+          onUpdateRoutine={handleUpdateRoutine}
+          onDeleteRoutine={handleDeleteRoutine}
+          onCompleteReminder={handleCompleteReminder} 
+          timeline={timeline} 
+          dailyLogs={dailyLogs} 
+          onUpdateLog={handleUpdateLog} 
+          doctorNotes={doctorNotes} 
+          onDeleteNote={handleDeleteClinicalNote}
+        />
+      );
       case 'profile': return <ProfileScreen pet={pet!} setPet={handleUpdatePet} reminders={reminders} onNavigate={setActiveTab} />;
       case 'timeline': return (
         <TimelineScreen 
@@ -162,12 +286,14 @@ const App: React.FC = () => {
           reminders={reminders} 
           setReminders={setReminders} 
           dailyLogs={dailyLogs} 
-          onUpdateLog={() => {}} 
+          onUpdateLog={handleUpdateLog} 
           petName={pet?.name} 
           doctorNotes={doctorNotes} 
+          onDeleteNote={handleDeleteClinicalNote}
           onDeleteTimelineEntry={handleDeleteTimelineEntry}
           onDeleteReminder={handleDeleteReminder}
           petId={user.id}
+          consultedDoctors={medicalNetworks}
         />
       );
       case 'documents': return <DocumentsScreen documents={documents} setDocuments={setDocuments} petName={pet?.name} petId={user.id} />;

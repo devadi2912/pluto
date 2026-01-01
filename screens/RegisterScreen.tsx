@@ -54,7 +54,6 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ onNavigate, onRe
     setIsLoading(true);
 
     try {
-      // Prepare payload for the api
       const payload: any = {
         username: cleanUsername,
         password: cleanPassword,
@@ -72,30 +71,28 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ onNavigate, onRe
           weight: weight || '0',
           color: color || '',
           microchip: microchip || '',
-          avatar_url: species === Species.Cat 
+          avatar: species === Species.Cat 
             ? 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=400&h=400' 
             : 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=400&h=400'
         };
       } else {
         if (!docName.trim()) throw new Error("A professional name is required.");
         payload.doctorDetails = {
-          full_name: docName,
+          name: docName,
           specialization: docSpec || 'General Veterinary',
-          clinic_name: docClinic || 'Private Practice',
+          clinic: docClinic || 'Private Practice',
           experience: docExp || '1 Year',
-          qualifications: docQual || 'DVM',
-          registration_id: docRegId || 'VET-PENDING',
+          qualification: docQual || 'DVM',
+          registrationId: docRegId || 'VET-PENDING',
           address: docAddress || 'Pending',
           contact: docContact || 'Pending',
-          emergency_contact: docEmerg || 'Pending',
-          consultation_hours: docHours || 'Mon-Fri 09:00-17:00',
-          medical_focus: docFocus || 'General Medicine'
+          emergencyContact: docEmerg || 'Pending',
+          consultationHours: docHours || 'Mon-Fri 09:00-17:00',
+          medicalFocus: docFocus || 'General Medicine'
         };
       }
 
       const newUser = await api.register(payload);
-      
-      // Pass the user to the auth screen so we can show the email in the verify screen
       onRegister(newUser);
     } catch (err: any) {
       console.error("[Registration] Error:", err.message);

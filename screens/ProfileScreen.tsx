@@ -27,6 +27,8 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
   });
   const [showBirthdate, setShowBirthdate] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -45,21 +47,22 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (window.confirm("Are you sure you want to delete your account? This cannot be undone.")) {
-      try {
-        await api.deleteAccount();
-      } catch (error) {
-        alert("Failed to delete account. You may need to re-login first.");
-        console.error(error);
-      }
+  const performDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await api.deleteAccount();
+      // api.deleteAccount includes deleteUser(user), which triggers onAuthStateChanged in App.tsx
+    } catch (error) {
+      alert("To delete your account, you must have logged in recently. Please log out and back in, then try again.");
+      console.error(error);
+      setIsDeleting(false);
+      setShowDeleteModal(false);
     }
   };
 
   const pendingCount = reminders.filter(r => !r.completed).length;
   const isHealthy = pendingCount === 0;
 
-  // Precise Age Calculation
   const ageStr = useMemo(() => {
     if (!formData.dateOfBirth) return 'Age Unknown';
     const birthDate = new Date(formData.dateOfBirth);
@@ -82,7 +85,6 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
 
   const birthDisplay = new Date(formData.dateOfBirth).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
 
-  // Only navigate if there is something to do (not healthy/pending items)
   const handleVitalityClick = () => {
     if (!isHealthy && onNavigate) {
       onNavigate('dashboard');
@@ -123,7 +125,6 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
         {/* Left Column: Avatar & Big Name */}
         <div className="lg:col-span-4 flex flex-col gap-6">
            <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-8 rounded-[3.5rem] border border-white/40 dark:border-zinc-800 shadow-xl flex flex-col items-center text-center relative overflow-hidden group">
-              {/* Decorative Blur */}
               <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-orange-500/10 to-transparent"></div>
               
               <div className="relative mb-6 mt-4">
@@ -165,8 +166,6 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
 
         {/* Right Column: Interaction Cards & Details */}
         <div className="lg:col-span-8 space-y-6">
-           
-           {/* Two Big Interactive Cards */}
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Birthday Card */}
               <button 
@@ -242,20 +241,17 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
               </div>
            </div>
 
-           {/* Detailed Form Fields - Subtler Design */}
            <div className="bg-white/30 dark:bg-zinc-900/30 backdrop-blur-xl rounded-[3rem] p-8 border border-white/40 dark:border-zinc-800 shadow-lg">
               <h4 className="text-3xl font-lobster text-zinc-400 dark:text-zinc-500/80 mb-8 px-2 flex items-center gap-3 transition-colors hover:text-orange-500">
                  <span className="w-2 h-2 rounded-full bg-orange-500"></span>
                  Biological Details
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                
-                {/* NEW: Unique Medical ID Field */}
                 <ColorField 
                    label="Unique Medical ID" 
                    value={formData.id} 
                    icon="fingerprint" 
-                   isEditing={false} // Always read-only
+                   isEditing={false}
                    highlight
                 />
 
@@ -293,7 +289,7 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
                    label="Age" 
                    value={ageStr} 
                    icon="hourglass-half" 
-                   isEditing={false} // Always read-only as it's calculated
+                   isEditing={false}
                 />
 
                 <ColorField 
@@ -350,13 +346,12 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
                    isEditing={isEditing}
                    onChange={v => setFormData({...formData, microchip: v})}
                 />
-
               </div>
 
               {!readOnly && (
                 <div className="mt-12 pt-8 border-t border-zinc-100 dark:border-zinc-800">
                    <button 
-                     onClick={handleDeleteAccount}
+                     onClick={() => setShowDeleteModal(true)}
                      className="w-full py-4 rounded-3xl border-2 border-rose-100 dark:border-rose-900/30 text-rose-500 font-black uppercase tracking-widest text-[10px] hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-colors"
                    >
                      Delete Account & Data
@@ -366,11 +361,51 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
            </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-transparent pointer-events-none">
+          <div className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-md pointer-events-auto" onClick={() => !isDeleting && setShowDeleteModal(false)}></div>
+          <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[3rem] p-10 shadow-2xl border-4 border-white dark:border-zinc-950 space-y-8 relative z-10 animate-in zoom-in-95 pointer-events-auto">
+            <div className="text-center space-y-4">
+              <div className="w-20 h-20 bg-rose-100 dark:bg-rose-900/30 rounded-3xl flex items-center justify-center text-rose-500 text-4xl mx-auto shadow-lg animate-alert">
+                <i className="fa-solid fa-heart-crack"></i>
+              </div>
+              <h3 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50">Goodbye {pet.name}?</h3>
+              <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                This will permanently remove all medical records, files, and memories for <span className="text-rose-500">{pet.name}</span>. You cannot undo this action.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <button 
+                onClick={performDelete} 
+                disabled={isDeleting}
+                className="w-full py-5 bg-rose-500 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg shadow-rose-500/30 hover:brightness-110 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isDeleting ? (
+                  <>
+                    <i className="fa-solid fa-spinner animate-spin"></i> Erasing Data...
+                  </>
+                ) : (
+                  'Delete Forever'
+                )}
+              </button>
+              <button 
+                onClick={() => setShowDeleteModal(false)} 
+                disabled={isDeleting}
+                className="w-full py-5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-zinc-200 dark:hover:bg-zinc-700 active:scale-95 transition-all"
+              >
+                Keep my records
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-// Helper for Subtler Fields
 const ColorField: React.FC<{ 
   label: string, 
   value: string, 
