@@ -5,9 +5,10 @@ interface DoctorSearchScreenProps {
   searchId: string;
   setSearchId: (id: string) => void;
   handleSearch: () => void;
+  isSearching?: boolean;
 }
 
-const DoctorSearchScreen: React.FC<DoctorSearchScreenProps> = ({ searchId, setSearchId, handleSearch }) => {
+const DoctorSearchScreen: React.FC<DoctorSearchScreenProps> = ({ searchId, setSearchId, handleSearch, isSearching = false }) => {
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       <section className="space-y-6">
@@ -29,8 +30,9 @@ const DoctorSearchScreen: React.FC<DoctorSearchScreenProps> = ({ searchId, setSe
               <div className="flex-1 relative group">
                 <input 
                   type="text" 
+                  disabled={isSearching}
                   placeholder="PET-LUNA-123"
-                  className="w-full p-5 rounded-2xl bg-white/5 border-2 border-white/10 outline-none font-bold text-white placeholder:text-zinc-600 focus:border-emerald-500/50 focus:bg-white/10 transition-all uppercase tracking-wider shadow-inner"
+                  className="w-full p-5 rounded-2xl bg-white/5 border-2 border-white/10 outline-none font-bold text-white placeholder:text-zinc-600 focus:border-emerald-500/50 focus:bg-white/10 transition-all uppercase tracking-wider shadow-inner disabled:opacity-50"
                   value={searchId}
                   onChange={e => setSearchId(e.target.value)}
                   onKeyPress={e => e.key === 'Enter' && handleSearch()}
@@ -41,10 +43,15 @@ const DoctorSearchScreen: React.FC<DoctorSearchScreenProps> = ({ searchId, setSe
               </div>
               <button 
                 onClick={() => handleSearch()}
-                className="w-16 h-16 bg-white text-zinc-900 rounded-2xl flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all group overflow-hidden relative"
+                disabled={isSearching}
+                className="w-16 h-16 bg-white text-zinc-900 rounded-2xl flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all group overflow-hidden relative disabled:opacity-50"
               >
                 <div className="absolute inset-0 bg-emerald-500 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                <i className="fa-solid fa-magnifying-glass text-xl relative z-10 group-hover:text-white transition-colors"></i>
+                {isSearching ? (
+                  <i className="fa-solid fa-spinner animate-spin text-xl relative z-10 group-hover:text-white transition-colors"></i>
+                ) : (
+                  <i className="fa-solid fa-magnifying-glass text-xl relative z-10 group-hover:text-white transition-colors"></i>
+                )}
               </button>
             </div>
             

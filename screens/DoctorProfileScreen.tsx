@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Doctor } from '../types';
 import { api } from '../lib/api';
 
@@ -11,16 +11,28 @@ interface DoctorProfileScreenProps {
 const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile, doctorId }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [formData, setFormData] = useState<Doctor & { bio?: string; languages?: string }>(
-    { ...doctorProfile, bio: 'Dedicated to compassionate care for all furry friends.', languages: 'English, Spanish' }
-  );
-  const [status, setStatus] = useState<'Available' | 'In Surgery' | 'On Break'>('Available');
+  
+  // Initialize state from props, ensuring defaults don't overwrite existing data
+  const [formData, setFormData] = useState<Doctor & { bio?: string; languages?: string }>(() => ({
+    ...doctorProfile,
+    bio: (doctorProfile as any).bio || 'Dedicated to compassionate care for all furry friends.',
+    languages: (doctorProfile as any).languages || 'English, Spanish'
+  }));
+
+  // Sync state if props change (e.g., after a login refresh or data hydration)
+  useEffect(() => {
+    setFormData({
+      ...doctorProfile,
+      bio: (doctorProfile as any).bio || (formData as any).bio,
+      languages: (doctorProfile as any).languages || (formData as any).languages
+    });
+  }, [doctorProfile]);
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
         const updatedProfile = await api.updateDoctorProfile(doctorId, formData);
-        setFormData({ ...formData, ...updatedProfile });
+        setFormData(prev => ({ ...prev, ...updatedProfile }));
         setIsEditing(false);
     } catch (error) {
         console.error(error);
@@ -29,6 +41,8 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
         setIsSaving(false);
     }
   };
+
+  const [status, setStatus] = useState<'Available' | 'In Surgery' | 'On Break'>('Available');
 
   const toggleStatus = () => {
     const statuses: ('Available' | 'In Surgery' | 'On Break')[] = ['Available', 'In Surgery', 'On Break'];
@@ -43,6 +57,11 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
       case 'On Break': return 'bg-amber-500 shadow-amber-500/30';
       default: return 'bg-zinc-500';
     }
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    alert(`${label} copied to clipboard!`);
   };
 
   return (
@@ -85,14 +104,21 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
               <h4 className="text-3xl font-bold font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide">{formData.name}</h4>
               <p className="text-[11px] font-black text-emerald-500 uppercase tracking-[0.2em] mt-2">{formData.specialization}</p>
               
-              {/* Fun Interactive Buttons */}
               <div className="flex gap-3 mt-6">
                 <FunButton icon="coffee" onClick={() => setStatus('On Break')} />
-                <FunButton icon="hand-holding-heart" onClick={() => alert("High five! You're doing great!")} />
-                <FunButton icon="share-nodes" onClick={() => alert("Profile shared!")} />
+                <FunButton icon="hand-holding-heart" onClick={() => alert("Keep up the great work, Doctor!")} />
+                <FunButton icon="share-nodes" onClick={() => copyToClipboard(doctorId, 'Doctor Profile Link')} />
               </div>
 
               <div className="w-full mt-10 pt-10 border-t border-white/40 dark:border-zinc-800 grid grid-cols-1 gap-4">
+                 <StatRow 
+                    label="Doctor System UID" 
+                    value={doctorId} 
+                    icon="fingerprint" 
+                    isEditing={false}
+                    highlight
+                    onIconClick={() => copyToClipboard(doctorId, 'UID')}
+                 />
                  <StatRow 
                     label="Practice Experience" 
                     value={formData.experience} 
@@ -120,10 +146,9 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
                     <h5 className="text-2xl font-black tracking-wide text-zinc-900 dark:text-zinc-100">Medical Credentials</h5>
                  </div>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Bio Field - Full Width */}
                     <div className="md:col-span-2">
                         <ProfileField 
-                           icon="quote-left" label="Bio / Motto" value={formData.bio || ''} isEditing={isEditing} color="indigo"
+                           icon="quote-left" label="Bio / Professional Statement" value={formData.bio || ''} isEditing={isEditing} color="indigo"
                            onChange={(v) => setFormData({...formData, bio: v})}
                         />
                     </div>
@@ -133,15 +158,15 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
                        onChange={(v) => setFormData({...formData, languages: v})}
                     />
                     <ProfileField 
-                       icon="graduation-cap" label="Academic Certification" value={formData.qualification} isEditing={isEditing} color="emerald"
+                       icon="graduation-cap" label="Academic Qualifications" value={formData.qualification} isEditing={isEditing} color="emerald"
                        onChange={(v) => setFormData({...formData, qualification: v})}
                     />
                     <ProfileField 
-                       icon="phone" label="Primary Contact" value={formData.contact} isEditing={isEditing} color="sky"
+                       icon="phone" label="Primary Phone" value={formData.contact} isEditing={isEditing} color="sky"
                        onChange={(v) => setFormData({...formData, contact: v})}
                     />
                     <ProfileField 
-                       icon="truck-medical" label="Emergency Pager" value={formData.emergencyContact} isEditing={isEditing} color="rose"
+                       icon="truck-medical" label="Emergency Contact" value={formData.emergencyContact} isEditing={isEditing} color="rose"
                        onChange={(v) => setFormData({...formData, emergencyContact: v})}
                     />
                     <ProfileField 
@@ -149,16 +174,16 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
                        onChange={(v) => setFormData({...formData, consultationHours: v})}
                     />
                     <ProfileField 
-                       icon="clinic-medical" label="Facility Primary" value={formData.clinic} isEditing={isEditing} color="emerald"
+                       icon="clinic-medical" label="Primary Clinic" value={formData.clinic} isEditing={isEditing} color="emerald"
                        onChange={(v) => setFormData({...formData, clinic: v})}
                     />
                     <ProfileField 
-                       icon="microscope" label="Medical Focus" value={formData.medicalFocus} isEditing={isEditing} color="indigo"
+                       icon="microscope" label="Medical Specialty Focus" value={formData.medicalFocus} isEditing={isEditing} color="indigo"
                        onChange={(v) => setFormData({...formData, medicalFocus: v})}
                     />
                     <div className="md:col-span-2">
                        <ProfileField 
-                          icon="location-arrow" label="Practice Base" value={formData.address} isEditing={isEditing} color="sky"
+                          icon="location-arrow" label="Practice Address" value={formData.address} isEditing={isEditing} color="sky"
                           onChange={(v) => setFormData({...formData, address: v})}
                        />
                     </div>
@@ -170,8 +195,10 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
                     <i className="fa-solid fa-vault"></i>
                  </div>
                  <div className="min-w-0">
-                    <h6 className="text-xl font-bold text-zinc-800 dark:text-zinc-100 tracking-widest uppercase">Medical Access Shield</h6>
-                    <p className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-2 leading-relaxed">Your professional identity is cryptographically linked to the Pluto health ecosystem. All interactions are logged for medical compliance and record security.</p>
+                    <h6 className="text-xl font-bold text-zinc-800 dark:text-zinc-100 tracking-widest uppercase">Verified Medical Node</h6>
+                    <p className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-2 leading-relaxed">
+                      Your professional profile is verified in the Pluto Health Network. This identity allows you to securely access patient records and issue clinical notes that are permanently archived in the pet's medical history.
+                    </p>
                  </div>
               </div>
            </div>
@@ -190,9 +217,26 @@ const FunButton: React.FC<{ icon: string, onClick: () => void }> = ({ icon, onCl
   </button>
 );
 
-const StatRow: React.FC<{ label: string, value: string, icon: string, isEditing?: boolean, onChange?: (val: string) => void }> = ({ label, value, icon, isEditing, onChange }) => (
-  <div className="flex items-center gap-5 p-5 bg-white/30 dark:bg-zinc-800/50 rounded-[1.75rem] border border-white/40 dark:border-zinc-700/50 w-full transition-all hover:bg-white/50 group/stat">
-     <div className="w-12 h-12 rounded-2xl bg-white dark:bg-zinc-900 flex items-center justify-center text-emerald-500 text-lg shadow-md transition-transform group-hover/stat:scale-110">
+const StatRow: React.FC<{ 
+  label: string, 
+  value: string, 
+  icon: string, 
+  isEditing?: boolean, 
+  onChange?: (val: string) => void,
+  highlight?: boolean,
+  onIconClick?: () => void
+}> = ({ label, value, icon, isEditing, onChange, highlight, onIconClick }) => (
+  <div 
+    className={`flex items-center gap-5 p-5 rounded-[1.75rem] border transition-all group/stat ${
+      highlight 
+        ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/40' 
+        : 'bg-white/30 dark:bg-zinc-800/50 border-white/40 dark:border-zinc-700/50 hover:bg-white/50'
+    } w-full`}
+  >
+     <div 
+        onClick={onIconClick}
+        className={`w-12 h-12 rounded-2xl bg-white dark:bg-zinc-900 flex items-center justify-center text-emerald-500 text-lg shadow-md transition-transform group-hover/stat:scale-110 ${onIconClick ? 'cursor-pointer' : ''}`}
+     >
         <i className={`fa-solid fa-${icon}`}></i>
      </div>
      <div className="text-left flex-1 min-w-0">
@@ -205,9 +249,17 @@ const StatRow: React.FC<{ label: string, value: string, icon: string, isEditing?
                 className="w-full bg-transparent border-b-2 border-zinc-200 dark:border-zinc-700 outline-none font-bold text-sm text-zinc-800 dark:text-zinc-200 mt-1 focus:border-emerald-500 transition-colors py-1"
             />
         ) : (
-            <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200 truncate mt-1.5">{value}</p>
+            <p className={`text-sm font-bold truncate mt-1.5 ${highlight ? 'text-emerald-600 dark:text-emerald-400 font-mono' : 'text-zinc-800 dark:text-zinc-200'}`}>
+              {value}
+            </p>
         )}
      </div>
+     {highlight && !isEditing && (
+       <i 
+         className="fa-solid fa-copy text-zinc-300 hover:text-emerald-500 cursor-pointer transition-colors"
+         onClick={onIconClick}
+       ></i>
+     )}
   </div>
 );
 
@@ -226,7 +278,9 @@ const ProfileField: React.FC<{
           className="flex-1 bg-transparent border-none outline-none font-bold text-sm text-zinc-800 dark:text-zinc-200 w-full"
         />
       ) : (
-        <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200 break-words flex-1 min-w-0 leading-tight">{value}</span>
+        <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200 break-words flex-1 min-w-0 leading-tight">
+          {value || 'Not provided'}
+        </span>
       )}
     </div>
   </div>
