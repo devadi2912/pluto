@@ -114,7 +114,8 @@ export interface AuthUser {
   doctorDetails?: Doctor;
   petId?: string; 
   petDetails?: PetProfile;
-  // Arrays moved to root for simpler Firebase management
   careJournal?: TimelineEntry[];
   plannedCare?: Reminder[];
+  lastDoctorVisit?: string;
+  lastDoctorId?: string;
 }

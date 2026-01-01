@@ -199,7 +199,9 @@ class ApiClient {
         checklist: home.checklist || { food: false, water: false, walk: false, medication: false, lastReset: new Date().toISOString() },
         dailyLogs,
         routines: (home.routines || []).sort((a: any, b: any) => a.time.localeCompare(b.time)),
-        recordedTrends: trends
+        recordedTrends: trends,
+        lastDoctorVisit: root.lastDoctorVisit,
+        lastDoctorId: root.lastDoctorId
       };
     } catch (e) {
       console.error("Hydration Error:", e);

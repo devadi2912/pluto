@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { PetProfile, Species, Gender, Reminder } from '../types';
 import { api } from '../lib/api';
 
@@ -31,6 +31,13 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
   const [isDeleting, setIsDeleting] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync form data whenever the source pet object changes (e.g., after hydration)
+  useEffect(() => {
+    if (pet && !isEditing) {
+      setFormData(pet);
+    }
+  }, [pet, isEditing]);
   
   const handleSave = async () => {
     if (!formData.name) return alert("Pet needs a name! ✨");

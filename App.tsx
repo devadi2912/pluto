@@ -42,6 +42,7 @@ const App: React.FC = () => {
   const [doctorNotes, setDoctorNotes] = useState<DoctorNote[]>([]);
   const [clinicalNotes, setClinicalNotes] = useState<DoctorNote[]>([]);
   const [medicalNetworks, setMedicalNetworks] = useState<Doctor[]>([]);
+  const [lastVisitInfo, setLastVisitInfo] = useState<{ date: string; id: string } | null>(null);
   
   const [activeTab, setActiveTab] = useState<'dashboard' | 'profile' | 'timeline' | 'documents' | 'ai'>('dashboard');
   const [darkMode, setDarkMode] = useState(false);
@@ -90,6 +91,7 @@ const App: React.FC = () => {
     setDoctorNotes(data.doctorNotes);
     setClinicalNotes(data.clinicalNotes || []);
     setMedicalNetworks(data.medicalNetworks || []);
+    setLastVisitInfo(data.lastDoctorVisit ? { date: data.lastDoctorVisit, id: data.lastDoctorId || '' } : null);
 
     // If it's a doctor viewing a patient, we need the pet profile too
     if (user?.role === 'DOCTOR') {
@@ -109,8 +111,19 @@ const App: React.FC = () => {
 
   const handleUpdatePet = async (updated: PetProfile) => {
     if (!user?.id) return;
-    setPet(updated);
-    await api.updatePetProfile(user.id, updated);
+    try {
+      // 1. Optimistic UI update for the current pet
+      setPet(updated);
+      
+      // 2. Persist to Firestore
+      await api.updatePetProfile(user.id, updated);
+      
+      // 3. Update master user state to prevent effect-driven reverts
+      setUser(prev => prev ? { ...prev, petDetails: updated } : null);
+    } catch (e) {
+      console.error("Pet Profile update failed:", e);
+      throw e;
+    }
   };
 
   const handleUpdateChecklist = async (newC: DailyChecklist) => {
@@ -294,6 +307,7 @@ const App: React.FC = () => {
           onDeleteReminder={handleDeleteReminder}
           petId={user.id}
           consultedDoctors={medicalNetworks}
+          lastVisit={lastVisitInfo}
         />
       );
       case 'documents': return <DocumentsScreen documents={documents} setDocuments={setDocuments} petName={pet?.name} petId={user.id} />;

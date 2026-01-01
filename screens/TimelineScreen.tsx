@@ -20,6 +20,7 @@ interface TimelineProps {
   consultedDoctors?: Doctor[];
   petId?: string;
   readOnly?: boolean;
+  lastVisit?: { date: string; id: string } | null;
 }
 
 const TimelineScreen: React.FC<TimelineProps> = ({ 
@@ -34,7 +35,8 @@ const TimelineScreen: React.FC<TimelineProps> = ({
   onDeleteReminder,
   consultedDoctors = [],
   petId,
-  readOnly = false
+  readOnly = false,
+  lastVisit
 }) => {
   const [showAdd, setShowAdd] = useState(false);
   const [showAddReminder, setShowAddReminder] = useState(false);
@@ -137,6 +139,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({
 
   return (
     <div className="p-8 md:p-12 space-y-16 animate-in slide-in-from-right-10 duration-700 pb-60 no-scrollbar">
+      
       {/* 1. Planned Care Section */}
       <section className="space-y-8">
         <div className="flex items-center justify-between px-2">
@@ -271,12 +274,44 @@ const TimelineScreen: React.FC<TimelineProps> = ({
          </div>
       </section>
 
-      {/* 4. Visited Doctors Section */}
+      {/* 4. Doctor Visit Section (Formerly Medical Network) */}
       <section className="space-y-6 pt-12 border-t border-zinc-100 dark:border-zinc-800">
          <div className="px-2">
-            <h2 className="text-4xl font-lobster text-rose-500 dark:text-rose-400">Medical Network</h2>
+            <h2 className="text-4xl font-lobster text-rose-500 dark:text-rose-400">Doctor Visit</h2>
             <p className="text-[11px] font-black uppercase text-zinc-500 tracking-widest mt-1">Professionals who accessed these records</p>
          </div>
+
+         {/* Combined Last Visit Insight Card - Moved directly under section header */}
+         {lastVisit && (
+            <div className="px-2 mb-6 animate-in fade-in slide-in-from-top-4 duration-1000">
+              <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl rounded-[3rem] p-8 border-4 border-white dark:border-zinc-800 shadow-[0_25px_50px_-12px_rgba(99,102,241,0.25)] flex flex-col md:flex-row items-center gap-8 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
+                  <div className="w-16 h-16 rounded-[1.5rem] bg-indigo-500 text-white flex items-center justify-center text-3xl shadow-xl shadow-indigo-500/20 shrink-0">
+                    <i className="fa-solid fa-user-doctor"></i>
+                  </div>
+                  <div className="flex-1 text-center md:text-left">
+                    <p className="text-[10px] font-black uppercase text-indigo-500 tracking-[0.4em] mb-1">Last Professional Visit</p>
+                    <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 font-lobster leading-tight">
+                        {new Date(lastVisit.date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                    </h3>
+                    <div className="flex flex-wrap justify-center md:justify-start items-center gap-3 mt-3">
+                        <span className="text-[10px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 px-3 py-1 rounded-full border border-zinc-200 dark:border-zinc-700">
+                          <i className="fa-solid fa-clock mr-2 opacity-50"></i>
+                          {new Date(lastVisit.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <span className="text-[10px] font-bold bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full border border-indigo-100 dark:border-indigo-900/30">
+                          <i className="fa-solid fa-id-badge mr-2 opacity-50"></i>
+                          {lastVisit.id.length > 12 ? `${lastVisit.id.substring(0, 12)}...` : lastVisit.id}
+                        </span>
+                    </div>
+                  </div>
+                  <div className="shrink-0 flex md:flex-col gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <div className="w-2 h-2 rounded-full bg-indigo-300"></div>
+                  </div>
+              </div>
+            </div>
+          )}
 
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {consultedDoctors && consultedDoctors.length > 0 ? consultedDoctors.map(doctor => (
