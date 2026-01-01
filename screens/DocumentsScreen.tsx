@@ -62,19 +62,23 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
 
   const saveRename = async () => {
     if (!selectedDoc || !newName.trim() || !petId) return;
-    const docId = selectedDoc.id || selectedDoc._id;
-    await api.renameDocument(petId, docId!, newName);
-    setDocuments(documents.map(d => (d.id === docId || d._id === docId) ? { ...d, name: newName } : d));
+    // Fix: Use 'id' only as '_id' does not exist on type PetDocument
+    const docId = selectedDoc.id;
+    await api.renameDocument(petId, docId, newName);
+    // Fix: Remove non-existent '_id' check
+    setDocuments(documents.map(d => (d.id === docId) ? { ...d, name: newName } : d));
     setSelectedDoc({ ...selectedDoc, name: newName });
     setIsRenaming(false);
   };
 
   const handleDeleteDoc = async (id: string) => {
-    if (readOnly) return;
+    if (readOnly || !petId) return;
     if (window.confirm('Delete this document permanently?')) {
-      await api.deleteDocument(id);
-      setDocuments(documents.filter(d => d.id !== id && d._id !== id));
-      if (selectedDoc?.id === id || selectedDoc?._id === id) setSelectedDoc(null);
+      // Fix: Pass petId (UID) to deleteDocument
+      await api.deleteDocument(petId, id);
+      // Fix: Remove non-existent '_id' check
+      setDocuments(documents.filter(d => d.id !== id));
+      if (selectedDoc?.id === id) setSelectedDoc(null);
     }
   };
 
@@ -114,7 +118,7 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
         {filteredDocs.map((doc, idx) => {
           const config = getDocTypeConfig(doc.type);
           return (
-            <div key={doc.id || doc._id} onClick={() => setSelectedDoc(doc)} className={`bg-white dark:bg-zinc-900 border-2 rounded-[1.75rem] p-4 flex items-center gap-4 transition-all group animate-in slide-in-from-bottom-4 duration-500 shadow-sm cursor-pointer border-zinc-50 hover:border-orange-200`} style={{ animationDelay: `${idx * 60}ms` }}>
+            <div key={doc.id} onClick={() => setSelectedDoc(doc)} className={`bg-white dark:bg-zinc-900 border-2 rounded-[1.75rem] p-4 flex items-center gap-4 transition-all group animate-in slide-in-from-bottom-4 duration-500 shadow-sm cursor-pointer border-zinc-50 hover:border-orange-200`} style={{ animationDelay: `${idx * 60}ms` }}>
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg ${config.bg} ${config.color}`}>
                 <i className={`fa-solid ${config.icon}`}></i>
               </div>
@@ -150,7 +154,7 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
               <div className="p-4 bg-white/30 grid grid-cols-3 gap-2 border-t border-white/20">
                  <FooterButton icon="share-nodes" label={shareStatus || "Share"} onClick={handleShare} color="indigo" />
                  {!readOnly && <FooterButton icon="pen" label="Rename" onClick={() => { setNewName(selectedDoc.name); setIsRenaming(true); }} color="amber" />}
-                 {!readOnly && <FooterButton icon="trash" label="Delete" onClick={() => handleDeleteDoc(selectedDoc.id || selectedDoc._id!)} color="rose" />}
+                 {!readOnly && <FooterButton icon="trash" label="Delete" onClick={() => handleDeleteDoc(selectedDoc.id)} color="rose" />}
               </div>
            </div>
         </div>
