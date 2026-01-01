@@ -44,7 +44,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({
   const [isEditingForm, setIsEditingForm] = useState(false);
   const [editFormData, setEditFormData] = useState<any>(null);
 
-  const [newEntry, setNewEntry] = useState<Partial<TimelineEntry>>({ type: EntryType.Note, date: new Date().toISOString().split('T')[0], title: '' });
+  const [newEntry, setNewEntry] = useState<Partial<TimelineEntry>>({ type: EntryType.Note, date: new Date().toISOString().split('T')[0], title: '', notes: '' });
   const [newReminder, setNewReminder] = useState<Partial<Reminder>>({ type: 'Medication', date: new Date().toISOString().split('T')[0], title: '' });
 
   useEffect(() => {
@@ -60,7 +60,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({
       const saved = await api.addTimelineEntry(uid, newEntry);
       setTimeline(prev => [saved, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
       setShowAdd(false);
-      setNewEntry({ type: EntryType.Note, date: new Date().toISOString().split('T')[0], title: '' });
+      setNewEntry({ type: EntryType.Note, date: new Date().toISOString().split('T')[0], title: '', notes: '' });
     }
   };
 
@@ -206,6 +206,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({
               </select>
             </div>
             <input type="text" placeholder="Title for this record..." className="w-full p-5 rounded-2xl bg-zinc-50/50 dark:bg-zinc-800/50 border-2 border-transparent focus:border-emerald-200 outline-none font-bold text-zinc-900 dark:text-white" value={newEntry.title} onChange={e => setNewEntry({...newEntry, title: e.target.value})} />
+            <textarea placeholder="Additional notes..." className="w-full p-5 rounded-2xl bg-zinc-50/50 dark:bg-zinc-800/50 border-2 border-transparent focus:border-emerald-200 outline-none font-bold text-zinc-900 dark:text-white h-24 resize-none" value={newEntry.notes} onChange={e => setNewEntry({...newEntry, notes: e.target.value})} />
             <button onClick={handleAdd} className="w-full bg-emerald-500 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:brightness-110 active:scale-95 transition-all">Save Memory</button>
           </div>
         )}
@@ -301,46 +302,52 @@ const TimelineScreen: React.FC<TimelineProps> = ({
                     <p className="w-full p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-transparent font-bold text-zinc-900 dark:text-zinc-100 text-sm">{editingItem.item.title}</p>
                   )}
                </div>
+               {editingItem.mode === 'journal' && (
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Notes</label>
+                    {isEditingForm ? (
+                      <textarea className="w-full p-4 rounded-2xl bg-white dark:bg-zinc-800 border-2 border-zinc-100 focus:border-orange-200 outline-none font-bold text-zinc-900 dark:text-zinc-100 text-sm h-24 resize-none" value={editFormData.notes} onChange={e => setEditFormData({...editFormData, notes: e.target.value})} />
+                    ) : (
+                      <p className="w-full p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-transparent font-bold text-zinc-900 dark:text-zinc-100 text-sm min-h-[4rem]">{editingItem.item.notes || 'No notes added.'}</p>
+                    )}
+                 </div>
+               )}
             </div>
 
-            <div className="flex flex-col gap-3 pt-2">
-              <div className="flex gap-3">
-                {isEditingForm ? (
+            <div className="pt-2">
+              {isEditingForm ? (
+                <div className="flex gap-3">
                   <button 
                     onClick={handleSaveEdit} 
                     disabled={isSaving}
-                    className="flex-1 py-4 bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg hover:brightness-110 active:scale-95 transition-all disabled:opacity-50"
+                    className="flex-1 py-4 bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-[0_10px_30px_rgba(16,185,129,0.3)] hover:shadow-[0_15px_35px_rgba(16,185,129,0.5)] hover:-translate-y-1 active:scale-95 transition-all disabled:opacity-50"
                   >
                     {isSaving ? 'Saving...' : 'Save Changes'}
                   </button>
-                ) : (
-                  <button 
-                    onClick={() => setIsEditingForm(true)} 
-                    className="flex-1 py-4 bg-indigo-500 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg hover:brightness-110 active:scale-95 transition-all"
-                  >
-                    Edit Details
-                  </button>
-                )}
-                
-                {isEditingForm && (
                   <button 
                     onClick={() => setIsEditingForm(false)} 
                     disabled={isSaving}
-                    className="flex-1 py-4 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 rounded-2xl font-black uppercase tracking-widest text-[11px] border-2 border-transparent hover:border-zinc-200 transition-all disabled:opacity-50"
+                    className="flex-1 py-4 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 rounded-2xl font-black uppercase tracking-widest text-[11px] border-2 border-transparent hover:border-zinc-300 dark:hover:border-zinc-600 hover:shadow-[0_10px_30px_rgba(161,161,170,0.2)] hover:-translate-y-1 active:scale-95 transition-all disabled:opacity-50"
                   >
                     Cancel
                   </button>
-                )}
-              </div>
-
-              {!isEditingForm && (
-                <button 
-                  onClick={handleDeleteItem} 
-                  disabled={isDeleting}
-                  className="w-full py-4 bg-rose-50/80 text-rose-600 dark:bg-rose-900/20 rounded-2xl font-black uppercase tracking-widest text-[11px] border-2 border-rose-100 hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all shadow-sm disabled:opacity-50 disabled:cursor-wait"
-                >
-                  {isDeleting ? 'Removing...' : 'Delete Permanently'}
-                </button>
+                </div>
+              ) : (
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => setIsEditingForm(true)} 
+                    className="flex-1 py-4 bg-indigo-500 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-[0_10px_30px_rgba(79,70,229,0.4)] hover:shadow-[0_15px_35px_rgba(79,70,229,0.5)] hover:-translate-y-1 active:scale-95 transition-all"
+                  >
+                    Edit
+                  </button>
+                  <button 
+                    onClick={handleDeleteItem} 
+                    disabled={isDeleting}
+                    className="flex-1 py-4 bg-rose-500 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] hover:brightness-110 shadow-[0_10px_30px_rgba(244,63,94,0.3)] hover:shadow-[0_15px_35px_rgba(244,63,94,0.5)] hover:-translate-y-1 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-wait"
+                  >
+                    {isDeleting ? 'Removing...' : 'Delete'}
+                  </button>
+                </div>
               )}
             </div>
           </div>
