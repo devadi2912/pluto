@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Doctor } from '../types';
+import { api } from '../lib/api';
 
 interface DoctorProfileScreenProps {
   doctorProfile: Doctor;
@@ -9,13 +10,24 @@ interface DoctorProfileScreenProps {
 
 const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile, doctorId }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<Doctor & { bio?: string; languages?: string }>(
     { ...doctorProfile, bio: 'Dedicated to compassionate care for all furry friends.', languages: 'English, Spanish' }
   );
   const [status, setStatus] = useState<'Available' | 'In Surgery' | 'On Break'>('Available');
 
-  const handleSave = () => {
-    setIsEditing(false);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+        const updatedProfile = await api.updateDoctorProfile(doctorId, formData);
+        setFormData({ ...formData, ...updatedProfile });
+        setIsEditing(false);
+    } catch (error) {
+        console.error(error);
+        alert("Failed to save profile.");
+    } finally {
+        setIsSaving(false);
+    }
   };
 
   const toggleStatus = () => {
@@ -43,15 +55,16 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
         <div className="flex gap-4">
             <button 
             onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+            disabled={isSaving}
             className={`px-8 md:px-12 py-4 rounded-[1.75rem] text-[10px] font-black tracking-widest uppercase transition-all shadow-2xl border-4 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] dark:hover:shadow-[0_0_20px_rgba(0,0,0,0.4)] ${
                 isEditing 
                 ? 'bg-emerald-500 text-white border-white dark:border-black shadow-emerald-500/20' 
                 : 'bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 border-white dark:border-black hover:scale-[1.03]'
-            }`}
+            } ${isSaving ? 'opacity-50 cursor-wait' : ''}`}
             >
             <div className="flex items-center gap-3">
                 <i className={`fa-solid ${isEditing ? 'fa-check-circle' : 'fa-user-tie'} text-sm`}></i>
-                {isEditing ? 'Commit Changes' : 'Update Profile'}
+                {isSaving ? 'Saving...' : (isEditing ? 'Commit Changes' : 'Update Profile')}
             </div>
             </button>
         </div>

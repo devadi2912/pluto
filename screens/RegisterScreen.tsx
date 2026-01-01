@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { UserRole, AuthUser, Species, Gender } from '../types';
 import { api } from '../lib/api';
@@ -46,15 +47,14 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ onNavigate, onRe
     const cleanPassword = password.trim();
 
     if (!cleanUsername || !cleanPassword) {
-      alert("Please enter both a username and password.");
+      alert("Please enter both an email and password.");
       return;
     }
 
     setIsLoading(true);
-    console.log(`[Registration] Connecting to Node.js Backend for: ${cleanUsername}`);
 
     try {
-      // Prepare payload for the backend
+      // Prepare payload for the api
       const payload: any = {
         username: cleanUsername,
         password: cleanPassword,
@@ -67,7 +67,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ onNavigate, onRe
           name: petName,
           species,
           breed: breed || 'Mixed/Unknown',
-          dob: dob || null,
+          dateOfBirth: dob || new Date().toISOString().split('T')[0],
           gender: gender || Gender.Unknown,
           weight: weight || '0',
           color: color || '',
@@ -93,16 +93,21 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ onNavigate, onRe
         };
       }
 
-      // Single API call to our new Node.js server
       const newUser = await api.register(payload);
       
-      console.log(`[Registration] SUCCESS. Data logged to MongoDB via Node.js`);
+      // Pass the user to the auth screen so we can show the email in the verify screen
       onRegister(newUser);
-      alert(`Account for '${cleanUsername}' created successfully! Please log in.`);
-      onNavigate('LOGIN');
     } catch (err: any) {
-      console.error("[Registration] Backend Error:", err.message);
-      alert(err.message);
+      console.error("[Registration] Error:", err.message);
+      if (err.code === 'auth/email-already-in-use') {
+        if (window.confirm("User already exists. Log in?")) {
+           onNavigate('LOGIN');
+        }
+      } else if (err.code === 'auth/weak-password') {
+        alert("Password should be at least 6 characters.");
+      } else {
+        alert(err.message || "Registration failed. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -178,12 +183,12 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ onNavigate, onRe
                <h3 className="text-xl font-lobster text-zinc-900 dark:text-zinc-100 border-b-2 border-zinc-100 dark:border-zinc-800 pb-2">Login Credentials</h3>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                     <label className="text-[9px] font-black uppercase tracking-widest text-zinc-400 ml-2">Username</label>
-                     <input disabled={isLoading} value={username} onChange={e => setUsername(e.target.value)} className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-zinc-300 outline-none font-bold text-zinc-900 dark:text-zinc-100 text-sm" placeholder="Unique Handle" />
+                     <label className="text-[9px] font-black uppercase tracking-widest text-zinc-400 ml-2">Email</label>
+                     <input disabled={isLoading} type="email" value={username} onChange={e => setUsername(e.target.value)} className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-zinc-300 outline-none font-bold text-zinc-900 dark:text-zinc-100 text-sm" placeholder="you@email.com" />
                   </div>
                   <div className="space-y-2">
                      <label className="text-[9px] font-black uppercase tracking-widest text-zinc-400 ml-2">Password</label>
-                     <input disabled={isLoading} type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-zinc-300 outline-none font-bold text-zinc-900 dark:text-zinc-100 text-sm" placeholder="Secret Key" />
+                     <input disabled={isLoading} type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent focus:border-zinc-300 outline-none font-bold text-zinc-900 dark:text-zinc-100 text-sm" placeholder="Min. 6 characters" />
                   </div>
                </div>
             </div>

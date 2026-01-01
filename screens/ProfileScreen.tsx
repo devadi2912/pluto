@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo, useRef } from 'react';
 import { PetProfile, Species, Gender, Reminder } from '../types';
+import { api } from '../lib/api';
 
 interface ProfileProps {
   pet: PetProfile;
@@ -25,12 +26,34 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
     microchip: ''
   });
   const [showBirthdate, setShowBirthdate] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const handleSave = () => {
+  
+  const handleSave = async () => {
     if (!formData.name) return alert("Pet needs a name! ✨");
-    setPet(formData);
-    setIsEditing(false);
+    setIsSaving(true);
+    try {
+      const updatedPet = await api.updatePetProfile(pet.id, formData);
+      setPet(updatedPet);
+      setIsEditing(false);
+    } catch (error) {
+      alert("Failed to save changes. Please try again.");
+      console.error(error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (window.confirm("Are you sure you want to delete your account? This cannot be undone.")) {
+      try {
+        await api.deleteAccount();
+      } catch (error) {
+        alert("Failed to delete account. You may need to re-login first.");
+        console.error(error);
+      }
+    }
   };
 
   const pendingCount = reminders.filter(r => !r.completed).length;
@@ -77,17 +100,19 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
         {!readOnly && (
           <button 
             onClick={() => isEditing ? handleSave() : setIsEditing(true)} 
+            disabled={isSaving}
             className={`
               relative px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all duration-300
               ${isEditing 
                 ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900 hover:scale-105 shadow-xl' 
                 : 'bg-transparent text-zinc-500 border-zinc-300 hover:border-orange-500 hover:text-orange-500 dark:border-zinc-700 dark:hover:border-orange-400 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/10'
               }
+              ${isSaving ? 'opacity-50 cursor-wait' : ''}
             `}
           >
              <span className="flex items-center gap-2">
                <i className={`fa-solid ${isEditing ? 'fa-check' : 'fa-pen'} text-xs`}></i>
-               {isEditing ? 'Save Details' : 'Modify'}
+               {isSaving ? 'Saving...' : (isEditing ? 'Save Details' : 'Modify')}
              </span>
           </button>
         )}
@@ -327,6 +352,17 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
                 />
 
               </div>
+
+              {!readOnly && (
+                <div className="mt-12 pt-8 border-t border-zinc-100 dark:border-zinc-800">
+                   <button 
+                     onClick={handleDeleteAccount}
+                     className="w-full py-4 rounded-3xl border-2 border-rose-100 dark:border-rose-900/30 text-rose-500 font-black uppercase tracking-widest text-[10px] hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-colors"
+                   >
+                     Delete Account & Data
+                   </button>
+                </div>
+              )}
            </div>
         </div>
       </div>

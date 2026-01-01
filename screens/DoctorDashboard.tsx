@@ -9,6 +9,7 @@ import DoctorProfileScreen from './DoctorProfileScreen';
 import DoctorSearchScreen from './DoctorSearchScreen';
 import DoctorPatientsScreen from './DoctorPatientsScreen';
 import { NavButton } from '../components/NavButton';
+import { api } from '../lib/api';
 
 interface PriorityItemData {
   id: string;
@@ -94,7 +95,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   const [priorityItems, setPriorityItems] = useState<PriorityItemData[]>([]);
 
   // Function to handle patient record search
-  const handleSearch = (id?: string | any) => {
+  const handleSearch = async (id?: string | any) => {
     // Ensure we are working with a string, as this might be called with an event object
     const query = typeof id === 'string' ? id : searchId;
     const targetId = query.toUpperCase();
@@ -102,6 +103,11 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
     if (targetId === petData.pet.id || targetId.startsWith('PET-')) {
       setVisitedPatientIds(prev => new Set([...Array.from(prev), targetId]));
       
+      // Log the doctor visit in the backend
+      if (doctor.doctorDetails?.id) {
+         await api.logDoctorVisit(targetId, doctor.doctorDetails.id);
+      }
+
       if (onVisitPatient) {
         onVisitPatient();
       }
@@ -143,7 +149,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
     if (!noteContent.trim()) return;
     const newNote: DoctorNote = {
       id: Date.now().toString(),
-      doctorId: doctor.id,
+      doctorId: doctor.doctorDetails?.id || doctor.id,
       doctorName: doctor.doctorDetails?.name || 'Veterinarian',
       petId: petData.pet.id,
       date: new Date().toISOString(),

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { UserRole, AuthUser } from '../types';
 import { api } from '../lib/api';
@@ -6,10 +7,11 @@ interface LoginScreenProps {
   onNavigate: (view: 'START' | 'LOGIN' | 'REGISTER') => void;
   onLogin: (user: AuthUser) => void;
   tempUser: AuthUser | null;
+  onVerifyNeeded: (email: string) => void;
+  onForgotPassword: (email: string) => void;
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLogin, tempUser }) => {
-  const [role, setRole] = useState<UserRole>('PET_OWNER');
+export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLogin, tempUser, onVerifyNeeded, onForgotPassword }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -20,7 +22,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLogin, t
   useEffect(() => {
     if (tempUser) {
       setUsername(tempUser.username);
-      setRole(tempUser.role);
     }
   }, [tempUser]);
 
@@ -29,7 +30,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLogin, t
     const cleanPassword = password.trim();
 
     if (!cleanUsername || !cleanPassword) {
-      alert("Please enter both your username and password.");
+      alert("Please enter both your email and password.");
       return;
     }
 
@@ -37,12 +38,25 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLogin, t
     try {
       const authUser = await api.login({
         username: cleanUsername,
-        password: cleanPassword,
-        role: role
+        password: cleanPassword
       });
+      // If successful (and verified), standard login proceeds
       onLogin(authUser);
     } catch (err: any) {
-      alert(err.message || "Invalid credentials. Please try again.");
+      console.error(err);
+      
+      // If email is not verified, api.login now throws but keeps the session active.
+      // App.tsx listener will detect the active unverified session and redirect to VERIFY_EMAIL.
+      
+      if (err.code !== 'auth/email-not-verified') {
+         let msg = "Invalid credentials. Please try again.";
+         if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+            msg = "Email or password incorrect";
+         } else if (err.code === 'auth/too-many-requests') {
+            msg = "Too many failed attempts. Try again later.";
+         }
+         alert(msg);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -98,34 +112,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLogin, t
         </div>
 
         <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] md:rounded-[3.5rem] p-6 md:p-12 lg:p-14 shadow-2xl border-4 border-orange-50 dark:border-zinc-800 space-y-6 md:space-y-10 w-full transition-all">
-          <div className="flex p-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-3xl gap-1 md:max-w-xs md:mx-auto">
-            <button 
-              onClick={() => setRole('PET_OWNER')}
-              disabled={isLoading}
-              className={`flex-1 py-3 rounded-2xl font-black text-[9px] uppercase tracking-widest transition-all ${
-                role === 'PET_OWNER' ? 'bg-white dark:bg-zinc-950 text-orange-600 shadow-md' : 'text-zinc-500'
-              } ${isLoading ? 'opacity-50' : ''}`}
-            >
-              Pet Owner
-            </button>
-            <button 
-              onClick={() => setRole('DOCTOR')}
-              disabled={isLoading}
-              className={`flex-1 py-3 rounded-2xl font-black text-[9px] uppercase tracking-widest transition-all ${
-                role === 'DOCTOR' ? 'bg-white dark:bg-zinc-950 text-orange-600 shadow-md' : 'text-zinc-500'
-              } ${isLoading ? 'opacity-50' : ''}`}
-            >
-              Doctor
-            </button>
-          </div>
-
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-10">
             <div className="space-y-2">
-              <label className="text-[9px] md:text-[11px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-widest ml-1">Username</label>
+              <label className="text-[9px] md:text-[11px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-widest ml-1">Email</label>
               <input 
                 disabled={isLoading}
-                type="text" 
-                placeholder="e.g. admin"
+                type="email" 
+                placeholder="you@email.com"
                 className="w-full p-4 md:p-6 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-transparent focus:border-orange-200 outline-none rounded-2xl md:rounded-[1.75rem] font-bold text-zinc-900 dark:text-white text-sm md:text-lg transition-all"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
@@ -151,6 +145,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLogin, t
                   <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'} text-lg`}></i>
                 </button>
               </div>
+              <div className="flex justify-end mt-2">
+                <button 
+                  onClick={() => onForgotPassword(username)}
+                  className="text-[10px] font-bold text-zinc-400 hover:text-orange-500 transition-colors uppercase tracking-widest outline-none"
+                >
+                  Forgot password?
+                </button>
+              </div>
             </div>
           </div>
 
@@ -172,7 +174,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLogin, t
           </div>
           
           <div className="text-center">
-            <p className="text-[9px] text-zinc-400 font-bold italic">Demo Login: admin / password</p>
+            <p className="text-[9px] text-zinc-400 font-bold italic">Demo Login: demo@pluto.com / password</p>
           </div>
         </div>
       </div>
