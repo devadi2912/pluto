@@ -228,11 +228,10 @@ const App: React.FC = () => {
         doctorNotes={doctorNotes}
         onAddNote={handleAddDoctorNote}
         onDeleteNote={handleDeleteClinicalNote}
-        // FIXED: Added async/await here to match the expected return type (Promise<void>)
-        onVisitPatient={async (id) => {
+        onVisitPatient={(id) => {
           if (id) {
             const patientUid = id.replace('PET-', '');
-            await hydrateData(patientUid);
+            hydrateData(patientUid);
           }
         }}
         consultedDoctors={medicalNetworks}

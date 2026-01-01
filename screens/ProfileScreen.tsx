@@ -5,7 +5,7 @@ import { api } from '../lib/api';
 
 interface ProfileProps {
   pet: PetProfile;
-  setPet: (pet: PetProfile) => void;
+  setPet: (pet: PetProfile) => Promise<void> | void;
   reminders: Reminder[];
   onNavigate?: (tab: 'dashboard' | 'profile' | 'timeline' | 'documents' | 'ai') => void;
   readOnly?: boolean;
@@ -36,11 +36,14 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
     if (!formData.name) return alert("Pet needs a name! ✨");
     setIsSaving(true);
     try {
-      const updatedPet = await api.updatePetProfile(pet.id, formData);
-      setPet(updatedPet);
+      // Logic fix: We rely on the parent's setPet handler (from App.tsx) 
+      // which correctly uses the authenticated user's UID to update the database.
+      // Calling api.updatePetProfile with pet.id (PET-...) was causing a permission error
+      // because pet.id is not the same as the user's document ID (Firebase Auth UID).
+      await setPet(formData);
       setIsEditing(false);
     } catch (error) {
-      alert("Failed to save changes. Please try again.");
+      alert("Failed to save changes. Please check your connection or permissions.");
       console.error(error);
     } finally {
       setIsSaving(false);
@@ -51,7 +54,6 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
     setIsDeleting(true);
     try {
       await api.deleteAccount();
-      // api.deleteAccount includes deleteUser(user), which triggers onAuthStateChanged in App.tsx
     } catch (error) {
       alert("To delete your account, you must have logged in recently. Please log out and back in, then try again.");
       console.error(error);

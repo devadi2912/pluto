@@ -188,17 +188,17 @@ const Dashboard: React.FC<DashboardProps> = ({
                 >
                   <div 
                     onClick={() => toggleRoutine(item)}
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform ${readOnly ? 'cursor-default' : 'cursor-pointer'} ${getRoutineColor(item.category)}`}
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform cursor-pointer ${getRoutineColor(item.category)}`}
                   >
                     <i className={`fa-solid ${getRoutineIcon(item.category)}`}></i>
                   </div>
-                  <div className={`flex-1 ${readOnly ? 'cursor-default' : 'cursor-pointer'}`} onClick={() => !readOnly && setEditingRoutine(item)}>
+                  <div className="flex-1 cursor-pointer" onClick={() => !readOnly && setEditingRoutine(item)}>
                     <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">{item.time}</p>
                     <h4 className={`text-lg font-bold ${item.completed ? 'line-through text-zinc-400' : 'text-zinc-900 dark:text-zinc-100'}`}>{item.title}</h4>
                   </div>
                   <div 
                     onClick={() => toggleRoutine(item)}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all border-4 ${readOnly ? 'cursor-default' : 'cursor-pointer'} ${item.completed ? 'bg-emerald-500 border-white text-white rotate-[360deg]' : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 text-transparent'}`}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all border-4 cursor-pointer ${item.completed ? 'bg-emerald-500 border-white text-white rotate-[360deg]' : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 text-transparent'}`}
                   >
                     <i className="fa-solid fa-check text-sm"></i>
                   </div>
@@ -224,48 +224,12 @@ const Dashboard: React.FC<DashboardProps> = ({
         </section>
       </div>
 
-      {/* Clinical Notes Section - Now visible to Doctor on Dashboard too */}
-      {doctorNotes.length > 0 && (
-        <section className="space-y-6 pt-10 border-t border-zinc-100 dark:border-zinc-800">
-           <div className="px-2">
-              <h3 className="text-3xl font-lobster text-indigo-600 dark:text-indigo-400">Recent Clinical Notes</h3>
-              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">Professional Veterinary Guidance</p>
-           </div>
-           <div className="space-y-4">
-              {doctorNotes.slice(0, 3).map(note => (
-                <div key={note.id} className="bg-indigo-50/50 dark:bg-indigo-900/10 p-6 rounded-[2.5rem] border border-indigo-100 dark:border-indigo-900/20 group relative">
-                   <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                         <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-xs">
-                            <i className="fa-solid fa-user-md"></i>
-                         </div>
-                         <div>
-                            <h5 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{note.doctorName}</h5>
-                            <p className="text-[9px] font-black uppercase text-zinc-400">{new Date(note.date).toLocaleDateString()}</p>
-                         </div>
-                      </div>
-                      {!readOnly && onDeleteNote && (
-                        <button 
-                          onClick={() => onDeleteNote(note.id)} 
-                          className="w-8 h-8 bg-rose-500 text-white rounded-xl flex items-center justify-center shadow-lg hover:scale-105 opacity-0 group-hover:opacity-100 transition-all"
-                        >
-                          <i className="fa-solid fa-trash text-[10px]"></i>
-                        </button>
-                      )}
-                   </div>
-                   <p className="text-sm font-bold text-zinc-600 dark:text-zinc-300 italic">"{note.content}"</p>
-                </div>
-              ))}
-           </div>
-        </section>
-      )}
-
       {/* Upcoming Events Section */}
       <section className="space-y-6 pt-10 border-t border-zinc-100 dark:border-zinc-800">
         <div className="flex items-center justify-between px-2">
           <div>
             <h3 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide leading-none">Upcoming Events</h3>
-            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-2">Planned Care Schedule</p>
+            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-2">Planned Care History</p>
           </div>
         </div>
         
@@ -312,29 +276,232 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </section>
 
-      {/* Modals are only active if not readOnly */}
-      {!readOnly && (
-        <>
-          {editingRoutine && (
-            <div className="fixed inset-0 z-[1100] flex items-center justify-center p-6 bg-transparent pointer-events-none animate-in fade-in">
-              <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-3xl border-4 border-white dark:border-zinc-950 w-full max-w-sm rounded-[3.5rem] p-10 shadow-2xl animate-in zoom-in-95 pointer-events-auto">
-                {/* Edit Routine UI */}
-                <div className="flex items-center justify-between mb-8">
-                  <h4 className="font-lobster text-3xl text-sky-500">Edit Task</h4>
-                  <button onClick={() => setEditingRoutine(null)} className="w-10 h-10 bg-white/50 dark:bg-zinc-800/50 rounded-xl flex items-center justify-center text-zinc-500 hover:text-rose-500"><i className="fa-solid fa-xmark"></i></button>
-                </div>
-                {/* Routine Form Inputs... */}
-                <div className="space-y-4">
-                   <input type="text" className="w-full p-4 rounded-xl bg-white/60 dark:bg-zinc-800/60 border-2 border-transparent outline-none font-bold text-zinc-900 dark:text-zinc-100" value={editingRoutine.title} onChange={e => setEditingRoutine({...editingRoutine, title: e.target.value})} />
-                   <div className="flex gap-3">
-                      <button onClick={handleUpdateRoutineSubmit} className="flex-1 bg-sky-500 text-white py-4 rounded-2xl font-black uppercase text-[10px]">Save</button>
-                      <button onClick={() => handleDeleteRoutineSubmit(editingRoutine.id)} className="flex-1 bg-rose-50 text-rose-500 py-4 rounded-2xl font-black uppercase text-[10px]">Delete</button>
-                   </div>
-                </div>
+      {/* Routine Edit/Delete Modal */}
+      {editingRoutine && !readOnly && (
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-6 bg-transparent pointer-events-none animate-in fade-in duration-300">
+          <div 
+            className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-3xl border-4 border-white dark:border-zinc-950 w-full max-w-sm rounded-[3.5rem] p-10 shadow-2xl animate-in zoom-in-95 duration-500 space-y-8 pointer-events-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h4 className="font-lobster text-3xl text-sky-500">Edit Task</h4>
+              <button onClick={() => setEditingRoutine(null)} className="w-10 h-10 bg-white/50 dark:bg-zinc-800/50 rounded-xl flex items-center justify-center text-zinc-500 hover:text-rose-500 border-2 border-transparent hover:border-zinc-200"><i className="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 ml-2">Time</span>
+                <input 
+                  type="time" 
+                  className="w-full p-4 rounded-xl bg-white/60 dark:bg-zinc-800/60 border-2 border-transparent focus:border-sky-300 outline-none font-bold text-zinc-900 dark:text-zinc-100" 
+                  value={editingRoutine.time} 
+                  onChange={e => setEditingRoutine({...editingRoutine, time: e.target.value})} 
+                />
+              </div>
+              <div className="space-y-2">
+                <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 ml-2">Category</span>
+                <select 
+                  className="w-full p-4 rounded-xl bg-white/60 dark:bg-zinc-800/60 border-2 border-transparent focus:border-sky-300 outline-none font-bold text-zinc-900 dark:text-zinc-100" 
+                  value={editingRoutine.category} 
+                  onChange={e => setEditingRoutine({...editingRoutine, category: e.target.value as any})}
+                >
+                  <option value="Food">Food 🍖</option>
+                  <option value="Walk">Walk 🦮</option>
+                  <option value="Medication">Meds 💊</option>
+                  <option value="Play">Play 🎾</option>
+                  <option value="Sleep">Sleep 😴</option>
+                  <option value="Other">Other ⭐</option>
+                </select>
               </div>
             </div>
-          )}
-        </>
+
+            <div className="space-y-2">
+              <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 ml-2">Description</span>
+              <input 
+                type="text" 
+                className="w-full p-4 rounded-xl bg-white/60 dark:bg-zinc-800/60 border-2 border-transparent focus:border-sky-300 outline-none font-bold text-zinc-900 dark:text-zinc-100" 
+                value={editingRoutine.title} 
+                onChange={e => setEditingRoutine({...editingRoutine, title: e.target.value})} 
+              />
+            </div>
+
+            <div className="space-y-3 pt-4">
+               <button 
+                 onClick={handleUpdateRoutineSubmit} 
+                 className="w-full bg-sky-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg shadow-sky-500/30 hover:brightness-110 active:scale-95 transition-all"
+               >
+                 Save Changes
+               </button>
+               <button 
+                 onClick={() => handleDeleteRoutineSubmit(editingRoutine.id)} 
+                 className="w-full bg-rose-50 dark:bg-rose-900/20 text-rose-500 py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] border-2 border-rose-100 dark:border-rose-900/40 hover:bg-rose-100 dark:hover:bg-rose-900/40 active:scale-95 transition-all"
+               >
+                 Delete Task
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Routine Add Modal */}
+      {showAddRoutine && !readOnly && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-transparent pointer-events-none animate-in fade-in duration-300">
+          <div 
+            className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-3xl border-4 border-white dark:border-zinc-950 w-full max-w-sm rounded-[3.5rem] p-10 shadow-2xl animate-in zoom-in-95 duration-500 space-y-8 pointer-events-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h4 className="font-lobster text-4xl text-sky-500 drop-shadow-sm">New Task</h4>
+              <button 
+                onClick={() => setShowAddRoutine(false)} 
+                className="w-12 h-12 bg-white/50 dark:bg-zinc-800/50 rounded-2xl flex items-center justify-center text-zinc-500 hover:text-rose-500 transition-all active:scale-90 border-2 border-white dark:border-zinc-700"
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 ml-2">Time</span>
+                <input 
+                  type="time" 
+                  className="w-full p-5 rounded-2xl bg-white/60 dark:bg-zinc-800/60 border-2 border-transparent focus:border-sky-300 outline-none font-bold text-zinc-900 dark:text-zinc-100 transition-all" 
+                  value={newRoutine.time} 
+                  onChange={e => setNewRoutine({...newRoutine, time: e.target.value})} 
+                />
+              </div>
+              <div className="space-y-2">
+                <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 ml-2">Category</span>
+                <select 
+                  className="w-full p-5 rounded-2xl bg-white/60 dark:bg-zinc-800/60 border-2 border-transparent focus:border-sky-300 outline-none font-bold text-zinc-900 dark:text-zinc-100 transition-all" 
+                  value={newRoutine.category} 
+                  onChange={e => setNewRoutine({...newRoutine, category: e.target.value as any})}
+                >
+                  <option value="Food">Food 🍖</option>
+                  <option value="Walk">Walk 🦮</option>
+                  <option value="Medication">Meds 💊</option>
+                  <option value="Play">Play 🎾</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 ml-2">Goal Details</span>
+              <input 
+                type="text" 
+                placeholder="Task description..." 
+                className="w-full p-6 rounded-2xl bg-white/60 dark:bg-zinc-800/60 border-2 border-transparent focus:border-sky-300 outline-none font-bold text-zinc-900 dark:text-zinc-100 shadow-inner transition-all" 
+                value={newRoutine.title} 
+                onChange={e => setNewRoutine({...newRoutine, title: e.target.value})} 
+              />
+            </div>
+
+            <button 
+              onClick={handleAddRoutine} 
+              className="w-full bg-sky-500 text-white py-6 rounded-[2.5rem] font-black uppercase tracking-[0.4em] text-[11px] transition-all hover:scale-[1.03] hover:brightness-110 active:scale-95 border-4 border-white dark:border-zinc-950 shadow-[0_15px_30px_-5px_rgba(0,0,0,0.3),0_0_20px_rgba(14,165,233,0.4)]"
+            >
+              Add Goal
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Activity Log Modal */}
+      {showLogModal && !readOnly && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-transparent pointer-events-none transition-all duration-300 animate-in fade-in">
+          <div 
+            className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl w-full max-w-[380px] rounded-[3.5rem] shadow-2xl border-4 border-white dark:border-zinc-950 animate-in zoom-in-95 duration-500 overflow-hidden pointer-events-auto" 
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="p-6 md:p-10 space-y-8">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-orange-500 flex items-center justify-center text-white shadow-lg">
+                  <i className="fa-solid fa-paw text-lg"></i>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-lobster text-3xl text-zinc-900 dark:text-zinc-50 truncate leading-none">Activity Log</h4>
+                  <p className="text-[9px] font-black text-orange-600 uppercase tracking-[0.2em] mt-1.5 opacity-60">Status: {pet.name}</p>
+                </div>
+                <button onClick={() => setShowLogModal(false)} className="text-zinc-400 hover:text-rose-500 transition-colors">
+                  <i className="fa-solid fa-xmark text-lg"></i>
+                </button>
+              </div>
+
+              <div className="space-y-8">
+                <div className="bg-zinc-100/50 dark:bg-black/20 p-5 rounded-3xl border border-white dark:border-zinc-800 space-y-3 group">
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Active Time</span>
+                    <span className="text-xs font-black text-orange-600">{currentLogData?.activityMinutes || 0}m</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button 
+                      onClick={() => onUpdateLog(today, { activityMinutes: Math.max(0, (currentLogData?.activityMinutes || 0) - 15) })}
+                      className="w-10 h-10 rounded-xl bg-white/80 dark:bg-zinc-800/80 border-2 border-transparent hover:border-orange-500 transition-all text-zinc-400 hover:text-orange-500 active:scale-90 shadow-sm"
+                    >
+                      <i className="fa-solid fa-minus text-[10px]"></i>
+                    </button>
+                    <div className="flex-1 h-2.5 bg-zinc-200/50 dark:bg-zinc-700/50 rounded-full overflow-hidden">
+                      <div className="h-full bg-orange-500 transition-all duration-700 ease-out shadow-[0_0_10px_rgba(249,115,22,0.4)]" style={{ width: `${Math.min(100, ((currentLogData?.activityMinutes || 0) / 120) * 100)}%` }}></div>
+                    </div>
+                    <button 
+                      onClick={() => onUpdateLog(today, { activityMinutes: (currentLogData?.activityMinutes || 0) + 15 })}
+                      className="w-10 h-10 rounded-xl bg-white/80 dark:bg-zinc-800/80 border-2 border-transparent hover:border-orange-500 transition-all text-zinc-400 hover:text-orange-500 active:scale-90 shadow-sm"
+                    >
+                      <i className="fa-solid fa-plus text-[10px]"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest ml-1">Meals</span>
+                  <div className="flex justify-between items-center gap-3 px-1">
+                    {[1, 2, 3, 4].map(v => (
+                      <button 
+                        key={v}
+                        onClick={() => onUpdateLog(today, { feedingCount: v })}
+                        className={`w-12 h-12 rounded-full flex items-center justify-center text-xs font-black transition-all border-2 border-white dark:border-black hover:scale-110 active:scale-90 ${
+                          currentLogData?.feedingCount === v 
+                            ? 'bg-emerald-500 text-white shadow-lg animate-pulse' 
+                            : 'bg-zinc-200/50 dark:bg-zinc-800/40 text-zinc-400 dark:text-zinc-600 hover:bg-zinc-300/50 dark:hover:bg-zinc-700/50'
+                        }`}
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest ml-1">Vibe</span>
+                  <div className="flex bg-zinc-200/30 dark:bg-zinc-800/20 p-2 rounded-2xl border border-white dark:border-zinc-800/40">
+                    {[1, 2, 3, 4, 5].map(v => (
+                      <button 
+                        key={v}
+                        onClick={() => onUpdateLog(today, { moodRating: v })}
+                        className={`flex-1 py-2 text-xl transition-all rounded-xl hover:scale-110 active:scale-95 ${
+                          currentLogData?.moodRating === v 
+                            ? 'bg-white/80 dark:bg-zinc-700/80 shadow-sm scale-110 z-10' 
+                            : 'opacity-40 grayscale hover:opacity-100 hover:grayscale-0'
+                        }`}
+                      >
+                        {['😢', '😕', '😐', '🙂', '🤩'][v-1]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button 
+                  onClick={() => setShowLogModal(false)}
+                  className="w-full py-5 bg-orange-500 text-white rounded-[2rem] font-black uppercase tracking-[0.4em] text-[11px] transition-all active:scale-[0.96] border-4 border-white dark:border-black shadow-xl hover:brightness-110"
+                >
+                  Save Record
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -343,20 +510,38 @@ const Dashboard: React.FC<DashboardProps> = ({
 const CheckTile: React.FC<{ 
   active: boolean, icon: string, label: string, onClick: () => void, color: string, readOnly?: boolean
 }> = ({ active, icon, label, onClick, color, readOnly }) => {
-  const bgMap: any = { orange: 'bg-orange-500', blue: 'bg-blue-500', emerald: 'bg-emerald-500', purple: 'bg-purple-500' };
+  const intenseShadowMap: any = {
+    orange: 'shadow-[0_25px_60px_rgba(249,115,22,0.6)]',
+    blue: 'shadow-[0_25px_60px_rgba(59,130,246,0.6)]',
+    emerald: 'shadow-[0_25px_60px_rgba(16,185,129,0.6)]',
+    purple: 'shadow-[0_25px_60px_rgba(168,85,247,0.6)]',
+  };
+
+  const bgMap: any = {
+    orange: 'bg-orange-500',
+    blue: 'bg-blue-500',
+    emerald: 'bg-emerald-500',
+    purple: 'bg-purple-500',
+  };
+
   return (
     <button 
       onClick={() => !readOnly && onClick()}
       className={`flex flex-col items-center justify-center gap-3 p-6 rounded-[2.5rem] transition-all duration-500 relative overflow-hidden group border-4 ${
         active 
-          ? `${bgMap[color]} text-white border-white dark:border-zinc-950 scale-[0.98]` 
+          ? `${bgMap[color]} ${intenseShadowMap[color]} text-white border-white dark:border-zinc-950 scale-[0.98]` 
           : 'bg-white dark:bg-zinc-900 border-zinc-50 dark:border-zinc-800 shadow-sm'
-      } ${readOnly ? 'cursor-default' : 'hover:scale-[1.03] active:scale-95'}`}
+      } hover:scale-[1.03] ${readOnly ? 'cursor-default' : 'hover:border-white'}`}
     >
-      <div className={`text-4xl transition-all ${active ? 'text-white scale-125' : 'text-zinc-300 dark:text-zinc-700'}`}>
+      <div className={`text-4xl transition-all ${active ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]' : 'text-zinc-300 dark:text-zinc-700'}`}>
         <i className={`fa-solid fa-${icon}`}></i>
       </div>
       <span className={`font-black text-[10px] uppercase tracking-[0.1em] ${active ? 'text-white' : 'text-zinc-500 dark:text-zinc-400'}`}>{label}</span>
+      {active && (
+        <div className="absolute top-3 right-3 bg-white text-emerald-600 w-6 h-6 rounded-full flex items-center justify-center shadow-md animate-in zoom-in">
+          <i className="fa-solid fa-check text-[10px]"></i>
+        </div>
+      )}
     </button>
   );
 };
