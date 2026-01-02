@@ -49,27 +49,58 @@ export const uploadToImageKit = async (file: File, fileName?: string): Promise<{
 
 /**
  * Deletes a file from ImageKit using the Management API.
- * Requires Private Key for Basic Auth (Client-side usage allowed for this MVP architecture).
+ * Requires Private Key for Basic Auth.
+ * Includes a timeout to prevent hanging.
  */
 export const deleteFromImageKit = async (fileId: string): Promise<void> => {
+  if (!fileId) {
+    console.warn("[ImageKit Service] No fileId provided, skipping.");
+    return;
+  }
+  
+  console.log(`[ImageKit Service] Starting deletion for fileId: ${fileId}`);
+  
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
   try {
-    // Encode private key for Basic Auth (username is private key, password is empty)
-    const auth = btoa(IK_CONFIG.privateKey + ':');
+    const privateKey = IK_CONFIG.privateKey.trim();
+    if (!privateKey) {
+        throw new Error("Missing ImageKit Private Key in configuration");
+    }
+
+    // Basic Auth header format: "Basic base64(username:password)"
+    const auth = btoa(`${privateKey}:`);
     
+    // NOTE: We do not set Content-Type for DELETE requests to avoid CORS preflight issues with some servers
     const response = await fetch(`https://api.imagekit.io/v1/files/${fileId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Basic ${auth}`
-      }
+      },
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
+
+    console.log(`[ImageKit Service] API Response Status: ${response.status}`);
+
+    // If file is already gone (404), treat as success
+    if (response.status === 404) {
+      console.warn(`[ImageKit Service] File ${fileId} not found (already deleted). Treating as success.`);
+      return;
+    }
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error("ImageKit Delete Error Response:", errText);
-      throw new Error(`Failed to delete file from ImageKit: ${response.statusText}`);
+      console.error(`[ImageKit Service] Delete failed. Status: ${response.status}, Body: ${errText}`);
+      throw new Error(`ImageKit Delete Failed: ${response.status} ${response.statusText} - ${errText}`);
     }
-  } catch (error) {
-    console.error("Delete failed:", error);
-    throw error;
+    
+    console.log(`[ImageKit Service] Successfully deleted file ${fileId}`);
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    console.error("[ImageKit Service] Exception during deletion:", error);
+    throw error; 
   }
 };

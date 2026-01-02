@@ -15,6 +15,7 @@ interface TimelineProps {
   petName?: string;
   doctorNotes?: DoctorNote[];
   onDeleteNote?: (id: string) => void;
+  canManageNotes?: boolean; // New prop to decouple note management from global readOnly
   onDeleteTimelineEntry?: (id: string) => Promise<void>;
   onDeleteReminder?: (id: string) => Promise<void>;
   consultedDoctors?: Doctor[];
@@ -31,6 +32,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({
   petName = "Luna",
   doctorNotes = [],
   onDeleteNote,
+  canManageNotes = false,
   onDeleteTimelineEntry,
   onDeleteReminder,
   consultedDoctors = [],
@@ -136,6 +138,9 @@ const TimelineScreen: React.FC<TimelineProps> = ({
       default: return 'bg-orange-500';
     }
   };
+
+  // Determine if user can delete notes (either not readOnly OR explicitly allowed via prop)
+  const canDeleteNote = !readOnly || canManageNotes;
 
   return (
     <div className="p-8 md:p-12 space-y-16 animate-in slide-in-from-right-10 duration-700 pb-60 no-scrollbar">
@@ -253,7 +258,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({
                           <p className="text-[10px] font-black uppercase text-zinc-400">{new Date(note.date).toLocaleDateString()} • {new Date(note.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
                        </div>
                     </div>
-                    {!readOnly && (
+                    {canDeleteNote && (
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();

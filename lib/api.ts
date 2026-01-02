@@ -354,25 +354,55 @@ class ApiClient {
   }
 
   async deleteDocument(uid: string, docId: string) {
-    const snap = await getDoc(this.userDoc(uid));
-    if (!snap.exists()) return;
+    console.log(`[API] deleteDocument called for user: ${uid}, doc: ${docId}`);
     
-    const docs = snap.data().documents || [];
+    if (!uid || !docId) {
+        console.error("[API] Missing uid or docId");
+        return;
+    }
+    
+    const userRef = this.userDoc(uid);
+    const snap = await getDoc(userRef);
+    
+    if (!snap.exists()) {
+        console.error("[API] User document not found");
+        return;
+    }
+    
+    const data = snap.data();
+    const docs = data.documents || [];
+    
+    // Check if it exists in DB
     const docToDelete = docs.find((d: any) => d.id === docId);
 
-    // If document has a fileId, delete it from ImageKit first
-    if (docToDelete?.fileId) {
-      try {
-        await deleteFromImageKit(docToDelete.fileId);
-        console.log(`Deleted file ${docToDelete.fileId} from ImageKit`);
-      } catch (e) {
-        console.error("Failed to delete file from ImageKit:", e);
-        // Continue to remove record from DB even if file delete fails (orphaned file is better than broken UI)
+    // If docToDelete doesn't exist, we might still want to clean up if the ID is just stuck in UI?
+    // But logically we can only proceed if we found the object to check for fileId.
+    if (docToDelete) {
+      if (docToDelete.fileId) {
+        try {
+          console.log(`[API] Found fileId: ${docToDelete.fileId}. Attempting ImageKit deletion...`);
+          await deleteFromImageKit(docToDelete.fileId);
+          console.log("[API] ImageKit deletion successful.");
+        } catch (e) {
+          console.error("[API] Warning: Failed to delete file from ImageKit storage (proceeding with DB delete):", e);
+        }
+      } else {
+        console.log("[API] No fileId found for this document. Skipping storage deletion.");
       }
+    } else {
+      console.warn("[API] Document not found in current user record. Proceeding to ensure it is removed from list if present by ID match.");
     }
 
-    const filtered = docs.filter((d: any) => d.id !== docId);
-    await updateDoc(this.userDoc(uid), { documents: sanitize(filtered) });
+    // Always attempt to filter out the ID from the list and update Firestore
+    try {
+        console.log("[API] Removing document from Firestore list...");
+        const filtered = docs.filter((d: any) => d.id !== docId);
+        await updateDoc(userRef, { documents: sanitize(filtered) });
+        console.log("[API] Firestore update complete.");
+    } catch (e) {
+        console.error("[API] Firestore update failed:", e);
+        throw e;
+    }
   }
 
   // --- Doctor & Patient Visit Logic ---

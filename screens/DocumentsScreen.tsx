@@ -5,7 +5,7 @@ import { api } from '../lib/api';
 
 interface DocumentsProps {
   documents: PetDocument[];
-  setDocuments: (docs: PetDocument[]) => void;
+  setDocuments: React.Dispatch<React.SetStateAction<PetDocument[]>>;
   petName?: string;
   petId?: string;
   readOnly?: boolean;
@@ -18,6 +18,7 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const filteredDocs = filter === 'All' ? documents : documents.filter(d => d.type === filter);
 
@@ -27,7 +28,6 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
     if (file) {
       setIsUploading(true);
       try {
-        // Upload to ImageKit via API helper and get back url AND fileId
         const { url, fileId } = await api.uploadFile(file);
         
         const newDoc: Partial<PetDocument> = {
@@ -36,12 +36,12 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
           date: new Date().toISOString().split('T')[0],
           fileSize: `${(file.size / 1024).toFixed(0)} KB`,
           fileUrl: url,
-          fileId: fileId, // Store fileId for deletion
+          fileId: fileId,
           mimeType: file.type
         };
 
         const saved = await api.addDocument(petId, newDoc);
-        setDocuments([saved, ...documents]);
+        setDocuments(prev => [saved, ...prev]);
       } catch (error) {
         alert("Failed to upload file. Please try again.");
         console.error(error);
@@ -74,17 +74,41 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
     const docId = selectedDoc.id;
     await api.renameDocument(petId, docId, newName);
     
-    setDocuments(documents.map(d => (d.id === docId) ? { ...d, name: newName } : d));
-    setSelectedDoc({ ...selectedDoc, name: newName });
+    setDocuments(prev => prev.map(d => (d.id === docId) ? { ...d, name: newName } : d));
+    setSelectedDoc(prev => prev ? { ...prev, name: newName } : null);
     setIsRenaming(false);
   };
 
-  const handleDeleteDoc = async (id: string) => {
-    if (readOnly || !petId) return;
-    if (window.confirm('Delete this document permanently?')) {
+  const handleDeleteDoc = async (e: React.MouseEvent | undefined, id: string) => {
+    if (e) e.stopPropagation();
+    if (readOnly || !petId || isDeleting) return;
+
+    if (!window.confirm('Are you sure you want to delete this document?')) {
+      return;
+    }
+
+    setIsDeleting(true);
+    console.log(`[UI] Deleting document: ${id}`);
+
+    // OPTIMISTIC UPDATE: Remove from UI immediately
+    const previousDocs = [...documents];
+    setDocuments(prev => prev.filter(d => d.id !== id));
+
+    // If we are deleting the currently open document, close the modal
+    if (selectedDoc?.id === id) {
+      setSelectedDoc(null);
+    }
+
+    try {
       await api.deleteDocument(petId, id);
-      setDocuments(documents.filter(d => d.id !== id));
-      if (selectedDoc?.id === id) setSelectedDoc(null);
+      console.log("[UI] Document deleted successfully from backend");
+    } catch (err) {
+      console.error("[UI] Delete failed, reverting UI:", err);
+      // Revert UI on failure
+      setDocuments(previousDocs);
+      alert("Failed to delete document. Please check your connection.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -132,8 +156,19 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
                 <h4 className="font-bold truncate text-[14px] md:text-base text-zinc-900 dark:text-zinc-100">{doc.name}</h4>
                 <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500">{doc.type} • {doc.date}</p>
               </div>
-              <div className="flex gap-3 text-zinc-300">
-                <i className="fa-solid fa-eye group-hover:text-orange-500 transition-colors"></i>
+              <div className="flex items-center gap-2">
+                {!readOnly && (
+                  <button 
+                    onClick={(e) => handleDeleteDoc(e, doc.id)}
+                    className="w-10 h-10 flex items-center justify-center text-zinc-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all"
+                    title="Delete File"
+                  >
+                    <i className="fa-solid fa-trash text-sm"></i>
+                  </button>
+                )}
+                <div className="w-10 h-10 flex items-center justify-center text-zinc-300 group-hover:text-orange-500 transition-colors">
+                  <i className="fa-solid fa-eye text-sm"></i>
+                </div>
               </div>
             </div>
           );
@@ -157,7 +192,6 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
                  )}
                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{selectedDoc.date} • {selectedDoc.fileSize}</p>
                  
-                 {/* Preview Thumbnail if Image */}
                  {selectedDoc.mimeType?.startsWith('image/') && (
                    <div className="w-full h-32 rounded-2xl overflow-hidden bg-black/10 mt-2 border border-white/20">
                      <img src={selectedDoc.fileUrl} className="w-full h-full object-cover opacity-80" alt="Preview" />
@@ -165,9 +199,17 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
                  )}
               </div>
               <div className="p-4 bg-white/30 grid grid-cols-3 gap-2 border-t border-white/20">
-                 <FooterButton icon="share-nodes" label={shareStatus || "Share"} onClick={handleShare} color="indigo" />
-                 {!readOnly && <FooterButton icon="pen" label="Rename" onClick={() => { setNewName(selectedDoc.name); setIsRenaming(true); }} color="amber" />}
-                 {!readOnly && <FooterButton icon="trash" label="Delete" onClick={() => handleDeleteDoc(selectedDoc.id)} color="rose" />}
+                 <FooterButton icon="share-nodes" label={shareStatus || "Share"} onClick={handleShare} color="indigo" disabled={isDeleting} />
+                 {!readOnly && <FooterButton icon="pen" label="Rename" onClick={() => { setNewName(selectedDoc.name); setIsRenaming(true); }} color="amber" disabled={isDeleting} />}
+                 {!readOnly && (
+                   <FooterButton 
+                     icon={isDeleting ? 'spinner' : 'trash'} 
+                     label={isDeleting ? "..." : "Delete"} 
+                     onClick={(e) => handleDeleteDoc(e, selectedDoc.id)} 
+                     color="rose" 
+                     disabled={isDeleting} 
+                   />
+                 )}
               </div>
            </div>
         </div>
@@ -176,11 +218,17 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
   );
 };
 
-const FooterButton: React.FC<{ icon: string, label: string, onClick: () => void, color: string }> = ({ icon, label, onClick, color }) => {
+const FooterButton: React.FC<{ icon: string, label: string, onClick: (e: React.MouseEvent) => void, color: string, disabled?: boolean }> = ({ icon, label, onClick, color, disabled }) => {
   const styles: any = { indigo: 'text-indigo-600', amber: 'text-amber-600', rose: 'text-rose-600' };
   return (
-    <button onClick={onClick} className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl transition-all active:scale-95 group">
-      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-lg bg-white/50 ${styles[color]}`}><i className={`fa-solid fa-${icon}`}></i></div>
+    <button 
+      onClick={onClick} 
+      disabled={disabled}
+      className={`flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl transition-all active:scale-95 group ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+    >
+      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-lg bg-white/50 ${styles[color]}`}>
+        <i className={`fa-solid fa-${icon} ${icon === 'spinner' ? 'animate-spin' : ''}`}></i>
+      </div>
       <span className="text-[8px] font-black uppercase tracking-widest text-zinc-600">{label}</span>
     </button>
   );

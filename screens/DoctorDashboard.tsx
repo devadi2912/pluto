@@ -220,6 +220,27 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
     alert("Advice logged for pet owner!");
   };
 
+  const handleDeleteNote = async (noteId: string) => {
+    // If we are viewing a searched patient, we must handle deletion locally targeting the patient ID
+    if (searchedPatientData && activePatientData.pet.id) {
+      const patientUid = activePatientData.pet.id.replace('PET-', '');
+      try {
+        await api.deleteDoctorNote(patientUid, noteId);
+        // Optimistic update
+        setSearchedPatientData((prev: any) => ({
+          ...prev,
+          doctorNotes: prev.doctorNotes.filter((n: DoctorNote) => n.id !== noteId)
+        }));
+      } catch (e) {
+        console.error("Failed to delete note", e);
+        alert("Could not delete note.");
+      }
+    } else if (onDeleteNote) {
+      // Fallback to prop (though prop might fail if App.tsx doesn't have correct pet ID loaded)
+      onDeleteNote(noteId);
+    }
+  };
+
   const handleDismissAlert = async (e: React.MouseEvent, item: PriorityItemData) => {
     e.stopPropagation();
     if (!doctor.id) return;
@@ -290,7 +311,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
               dailyLogs={activeDailyLogs} 
               onUpdateLog={() => {}} 
               doctorNotes={activeDoctorNotes}
-              onDeleteNote={onDeleteNote}
+              onDeleteNote={handleDeleteNote}
               readOnly={true}
             />
           )}
@@ -305,7 +326,8 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
               onUpdateLog={() => {}} 
               petName={activePatientData.pet.name} 
               doctorNotes={activeDoctorNotes}
-              onDeleteNote={onDeleteNote}
+              onDeleteNote={handleDeleteNote} // Use local handler
+              canManageNotes={true} // Allow doctors to manage notes even in readOnly mode
               consultedDoctors={activeConsultedDoctors}
               readOnly={true}
             />
