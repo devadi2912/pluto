@@ -3,6 +3,7 @@ import { AuthUser, PetProfile, TimelineEntry, PetDocument, Reminder, DoctorNote,
 import { auth, db } from './firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendEmailVerification, sendPasswordResetEmail, deleteUser } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, deleteDoc, arrayUnion, collection, getDocs } from 'firebase/firestore';
+import { uploadToImageKit, deleteFromImageKit } from './imagekit-service';
 
 /**
  * Sanitizes objects for Firestore by removing undefined fields recursively.
@@ -128,6 +129,12 @@ class ApiClient {
     await deleteDoc(this.journalDoc(uid));
     await deleteDoc(this.userDoc(uid));
     await deleteUser(user);
+  }
+
+  // --- ImageKit Upload Wrapper ---
+  async uploadFile(file: File): Promise<{ url: string, fileId: string }> {
+    const result = await uploadToImageKit(file);
+    return { url: result.url, fileId: result.fileId };
   }
 
   // --- Array Node Logic ---
@@ -349,7 +356,22 @@ class ApiClient {
   async deleteDocument(uid: string, docId: string) {
     const snap = await getDoc(this.userDoc(uid));
     if (!snap.exists()) return;
-    const filtered = (snap.data().documents || []).filter((d: any) => d.id !== docId);
+    
+    const docs = snap.data().documents || [];
+    const docToDelete = docs.find((d: any) => d.id === docId);
+
+    // If document has a fileId, delete it from ImageKit first
+    if (docToDelete?.fileId) {
+      try {
+        await deleteFromImageKit(docToDelete.fileId);
+        console.log(`Deleted file ${docToDelete.fileId} from ImageKit`);
+      } catch (e) {
+        console.error("Failed to delete file from ImageKit:", e);
+        // Continue to remove record from DB even if file delete fails (orphaned file is better than broken UI)
+      }
+    }
+
+    const filtered = docs.filter((d: any) => d.id !== docId);
     await updateDoc(this.userDoc(uid), { documents: sanitize(filtered) });
   }
 
@@ -373,8 +395,6 @@ class ApiClient {
        const alerts = reminders.filter(r => !r.completed);
 
        // 2. Save Patient data and Alerts to Doctor's subcollection "pet_visits"
-       // Path: users/{doctorId}/pet_visits/{petId}
-       // Using passed doctorId (which should be UID) ensures this collection lives in the root user doc.
        const visitedRef = doc(db, 'users', doctorId, 'pet_visits', petId);
        
        await setDoc(visitedRef, {

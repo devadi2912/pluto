@@ -17,29 +17,37 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
   const [shareStatus, setShareStatus] = useState<string | null>(null);
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   const filteredDocs = filter === 'All' ? documents : documents.filter(d => d.type === filter);
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (readOnly || !petId) return;
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64Data = (reader.result as string).split(',')[1];
+      setIsUploading(true);
+      try {
+        // Upload to ImageKit via API helper and get back url AND fileId
+        const { url, fileId } = await api.uploadFile(file);
+        
         const newDoc: Partial<PetDocument> = {
           name: file.name.split('.')[0],
           type: 'Report',
           date: new Date().toISOString().split('T')[0],
           fileSize: `${(file.size / 1024).toFixed(0)} KB`,
-          data: base64Data,
-          mimeType: file.type,
-          fileUrl: URL.createObjectURL(file)
+          fileUrl: url,
+          fileId: fileId, // Store fileId for deletion
+          mimeType: file.type
         };
+
         const saved = await api.addDocument(petId, newDoc);
         setDocuments([saved, ...documents]);
-      };
-      reader.readAsDataURL(file);
+      } catch (error) {
+        alert("Failed to upload file. Please try again.");
+        console.error(error);
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -62,10 +70,10 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
 
   const saveRename = async () => {
     if (!selectedDoc || !newName.trim() || !petId) return;
-    // Fix: Use 'id' only as '_id' does not exist on type PetDocument
+    
     const docId = selectedDoc.id;
     await api.renameDocument(petId, docId, newName);
-    // Fix: Remove non-existent '_id' check
+    
     setDocuments(documents.map(d => (d.id === docId) ? { ...d, name: newName } : d));
     setSelectedDoc({ ...selectedDoc, name: newName });
     setIsRenaming(false);
@@ -74,9 +82,7 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
   const handleDeleteDoc = async (id: string) => {
     if (readOnly || !petId) return;
     if (window.confirm('Delete this document permanently?')) {
-      // Fix: Pass petId (UID) to deleteDocument
       await api.deleteDocument(petId, id);
-      // Fix: Remove non-existent '_id' check
       setDocuments(documents.filter(d => d.id !== id));
       if (selectedDoc?.id === id) setSelectedDoc(null);
     }
@@ -99,9 +105,9 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
           <p className="text-[10px] text-zinc-600 dark:text-zinc-400 font-black uppercase tracking-widest mt-1">Archive: {documents.length} Records</p>
         </div>
         {!readOnly && (
-          <label className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-tr from-amber-400 to-orange-500 text-white rounded-2xl flex items-center justify-center cursor-pointer transition-all hover:scale-110 active:scale-90 border-4 border-white dark:border-black shadow-lg">
-            <i className="fa-solid fa-file-circle-plus text-lg"></i>
-            <input type="file" className="hidden" onChange={handleUpload} />
+          <label className={`w-12 h-12 md:w-14 md:h-14 bg-gradient-to-tr from-amber-400 to-orange-500 text-white rounded-2xl flex items-center justify-center cursor-pointer transition-all hover:scale-110 active:scale-90 border-4 border-white dark:border-black shadow-lg ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+            {isUploading ? <i className="fa-solid fa-spinner animate-spin text-lg"></i> : <i className="fa-solid fa-file-circle-plus text-lg"></i>}
+            <input type="file" className="hidden" onChange={handleUpload} disabled={isUploading} />
           </label>
         )}
       </div>
@@ -147,9 +153,16 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({ documents, setDocuments, pe
                  {isRenaming ? (
                     <input autoFocus className="w-full bg-transparent border-b border-orange-500 text-center font-lobster text-2xl text-zinc-900 dark:text-white outline-none" value={newName} onChange={(e) => setNewName(e.target.value)} onBlur={saveRename} onKeyDown={(e) => e.key === 'Enter' && saveRename()} />
                  ) : (
-                    <h3 className="font-lobster text-3xl text-zinc-900 dark:text-white" onClick={() => !readOnly && (setNewName(selectedDoc.name), setIsRenaming(true))}>{selectedDoc.name}</h3>
+                    <h3 className="font-lobster text-3xl text-zinc-900 dark:text-white cursor-pointer hover:text-orange-500 transition-colors" onClick={() => window.open(selectedDoc.fileUrl, '_blank')}>{selectedDoc.name}</h3>
                  )}
                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{selectedDoc.date} • {selectedDoc.fileSize}</p>
+                 
+                 {/* Preview Thumbnail if Image */}
+                 {selectedDoc.mimeType?.startsWith('image/') && (
+                   <div className="w-full h-32 rounded-2xl overflow-hidden bg-black/10 mt-2 border border-white/20">
+                     <img src={selectedDoc.fileUrl} className="w-full h-full object-cover opacity-80" alt="Preview" />
+                   </div>
+                 )}
               </div>
               <div className="p-4 bg-white/30 grid grid-cols-3 gap-2 border-t border-white/20">
                  <FooterButton icon="share-nodes" label={shareStatus || "Share"} onClick={handleShare} color="indigo" />

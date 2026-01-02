@@ -89,8 +89,6 @@ const App: React.FC = () => {
       const todayDate = new Date().toDateString();
 
       if (lastResetDate !== todayDate) {
-        console.log("New day detected. Resetting daily tasks...");
-        
         const resetChecklist = { 
           food: false, water: false, walk: false, medication: false, lastReset: new Date().toISOString() 
         };

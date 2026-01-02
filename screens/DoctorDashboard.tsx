@@ -138,7 +138,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
     
     // 1. Validate Format
     if (!rawInput.toUpperCase().startsWith('PET-')) {
-      console.log("id is incorrect");
       alert("Invalid ID format. Must start with PET-");
       return;
     }
@@ -151,8 +150,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
       const userProfile = await api.getUserProfile(uid);
       
       if (userProfile && userProfile.petDetails) {
-         console.log("pet id found");
-
          // 3. Fetch Full Records
          const records = await api.getPetRecords(uid);
          
@@ -175,7 +172,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
             const standardId = `PET-${uid}`;
             
             // Log visit in backend and SYNC ALERTS
-            // FIX: Pass doctor.id (UID) instead of doctorDetails.id so collection is created in the correct user profile
             if (doctor.id) {
                await api.logDoctorVisit(standardId, doctor.id);
                // Refresh dashboard data to pull in new synced alerts
@@ -184,15 +180,12 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
 
             setIsViewingPatient(true);
          } else {
-            console.log("id is incorrect"); // Profile exists but no records (rare edge case)
             alert("Patient profile exists but records are unavailable.");
          }
       } else {
-         console.log("id is incorrect");
          alert("No patient found with this ID.");
       }
     } catch (e) {
-      console.log("id is incorrect");
       console.error("Search failed:", e);
       alert("An error occurred while searching.");
     }

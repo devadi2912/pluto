@@ -27,6 +27,7 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
   });
   const [showBirthdate, setShowBirthdate] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -43,10 +44,6 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
     if (!formData.name) return alert("Pet needs a name! ✨");
     setIsSaving(true);
     try {
-      // Logic fix: We rely on the parent's setPet handler (from App.tsx) 
-      // which correctly uses the authenticated user's UID to update the database.
-      // Calling api.updatePetProfile with pet.id (PET-...) was causing a permission error
-      // because pet.id is not the same as the user's document ID (Firebase Auth UID).
       await setPet(formData);
       setIsEditing(false);
     } catch (error) {
@@ -54,6 +51,23 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
       console.error(error);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsUploading(true);
+      try {
+        // Updated to destructure the response object (we only need the URL for the avatar)
+        const { url } = await api.uploadFile(file);
+        setFormData(prev => ({ ...prev, avatar: url }));
+      } catch (error) {
+        alert("Failed to upload image.");
+        console.error(error);
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -111,14 +125,14 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
         {!readOnly && (
           <button 
             onClick={() => isEditing ? handleSave() : setIsEditing(true)} 
-            disabled={isSaving}
+            disabled={isSaving || isUploading}
             className={`
               relative px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all duration-300
               ${isEditing 
                 ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900 hover:scale-105 shadow-xl' 
                 : 'bg-transparent text-zinc-500 border-zinc-300 hover:border-orange-500 hover:text-orange-500 dark:border-zinc-700 dark:hover:border-orange-400 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/10'
               }
-              ${isSaving ? 'opacity-50 cursor-wait' : ''}
+              ${isSaving || isUploading ? 'opacity-50 cursor-wait' : ''}
             `}
           >
              <span className="flex items-center gap-2">
@@ -138,6 +152,11 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
               
               <div className="relative mb-6 mt-4">
                 <div className="w-56 h-56 rounded-[2.5rem] overflow-hidden border-[6px] border-white dark:border-zinc-800 shadow-2xl relative z-10 transition-transform duration-500 group-hover:scale-[1.02] group-hover:rotate-1">
+                  {isUploading && (
+                    <div className="absolute inset-0 bg-black/50 z-30 flex items-center justify-center">
+                       <i className="fa-solid fa-spinner animate-spin text-white text-3xl"></i>
+                    </div>
+                  )}
                   <img src={formData.avatar} className="w-full h-full object-cover" alt="Pet Avatar" />
                 </div>
                 {isEditing && (
@@ -145,14 +164,7 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
                     <i className="fa-solid fa-camera text-xl"></i>
                   </button>
                 )}
-                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const r = new FileReader();
-                    r.onload = () => setFormData({...formData, avatar: r.result as string});
-                    r.readAsDataURL(file);
-                  }
-                }} />
+                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
               </div>
               
               <div className="relative z-10 w-full">

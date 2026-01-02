@@ -46,6 +46,7 @@ export interface PetDocument {
   type: 'Prescription' | 'Bill' | 'Report' | 'Note';
   date: string;
   fileUrl: string;
+  fileId?: string;
   fileSize: string;
   data?: string; 
   mimeType?: string;
