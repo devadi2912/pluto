@@ -89,6 +89,8 @@ const Dashboard: React.FC<DashboardProps> = ({
     return totalItems === 0 ? 0 : Math.round((completedItems / totalItems) * 100);
   }, [routine, checklist]);
 
+  const isCelebration = progressPercent === 100;
+
   const upcomingEvents = useMemo(() => {
     return reminders
       .filter(r => !r.completed)
@@ -121,17 +123,34 @@ const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="p-5 md:p-10 space-y-10 animate-in fade-in duration-700 pb-44 no-scrollbar">
       {/* Hero Card */}
-      <section className="bg-zinc-950 rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl relative overflow-hidden group border border-zinc-800">
-        <div className="absolute -right-10 -top-10 w-96 h-96 bg-orange-500/10 rounded-full blur-[100px] transition-transform duration-1000 group-hover:scale-110"></div>
+      <section className={`rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl relative overflow-hidden group border transition-all duration-1000 ${isCelebration ? 'bg-gradient-to-br from-indigo-600 to-purple-600 border-indigo-400/50' : 'bg-zinc-950 border-zinc-800'}`}>
+        {/* Ambient Glow */}
+        <div className={`absolute -right-10 -top-10 w-96 h-96 rounded-full blur-[100px] transition-all duration-1000 group-hover:scale-110 ${isCelebration ? 'bg-white/20' : 'bg-orange-500/10'}`}></div>
+        
+        {/* Celebration Confetti */}
+        {isCelebration && (
+          <>
+            <div className="absolute top-0 left-1/4 w-2 h-2 bg-yellow-400 rounded-full animate-[spin_3s_linear_infinite] drop-shadow-lg" style={{animationDuration: '2s'}}></div>
+            <div className="absolute top-10 left-3/4 w-3 h-3 bg-rose-400 rounded-full animate-bounce delay-100 drop-shadow-lg"></div>
+            <div className="absolute bottom-10 right-10 w-2 h-2 bg-emerald-400 rounded-full animate-ping delay-700"></div>
+            <div className="absolute top-1/2 left-10 text-2xl animate-party">🎉</div>
+            <div className="absolute bottom-1/3 right-1/4 text-xl animate-spin-slow">✨</div>
+          </>
+        )}
         
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center relative z-10 gap-6">
           <div className="flex items-center gap-6">
             <div className="relative group/avatar cursor-pointer">
-              <img src={pet.avatar} className="w-16 h-16 md:w-20 md:h-20 rounded-[1.75rem] border-4 border-white/10 shadow-2xl group-hover/avatar:rotate-6 transition-transform duration-500" alt="Pet" />
+              <img src={pet.avatar} className={`w-16 h-16 md:w-20 md:h-20 rounded-[1.75rem] border-4 shadow-2xl transition-transform duration-500 ${isCelebration ? 'border-white animate-spring-jump' : 'border-white/10 group-hover/avatar:rotate-6'}`} alt="Pet" />
+              {isCelebration && <div className="absolute -top-2 -right-2 text-2xl animate-bounce">👑</div>}
             </div>
             <div>
-              <h2 className="text-3xl md:text-4xl font-lobster tracking-wide">Hi, {pet.name}'s Family!</h2>
-              <p className="text-zinc-300 dark:text-zinc-400 mt-1 font-bold italic text-sm md:text-base">You've reached <span className="text-orange-400">{progressPercent}%</span> today.</p>
+              <h2 className="text-3xl md:text-4xl font-lobster tracking-wide">
+                {isCelebration ? `Superstar ${pet.name}!` : `Hi, ${pet.name}'s Family!`}
+              </h2>
+              <p className="text-zinc-300 dark:text-zinc-400 mt-1 font-bold italic text-sm md:text-base">
+                {isCelebration ? 'All daily goals crushed! 🌟' : <span className="flex items-center gap-2">You've reached <span className="text-orange-400">{progressPercent}%</span> today.</span>}
+              </p>
             </div>
           </div>
         </div>
@@ -139,11 +158,11 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className="mt-8 md:mt-12 relative z-10">
           <div className="flex justify-between items-end mb-3 px-1">
              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Care Progress</span>
-             <span className="text-3xl font-black text-orange-500 drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]">{progressPercent}%</span>
+             <span className={`text-3xl font-black drop-shadow-[0_0_10px_rgba(249,115,22,0.3)] ${isCelebration ? 'text-white' : 'text-orange-500'}`}>{progressPercent}%</span>
           </div>
-          <div className="bg-zinc-900 h-6 md:h-8 rounded-full overflow-hidden p-1 border border-zinc-800 shadow-inner">
+          <div className="bg-zinc-900/50 h-6 md:h-8 rounded-full overflow-hidden p-1 border border-white/10 shadow-inner">
             <div 
-              className="h-full bg-orange-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_25px_rgba(249,115,22,0.8)]" 
+              className={`h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_25px_rgba(249,115,22,0.8)] ${isCelebration ? 'bg-gradient-to-r from-emerald-400 to-emerald-300' : 'bg-orange-500'}`}
               style={{ width: `${progressPercent}%` }}
             ></div>
           </div>

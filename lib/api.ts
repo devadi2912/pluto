@@ -323,6 +323,16 @@ class ApiClient {
     return this.deleteNestedArrayNode(this.homeDoc(uid), 'routines', id);
   }
 
+  async resetDailyTasks(uid: string, resetRoutines: RoutineItem[]) {
+    const freshChecklist = { 
+      food: false, water: false, walk: false, medication: false, lastReset: new Date().toISOString() 
+    };
+    await updateDoc(this.homeDoc(uid), { 
+      checklist: sanitize(freshChecklist),
+      routines: sanitize(resetRoutines)
+    });
+  }
+
   async addDocument(uid: string, docData: Partial<PetDocument>) {
     const newItem = { ...docData, id: `DOC-${Date.now()}` };
     await updateDoc(this.userDoc(uid), { documents: arrayUnion(sanitize(newItem)) });

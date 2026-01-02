@@ -70,7 +70,7 @@ const TimelineScreen: React.FC<TimelineProps> = ({
     const uid = auth.currentUser?.uid;
     if (newReminder.title && newReminder.date && newReminder.type && !readOnly && uid) {
       const saved = await api.addReminder(uid, newReminder);
-      setReminders(prev => [...prev, saved].sort((a, b) => new Date(a.date).getTime() - new Date(a.date).getTime()));
+      setReminders(prev => [...prev, saved].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
       setShowAddReminder(false);
       setNewReminder({ type: 'Medication', date: new Date().toISOString().split('T')[0], title: '' });
     }
@@ -255,8 +255,11 @@ const TimelineScreen: React.FC<TimelineProps> = ({
                     </div>
                     {!readOnly && (
                       <button 
-                        onClick={() => onDeleteNote && onDeleteNote(note.id)} 
-                        className="w-10 h-10 bg-rose-500 text-white rounded-2xl flex items-center justify-center shadow-lg hover:shadow-rose-500/30 hover:-translate-y-1 active:scale-95 transition-all opacity-0 group-hover:opacity-100"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onDeleteNote) onDeleteNote(note.id);
+                        }}
+                        className="w-10 h-10 bg-rose-500 text-white rounded-2xl flex items-center justify-center shadow-lg hover:shadow-rose-500/30 hover:-translate-y-1 active:scale-95 transition-all opacity-60 hover:opacity-100"
                         title="Delete Note"
                       >
                         <i className="fa-solid fa-trash text-xs"></i>
@@ -274,40 +277,36 @@ const TimelineScreen: React.FC<TimelineProps> = ({
          </div>
       </section>
 
-      {/* 4. Doctor Visit Section (Formerly Medical Network) */}
+      {/* 4. Doctor Visit Section */}
       <section className="space-y-6 pt-12 border-t border-zinc-100 dark:border-zinc-800">
          <div className="px-2">
             <h2 className="text-4xl font-lobster text-rose-500 dark:text-rose-400">Doctor Visit</h2>
             <p className="text-[11px] font-black uppercase text-zinc-500 tracking-widest mt-1">Professionals who accessed these records</p>
          </div>
 
-         {/* Combined Last Visit Insight Card - Moved directly under section header */}
+         {/* Simplified Last Visit Insight Card */}
          {lastVisit && (
-            <div className="px-2 mb-6 animate-in fade-in slide-in-from-top-4 duration-1000">
-              <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl rounded-[3rem] p-8 border-4 border-white dark:border-zinc-800 shadow-[0_25px_50px_-12px_rgba(99,102,241,0.25)] flex flex-col md:flex-row items-center gap-8 relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
-                  <div className="w-16 h-16 rounded-[1.5rem] bg-indigo-500 text-white flex items-center justify-center text-3xl shadow-xl shadow-indigo-500/20 shrink-0">
-                    <i className="fa-solid fa-user-doctor"></i>
-                  </div>
-                  <div className="flex-1 text-center md:text-left">
-                    <p className="text-[10px] font-black uppercase text-indigo-500 tracking-[0.4em] mb-1">Last Professional Visit</p>
-                    <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 font-lobster leading-tight">
-                        {new Date(lastVisit.date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
-                    </h3>
-                    <div className="flex flex-wrap justify-center md:justify-start items-center gap-3 mt-3">
-                        <span className="text-[10px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 px-3 py-1 rounded-full border border-zinc-200 dark:border-zinc-700">
-                          <i className="fa-solid fa-clock mr-2 opacity-50"></i>
-                          {new Date(lastVisit.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                        <span className="text-[10px] font-bold bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full border border-indigo-100 dark:border-indigo-900/30">
-                          <i className="fa-solid fa-id-badge mr-2 opacity-50"></i>
-                          {lastVisit.id.length > 12 ? `${lastVisit.id.substring(0, 12)}...` : lastVisit.id}
-                        </span>
+            <div className="px-2 mb-8 animate-in fade-in slide-in-from-top-4 duration-1000">
+              <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl rounded-[2.5rem] p-6 border-4 border-white dark:border-zinc-800 shadow-lg transition-all duration-300 hover:scale-[1.01] hover:shadow-2xl hover:border-rose-200 dark:hover:border-rose-900/30 group cursor-default">
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-5">
+                        <div className="w-14 h-14 rounded-2xl bg-rose-500 text-white flex items-center justify-center text-2xl shadow-lg group-hover:rotate-12 transition-transform">
+                          <i className="fa-solid fa-user-doctor"></i>
+                        </div>
+                        <div className="text-center md:text-left">
+                          <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 font-lobster leading-tight">
+                              {new Date(lastVisit.date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                          </h3>
+                          <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400 mt-0.5">
+                              <i className="fa-regular fa-clock mr-2 opacity-60"></i>
+                              {new Date(lastVisit.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
                     </div>
-                  </div>
-                  <div className="shrink-0 flex md:flex-col gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <div className="w-2 h-2 rounded-full bg-indigo-300"></div>
+                    <div className="bg-white dark:bg-zinc-950 px-5 py-3 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-inner">
+                        <p className="text-[9px] font-black uppercase text-zinc-400 tracking-widest text-center">Doctor ID</p>
+                        <p className="font-mono font-bold text-rose-500 text-sm tracking-wide">{lastVisit.id}</p>
+                    </div>
                   </div>
               </div>
             </div>
@@ -325,10 +324,12 @@ const TimelineScreen: React.FC<TimelineProps> = ({
                   </div>
                </div>
             )) : (
-              <div className="md:col-span-2 py-10 text-center border-4 border-dashed border-zinc-100 dark:border-zinc-800 rounded-[3rem] text-zinc-400">
-                  <i className="fa-solid fa-users-medical text-4xl mb-3 opacity-30"></i>
-                  <p className="text-xs font-bold">No verified medical visits yet.</p>
-               </div>
+              !lastVisit && (
+                <div className="md:col-span-2 py-10 text-center border-4 border-dashed border-zinc-100 dark:border-zinc-800 rounded-[3rem] text-zinc-400">
+                    <i className="fa-solid fa-users-medical text-4xl mb-3 opacity-30"></i>
+                    <p className="text-xs font-bold">No verified medical visits yet.</p>
+                 </div>
+              )
             )}
          </div>
       </section>

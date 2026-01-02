@@ -96,6 +96,8 @@ export interface Doctor {
   emergencyContact: string;
   consultationHours: string;
   medicalFocus: string;
+  bio?: string;
+  languages?: string;
 }
 
 export interface DoctorNote {
