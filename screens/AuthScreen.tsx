@@ -5,13 +5,13 @@ import { StartScreen } from './StartScreen';
 import { LoginScreen } from './LoginScreen';
 import { RegisterScreen } from './RegisterScreen';
 import { api } from '../lib/api';
-import { User as FirebaseUser } from 'firebase/auth';
+import firebase from 'firebase/compat/app';
 
 interface AuthScreenProps {
   onLogin: (user: AuthUser) => void;
   darkMode: boolean;
   setDarkMode: (dark: boolean) => void;
-  unverifiedUser?: FirebaseUser | null; // Passed from App.tsx if session exists but unverified
+  unverifiedUser?: firebase.User | null; // Passed from App.tsx if session exists but unverified
 }
 
 type AuthView = 'START' | 'LOGIN' | 'REGISTER' | 'VERIFY_EMAIL' | 'FORGOT_PASSWORD';

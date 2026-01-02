@@ -25,7 +25,6 @@ import DoctorDashboard from './screens/DoctorDashboard';
 import { PetOwnerShell } from './components/PetOwnerShell';
 import { api } from './lib/api';
 import { auth } from './lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -59,7 +58,7 @@ const App: React.FC = () => {
   }, [darkMode]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
         if (!firebaseUser.emailVerified) {
           setUnverifiedUser(firebaseUser);
@@ -86,7 +85,7 @@ const App: React.FC = () => {
     // Daily Reset Logic
     if (data.checklist?.lastReset) {
       const lastResetDate = new Date(data.checklist.lastReset).toDateString();
-      const todayDate = new Date().toDateString();
+      const todayDate = new Date().toISOString().split('T')[0];
 
       if (lastResetDate !== todayDate) {
         const resetChecklist = { 
@@ -94,10 +93,8 @@ const App: React.FC = () => {
         };
         const resetRoutines = (data.routines || []).map((r: RoutineItem) => ({ ...r, completed: false }));
         
-        // Update in DB
         await api.resetDailyTasks(uid, resetRoutines);
 
-        // Update in-memory data for rendering
         data.checklist = resetChecklist;
         data.routines = resetRoutines;
       }
@@ -191,6 +188,30 @@ const App: React.FC = () => {
     }
   };
 
+  const handleDeleteDocument = async (id: string) => {
+    console.log(`[App] handleDeleteDocument: Triggered for ID ${id}`);
+    
+    if (user?.role !== 'PET_OWNER' || !user?.id) {
+      console.warn("[App] handleDeleteDocument: Permission denied or User ID missing.");
+      alert("Permission Denied: Only pet owners can manage the Document Safe.");
+      return;
+    }
+
+    console.log("[App] handleDeleteDocument: Calling API.deleteDocument...");
+    const success = await api.deleteDocument(user.id, id);
+    
+    if (success) {
+      console.log("[App] handleDeleteDocument: API reported success. Updating local state...");
+      setDocuments(prev => {
+        const filtered = prev.filter(d => d.id !== id);
+        console.log(`[App] handleDeleteDocument: UI State updated. Removed 1 item. New count: ${filtered.length}`);
+        return filtered;
+      });
+    } else {
+      console.error("[App] handleDeleteDocument: API reported failure.");
+    }
+  };
+
   const handleCompleteReminder = async (id: string) => {
     if (!user?.id) return;
     const reminder = reminders.find(r => r.id === id);
@@ -219,7 +240,6 @@ const App: React.FC = () => {
     const targetUid = user?.role === 'PET_OWNER' ? user.id : pet?.id?.replace('PET-', '');
     if (!targetUid) return;
     
-    // Optimistic Update
     setDoctorNotes(prev => prev.filter(n => n.id !== id));
     setClinicalNotes(prev => prev.filter(n => n.id !== id));
 
@@ -227,8 +247,6 @@ const App: React.FC = () => {
       await api.deleteDoctorNote(targetUid, id);
     } catch (e) {
       console.error("Failed to delete note from DB", e);
-      // In a real production app, we would revert the state here if the API fails.
-      // For this MVP, relying on hydration on next reload is acceptable behavior for edge case failures.
     }
   };
 
@@ -243,39 +261,6 @@ const App: React.FC = () => {
 
   if (!user) return <AuthScreen onLogin={setUser} darkMode={darkMode} setDarkMode={setDarkMode} unverifiedUser={unverifiedUser} />;
 
-  // DOCTOR EXPERIENCE
-  if (user.role === 'DOCTOR') {
-    return (
-      <DoctorDashboard 
-        doctor={user}
-        petData={{
-          pet: pet || { id: '', name: 'No Patient', species: Species.Dog, breed: '', dateOfBirth: '', gender: Gender.Unknown, avatar: '' },
-          timeline,
-          documents,
-          checklist,
-          routine,
-          reminders
-        }}
-        dailyLogs={dailyLogs}
-        doctorNotes={doctorNotes}
-        onAddNote={handleAddDoctorNote}
-        onDeleteNote={handleDeleteClinicalNote}
-        onVisitPatient={(id) => { if (id) hydrateData(id.replace('PET-', '')); }}
-        consultedDoctors={medicalNetworks}
-        darkMode={darkMode}
-        setDarkMode={setDarkMode}
-        activeTab={doctorActiveTab}
-        setActiveTab={setDoctorActiveTab}
-        isViewingPatient={isViewingPatient}
-        setIsViewingPatient={setIsViewingPatient}
-        patientSubTab={patientSubTab}
-        setPatientSubTab={setPatientSubTab}
-        onLogout={() => api.logout()}
-      />
-    );
-  }
-
-  // PET OWNER EXPERIENCE
   const renderPetOwnerContent = () => {
     if (!pet && activeTab !== 'profile') return (
        <div className="flex flex-col items-center justify-center h-full p-10 text-center space-y-6">
@@ -306,11 +291,42 @@ const App: React.FC = () => {
           lastVisit={lastVisitInfo}
         />
       );
-      case 'documents': return <DocumentsScreen documents={documents} setDocuments={setDocuments} petName={pet?.name} petId={user.id} />;
+      case 'documents': return <DocumentsScreen documents={documents} setDocuments={setDocuments} onDeleteDocument={handleDeleteDocument} petName={pet?.name} petId={user.id} />;
       case 'ai': return <AIScreen pet={pet!} timeline={timeline} documents={documents} reminders={reminders} />;
       default: return null;
     }
   };
+
+  if (user.role === 'DOCTOR') {
+    return (
+      <DoctorDashboard 
+        doctor={user}
+        petData={{
+          pet: pet || { id: '', name: 'No Patient', species: Species.Dog, breed: '', dateOfBirth: '', gender: Gender.Unknown, avatar: '' },
+          timeline,
+          documents,
+          checklist,
+          routine,
+          reminders
+        }}
+        dailyLogs={dailyLogs}
+        doctorNotes={doctorNotes}
+        onAddNote={handleAddDoctorNote}
+        onDeleteNote={handleDeleteClinicalNote}
+        onVisitPatient={(id) => { if (id) hydrateData(id.replace('PET-', '')); }}
+        consultedDoctors={medicalNetworks}
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+        activeTab={doctorActiveTab}
+        setActiveTab={setDoctorActiveTab}
+        isViewingPatient={isViewingPatient}
+        setIsViewingPatient={setIsViewingPatient}
+        patientSubTab={patientSubTab}
+        setPatientSubTab={setPatientSubTab}
+        onLogout={() => api.logout()}
+      />
+    );
+  }
 
   return (
     <PetOwnerShell
