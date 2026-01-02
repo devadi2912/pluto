@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { PetProfile } from '../types';
 import { NavButton } from './NavButton';
 import { api } from '../lib/api';
@@ -21,6 +21,8 @@ export const PetOwnerShell: React.FC<PetOwnerShellProps> = ({
   setDarkMode,
   children
 }) => {
+  const [animateMobileLogo, setAnimateMobileLogo] = useState(false);
+
   const navItems = [
     { id: 'dashboard', icon: 'house', label: 'Home', color: 'orange' },
     { id: 'timeline', icon: 'calendar-days', label: 'Journal', color: 'emerald' },
@@ -28,6 +30,12 @@ export const PetOwnerShell: React.FC<PetOwnerShellProps> = ({
     { id: 'documents', icon: 'folder-open', label: 'Files', color: 'indigo' },
     { id: 'profile', icon: 'paw', label: pet?.name || 'Pet', color: 'rose' },
   ];
+
+  const handleMobileHomeClick = () => {
+    setActiveTab('dashboard');
+    setAnimateMobileLogo(true);
+    setTimeout(() => setAnimateMobileLogo(false), 700);
+  };
 
   return (
     <div className={`h-screen flex flex-col md:flex-row transition-colors duration-500 overflow-hidden ${darkMode ? 'dark' : ''}`}>
@@ -62,10 +70,13 @@ export const PetOwnerShell: React.FC<PetOwnerShellProps> = ({
 
       {/* Mobile Header */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md z-[100] px-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
-         <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center text-white text-xs shadow-sm"><i className="fa-solid fa-paw"></i></div>
+         <button 
+           onClick={handleMobileHomeClick}
+           className="flex items-center gap-2 active:scale-95 transition-transform"
+         >
+            <div className={`w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center text-white text-xs shadow-sm ${animateMobileLogo ? 'animate-spring-jump' : ''}`}><i className="fa-solid fa-paw"></i></div>
             <h1 className="text-xl font-lobster text-zinc-900 dark:text-zinc-50">Pluto</h1>
-         </div>
+         </button>
          <div className="flex items-center gap-4">
             <button onClick={() => setDarkMode(!darkMode)} className="w-10 h-10 flex items-center justify-center relative active:scale-90 transition-transform">
                <i className={`fa-solid fa-sun absolute text-xl transition-all duration-700 ${darkMode ? 'rotate-0 scale-110 opacity-100 text-orange-400 animate-spin-slow' : 'rotate-180 scale-0 opacity-0'}`}></i>

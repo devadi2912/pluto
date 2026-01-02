@@ -111,7 +111,6 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({
   const handleInitiateDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     e.preventDefault();
-    console.log(`[DocumentsScreen] handleInitiateDelete: User clicked shred icon for ID ${id}. Opening custom popup.`);
     setConfirmDeleteId(id);
   };
 
@@ -122,46 +121,36 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({
     if (!confirmDeleteId) return;
     const targetId = confirmDeleteId;
     
-    console.log(`[DocumentsScreen] executePurge: User confirmed shredding for ID ${targetId}.`);
-    
     if (readOnly || !petId || !onDeleteDocument) {
-      console.warn(`[DocumentsScreen] executePurge: Action blocked. readOnly: ${readOnly}, petId: ${!!petId}, handler: ${!!onDeleteDocument}`);
       setConfirmDeleteId(null);
       return;
     }
     
     setIsDeleting(true);
     try {
-      console.log(`[DocumentsScreen] executePurge: Calling onDeleteDocument handler...`);
       await onDeleteDocument(targetId);
-      
-      console.log(`[DocumentsScreen] executePurge: Success! Target ID ${targetId} removed from records.`);
-      
       if (selectedDoc?.id === targetId) {
-        console.log(`[DocumentsScreen] executePurge: Closing preview modal for deleted file.`);
         setSelectedDoc(null);
       }
     } catch (err) {
-      console.error("[DocumentsScreen] executePurge: CRITICAL ERROR - Shred process failed:", err);
-      alert("System failure: Failed to purge record from the database.");
+      console.error("Shred process failed:", err);
+      alert("System failure: Failed to purge record.");
     } finally {
       setIsDeleting(false);
       setConfirmDeleteId(null);
-      console.log(`[DocumentsScreen] executePurge: Process complete. State reset.`);
     }
   };
 
   const cancelDelete = () => {
-    console.log(`[DocumentsScreen] cancelDelete: User cancelled shredding for ID ${confirmDeleteId}. Closing popup.`);
     setConfirmDeleteId(null);
   };
 
   const getDocTypeConfig = (type: PetDocument['type']) => {
     switch (type) {
-      case 'Prescription': return { icon: 'fa-prescription', color: 'rose', gradient: 'from-rose-500 to-pink-600', bg: 'bg-rose-50 dark:bg-rose-950/20', text: 'text-rose-600 dark:text-rose-400' };
-      case 'Bill': return { icon: 'fa-file-invoice-dollar', color: 'emerald', gradient: 'from-emerald-500 to-teal-600', bg: 'bg-emerald-50 dark:bg-emerald-950/20', text: 'text-emerald-600 dark:text-emerald-400' };
-      case 'Note': return { icon: 'fa-note-sticky', color: 'amber', gradient: 'from-amber-400 to-orange-500', bg: 'bg-amber-50 dark:bg-amber-950/20', text: 'text-amber-600 dark:text-amber-400' };
-      default: return { icon: 'fa-clipboard-check', color: 'indigo', gradient: 'from-indigo-500 to-violet-600', bg: 'bg-indigo-50 dark:bg-indigo-950/20', text: 'text-indigo-600 dark:text-indigo-400' };
+      case 'Prescription': return { icon: 'fa-prescription', color: 'rose', gradient: 'from-rose-500 to-pink-600', bg: 'bg-rose-50 dark:bg-rose-950/20', text: 'text-rose-600 dark:text-rose-400', glow: 'bg-rose-500/10 dark:bg-rose-500/20' };
+      case 'Bill': return { icon: 'fa-file-invoice-dollar', color: 'emerald', gradient: 'from-emerald-500 to-teal-600', bg: 'bg-emerald-50 dark:bg-emerald-950/20', text: 'text-emerald-600 dark:text-emerald-400', glow: 'bg-emerald-500/10 dark:bg-emerald-500/20' };
+      case 'Note': return { icon: 'fa-note-sticky', color: 'amber', gradient: 'from-amber-400 to-orange-500', bg: 'bg-amber-50 dark:bg-amber-950/20', text: 'text-amber-600 dark:text-amber-400', glow: 'bg-amber-500/10 dark:bg-amber-500/20' };
+      default: return { icon: 'fa-clipboard-check', color: 'indigo', gradient: 'from-indigo-500 to-violet-600', bg: 'bg-indigo-50 dark:bg-indigo-950/20', text: 'text-indigo-600 dark:text-indigo-400', glow: 'bg-indigo-500/10 dark:bg-indigo-500/20' };
     }
   };
 
@@ -241,12 +230,13 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({
               className="group relative bg-white dark:bg-zinc-900 rounded-[2.5rem] border-2 border-zinc-50 dark:border-zinc-800 p-6 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 cursor-pointer overflow-hidden animate-in zoom-in-95"
               style={{ animationDelay: `${idx * 50}ms` }}
             >
-              {/* Type Accent Glow */}
-              <div className={`absolute top-0 right-0 w-24 h-24 bg-${config.color}-500 opacity-5 blur-3xl pointer-events-none`}></div>
+              {/* Type Accent Glow - Enhanced Background Glow */}
+              <div className={`absolute -inset-2 ${config.glow} opacity-30 blur-3xl pointer-events-none transition-all duration-700 group-hover:opacity-60 group-hover:scale-125`}></div>
+              <div className={`absolute top-0 right-0 w-32 h-32 bg-${config.color}-500 opacity-5 blur-3xl pointer-events-none group-hover:opacity-10`}></div>
               
-              <div className="flex flex-col h-full space-y-6">
+              <div className="flex flex-col h-full space-y-6 relative z-10">
                 <div className="flex justify-between items-start">
-                  <div className={`w-14 h-14 rounded-2xl ${config.bg} ${config.text} flex items-center justify-center text-2xl shadow-inner group-hover:rotate-6 transition-transform`}>
+                  <div className={`w-14 h-14 rounded-2xl ${config.bg} ${config.text} flex items-center justify-center text-2xl shadow-inner group-hover:rotate-6 group-hover:scale-110 transition-all duration-500`}>
                     <i className={`fa-solid ${config.icon}`}></i>
                   </div>
                   {!readOnly && (
@@ -295,14 +285,21 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({
         )}
       </div>
 
-      {/* 4. Preview Modal redesign */}
+      {/* 4. Document Preview Modal (Updated: Heavy Frosted Glass & Scrollable Background) */}
       {selectedDoc && (
         <div 
           className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-transparent pointer-events-none animate-in fade-in duration-300"
-          onClick={() => { setSelectedDoc(null); setIsRenaming(false); }}
+          aria-modal="true"
+          role="dialog"
         >
+          {/* Invisible Backdrop that allows scroll-through but blocks clicking unless specifically handled */}
           <div 
-            className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-3xl w-full max-w-md rounded-[3.5rem] overflow-hidden shadow-2xl border-4 border-white dark:border-zinc-950 animate-in zoom-in-95 duration-500 pointer-events-auto"
+            className="absolute inset-0 bg-zinc-900/5 backdrop-blur-[2px] pointer-events-auto"
+            onClick={() => { setSelectedDoc(null); setIsRenaming(false); }}
+          ></div>
+
+          <div 
+            className="bg-white/10 dark:bg-zinc-900/10 backdrop-blur-[80px] w-full max-w-[360px] rounded-[3.5rem] overflow-hidden shadow-[0_30px_70px_rgba(0,0,0,0.25)] border-[5px] border-white/30 dark:border-zinc-800/30 animate-in zoom-in-95 duration-500 pointer-events-auto relative z-10"
             onClick={e => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -321,7 +318,7 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({
                       onKeyDown={e => e.key === 'Enter' && saveRename()}
                     />
                   ) : (
-                    <h3 className="text-3xl font-lobster leading-tight">{selectedDoc.name}</h3>
+                    <h3 className="text-3xl font-lobster leading-tight">"{selectedDoc.name}"</h3>
                   )}
                </div>
                <button onClick={() => setSelectedDoc(null)} className="w-10 h-10 bg-black/10 hover:bg-black/20 rounded-full flex items-center justify-center transition-all">
@@ -337,35 +334,41 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({
                </div>
 
                {selectedDoc.mimeType?.startsWith('image/') && (
-                 <div className="relative group rounded-[2rem] overflow-hidden border-4 border-white dark:border-zinc-800 shadow-lg cursor-zoom-in" onClick={() => window.open(selectedDoc.fileUrl, '_blank')}>
-                    <img src={selectedDoc.fileUrl} className="w-full h-48 object-cover transition-transform duration-700 group-hover:scale-110" alt="Preview" />
+                 <div className="relative group rounded-[2rem] overflow-hidden border-4 border-white/20 dark:border-zinc-800/40 shadow-lg cursor-zoom-in" onClick={() => window.open(selectedDoc.fileUrl, '_blank')}>
+                    <img src={selectedDoc.fileUrl} className="w-full h-40 object-cover transition-transform duration-700 group-hover:scale-110" alt="Preview" />
                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-black text-[10px] uppercase tracking-widest">
-                       View Full Resolution
+                       Inspect Original
                     </div>
                  </div>
                )}
 
-               <div className="flex flex-col gap-3">
+               <div className="flex flex-col gap-4">
                   <button 
                     onClick={() => window.open(selectedDoc.fileUrl, '_blank')}
-                    className="w-full py-4 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all"
+                    className="w-full py-5 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-[1.75rem] font-black uppercase tracking-[0.2em] text-[10px] shadow-lg flex items-center justify-center gap-3 hover:scale-[1.02] hover:brightness-110 active:scale-95 transition-all"
                   >
                     <i className="fa-solid fa-file-export"></i> Open Medical File
                   </button>
                   
-                  <div className="grid grid-cols-2 gap-3">
-                    <ActionButton icon="share-nodes" label={shareStatus || "Share"} onClick={handleShare} color="indigo" />
-                    {!readOnly && <ActionButton icon="pen" label="Rename" onClick={() => { setNewName(selectedDoc.name); setIsRenaming(true); }} color="amber" />}
+                  <div className="grid grid-cols-1">
+                    {!readOnly && (
+                      <button 
+                        onClick={() => { setNewName(selectedDoc.name); setIsRenaming(true); }}
+                        className="w-full py-5 bg-orange-50/60 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 rounded-2xl font-black uppercase tracking-[0.15em] text-[10px] border-2 border-orange-100/30 dark:border-orange-900/30 flex items-center justify-center gap-2 hover:scale-[1.02] hover:bg-orange-100 dark:hover:bg-orange-900/40 active:scale-95 transition-all"
+                      >
+                        <i className="fa-solid fa-pen text-xs"></i> Rename Record
+                      </button>
+                    )}
                   </div>
 
                   {!readOnly && (
                     <button 
                       onClick={(e) => handleInitiateDelete(e, selectedDoc.id)}
                       disabled={isDeleting}
-                      className="w-full py-3 text-rose-500 font-black uppercase tracking-widest text-[9px] hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl transition-all flex items-center justify-center gap-2"
+                      className="w-full py-2 text-rose-500 font-black uppercase tracking-widest text-[9px] hover:text-rose-600 active:scale-95 transition-all flex items-center justify-center gap-2 group/shred"
                     >
-                      {isDeleting ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-trash-can"></i>}
-                      {isDeleting ? 'Purging...' : 'Permanently Shred Record'}
+                      {isDeleting ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-trash-can group-hover/shred:rotate-6"></i>}
+                      {isDeleting ? 'PURGING...' : 'PERMANENTLY SHRED RECORD'}
                     </button>
                   )}
                </div>
@@ -374,26 +377,34 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({
         </div>
       )}
 
-      {/* 5. Custom Confirmation Modal (Identity Shredder) */}
+      {/* 5. Custom Confirmation Modal (Identity Shredder - Heavy Frosted & Scrollable) */}
       {confirmDeleteId && (
         <div 
-          className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-black/40 dark:bg-black/60 backdrop-blur-md animate-in fade-in duration-300 pointer-events-auto"
-          onClick={cancelDelete}
+          className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-transparent pointer-events-none animate-in fade-in duration-300"
+          aria-modal="true"
+          role="alertdialog"
         >
+          {/* Transparent interaction layer to close on click outside and allow scrolling */}
           <div 
-            className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[3rem] p-10 shadow-2xl border-4 border-white dark:border-zinc-950 space-y-8 animate-in zoom-in-95 duration-500 text-center"
+            className="absolute inset-0 bg-black/5 pointer-events-auto"
+            onClick={cancelDelete}
+          ></div>
+
+          <div 
+            className="bg-black/30 dark:bg-black/40 backdrop-blur-[80px] w-full max-w-sm rounded-[3rem] p-10 shadow-[0_40px_100px_rgba(0,0,0,0.4)] border-4 border-zinc-800/40 space-y-8 animate-in zoom-in-95 duration-500 text-center pointer-events-auto relative z-10"
             onClick={e => e.stopPropagation()}
           >
             <div className="space-y-4">
-              <div className="w-20 h-20 bg-rose-100 dark:bg-rose-900/30 rounded-3xl flex items-center justify-center text-rose-500 text-4xl mx-auto shadow-lg animate-pulse">
-                <i className="fa-solid fa-trash-arrow-up"></i>
+              <div className="w-20 h-20 bg-rose-950/40 rounded-3xl flex items-center justify-center text-rose-500 text-4xl mx-auto shadow-inner relative border border-rose-500/20">
+                <i className="fa-solid fa-trash-can relative z-10 translate-y-[-2px]"></i>
+                <i className="fa-solid fa-arrow-up absolute top-3 text-xs opacity-80 animate-bounce"></i>
               </div>
-              <h3 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50">Shred Record?</h3>
-              <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed">
+              <h3 className="text-3xl font-lobster text-white">Shred Record?</h3>
+              <p className="text-sm font-bold text-zinc-300/80 leading-relaxed">
                 This will permanently remove this medical record from the sub-collection. This action cannot be undone.
               </p>
-              <div className="bg-zinc-50 dark:bg-zinc-800/50 p-2 rounded-xl text-[10px] font-mono text-zinc-400">
-                REF: {confirmDeleteId}
+              <div className="bg-white/5 p-3 rounded-2xl text-[9px] font-mono text-zinc-500 border border-white/5">
+                REF: <span className="text-zinc-400">{confirmDeleteId}</span>
               </div>
             </div>
 
@@ -401,21 +412,21 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({
               <button 
                 onClick={executePurge}
                 disabled={isDeleting}
-                className={`w-full py-5 bg-rose-500 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg shadow-rose-500/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 ${isDeleting ? 'opacity-50 cursor-wait' : ''}`}
+                className={`w-full py-5 bg-gradient-to-r from-[#FF4C6A] to-[#FF3E5D] text-white rounded-2xl font-black uppercase tracking-[0.15em] text-[10px] shadow-[0_10px_25px_rgba(255,76,106,0.3)] hover:scale-[1.02] hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 border-none ${isDeleting ? 'opacity-50 cursor-wait' : ''}`}
               >
                 {isDeleting ? (
                   <i className="fa-solid fa-spinner animate-spin"></i>
                 ) : (
-                  <i className="fa-solid fa-fire-flame-curved"></i>
+                  <i className="fa-solid fa-fire-flame-curved text-xs"></i>
                 )}
-                {isDeleting ? 'Shredding...' : 'Permanently Delete'}
+                {isDeleting ? 'SHREDDING...' : 'PERMANENTLY DELETE'}
               </button>
               <button 
                 onClick={cancelDelete}
                 disabled={isDeleting}
-                className="w-full py-5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-zinc-200 dark:hover:bg-zinc-700 active:scale-95 transition-all"
+                className="w-full py-5 bg-white/10 text-zinc-200 rounded-2xl font-black uppercase tracking-[0.15em] text-[10px] hover:bg-white/20 active:scale-95 transition-all border border-white/5"
               >
-                Cancel
+                CANCEL
               </button>
             </div>
           </div>
@@ -427,9 +438,9 @@ const DocumentsScreen: React.FC<DocumentsProps> = ({
 
 const StatMini: React.FC<{ label: string, count: number, color: string }> = ({ label, count, color }) => {
   const colors: any = {
-    rose: 'bg-rose-50 text-rose-500 border-rose-100 dark:bg-rose-900/20 dark:border-rose-800',
+    rose: 'bg-rose-50 text-rose-500 border-rose-100 dark:bg-rose-950/20 dark:border-rose-800',
     indigo: 'bg-indigo-50 text-indigo-500 border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800',
-    emerald: 'bg-emerald-50 text-emerald-500 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800',
+    emerald: 'bg-emerald-50 text-emerald-500 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-800',
   };
   return (
     <div className={`px-4 py-2 rounded-2xl border-2 shadow-sm flex items-center gap-3 transition-all hover:scale-105 ${colors[color]}`}>
@@ -440,8 +451,8 @@ const StatMini: React.FC<{ label: string, count: number, color: string }> = ({ l
 };
 
 const InfoPill: React.FC<{ label: string, value: string, icon: string }> = ({ label, value, icon }) => (
-  <div className="bg-zinc-50 dark:bg-zinc-800/40 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-    <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest flex items-center gap-1.5 mb-1">
+  <div className="bg-white/30 dark:bg-zinc-800/30 p-4 rounded-2xl border border-white/40 dark:border-zinc-700/30">
+    <p className="text-[8px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-widest flex items-center gap-1.5 mb-1">
       <i className={`fa-solid fa-${icon}`}></i> {label}
     </p>
     <p className="font-bold text-zinc-800 dark:text-zinc-200 text-sm truncate">{value}</p>
@@ -450,11 +461,11 @@ const InfoPill: React.FC<{ label: string, value: string, icon: string }> = ({ la
 
 const ActionButton: React.FC<{ icon: string, label: string, onClick: (e: React.MouseEvent) => void, color: string }> = ({ icon, label, onClick, color }) => {
   const colors: any = {
-    indigo: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800 hover:bg-indigo-100',
-    amber: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800 hover:bg-amber-100',
+    indigo: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/40',
+    amber: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800/40 hover:bg-amber-100 dark:hover:bg-amber-900/40',
   };
   return (
-    <button onClick={onClick} className={`flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl border-2 transition-all active:scale-95 ${colors[color]}`}>
+    <button onClick={onClick} className={`flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl border-2 transition-all hover:scale-[1.02] active:scale-95 ${colors[color]}`}>
       <i className={`fa-solid fa-${icon} text-base`}></i>
       <span className="text-[8px] font-black uppercase tracking-widest">{label}</span>
     </button>

@@ -84,10 +84,12 @@ const App: React.FC = () => {
 
     // Daily Reset Logic
     if (data.checklist?.lastReset) {
-      const lastResetDate = new Date(data.checklist.lastReset).toDateString();
+      // FIX: Use consistent format (YYYY-MM-DD) for comparison
+      const lastResetDate = data.checklist.lastReset.split('T')[0];
       const todayDate = new Date().toISOString().split('T')[0];
 
       if (lastResetDate !== todayDate) {
+        console.log(`[Hydration] New day detected (${todayDate} vs ${lastResetDate}). Resetting tasks...`);
         const resetChecklist = { 
           food: false, water: false, walk: false, medication: false, lastReset: new Date().toISOString() 
         };
@@ -97,6 +99,8 @@ const App: React.FC = () => {
 
         data.checklist = resetChecklist;
         data.routines = resetRoutines;
+      } else {
+        console.log(`[Hydration] Today's progress is already synced (${todayDate}). Persistence maintained.`);
       }
     }
 

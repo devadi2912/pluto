@@ -141,8 +141,9 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center relative z-10 gap-6">
           <div className="flex items-center gap-6">
             <div className="relative group/avatar cursor-pointer">
-              <img src={pet.avatar} className={`w-16 h-16 md:w-20 md:h-20 rounded-[1.75rem] border-4 shadow-2xl transition-transform duration-500 ${isCelebration ? 'border-white animate-spring-jump' : 'border-white/10 group-hover/avatar:rotate-6'}`} alt="Pet" />
-              {isCelebration && <div className="absolute -top-2 -right-2 text-2xl animate-bounce">👑</div>}
+              <div className="absolute inset-0 bg-white/20 blur-xl rounded-full scale-110 opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-500"></div>
+              <img src={pet.avatar} className={`w-16 h-16 md:w-20 md:h-20 rounded-[1.75rem] border-4 shadow-2xl transition-all duration-500 object-cover relative z-10 ${isCelebration ? 'border-white animate-spring-jump' : 'border-white/10 group-hover/avatar:rotate-6 group-hover/avatar:scale-105'}`} alt="Pet" />
+              {isCelebration && <div className="absolute -top-2 -right-2 text-2xl animate-bounce z-20">👑</div>}
             </div>
             <div>
               <h2 className="text-3xl md:text-4xl font-lobster tracking-wide">
@@ -158,7 +159,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className="mt-8 md:mt-12 relative z-10">
           <div className="flex justify-between items-end mb-3 px-1">
              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Care Progress</span>
-             <span className={`text-3xl font-black drop-shadow-[0_0_10px_rgba(249,115,22,0.3)] ${isCelebration ? 'text-white' : 'text-orange-500'}`}>{progressPercent}%</span>
+             <span className={`text-3xl font-black drop-shadow-[0_0_10px_rgba(249,115,22,0.3)] ${isCelebration ? 'text-white' : 'text-orange-50'}`}>{progressPercent}%</span>
           </div>
           <div className="bg-zinc-900/50 h-6 md:h-8 rounded-full overflow-hidden p-1 border border-white/10 shadow-inner">
             <div 
