@@ -84,7 +84,6 @@ const App: React.FC = () => {
 
     // Daily Reset Logic
     if (data.checklist?.lastReset) {
-      // FIX: Use consistent format (YYYY-MM-DD) for comparison
       const lastResetDate = data.checklist.lastReset.split('T')[0];
       const todayDate = new Date().toISOString().split('T')[0];
 
@@ -193,26 +192,13 @@ const App: React.FC = () => {
   };
 
   const handleDeleteDocument = async (id: string) => {
-    console.log(`[App] handleDeleteDocument: Triggered for ID ${id}`);
-    
     if (user?.role !== 'PET_OWNER' || !user?.id) {
-      console.warn("[App] handleDeleteDocument: Permission denied or User ID missing.");
       alert("Permission Denied: Only pet owners can manage the Document Safe.");
       return;
     }
-
-    console.log("[App] handleDeleteDocument: Calling API.deleteDocument...");
     const success = await api.deleteDocument(user.id, id);
-    
     if (success) {
-      console.log("[App] handleDeleteDocument: API reported success. Updating local state...");
-      setDocuments(prev => {
-        const filtered = prev.filter(d => d.id !== id);
-        console.log(`[App] handleDeleteDocument: UI State updated. Removed 1 item. New count: ${filtered.length}`);
-        return filtered;
-      });
-    } else {
-      console.error("[App] handleDeleteDocument: API reported failure.");
+      setDocuments(prev => prev.filter(d => d.id !== id));
     }
   };
 
@@ -243,10 +229,8 @@ const App: React.FC = () => {
   const handleDeleteClinicalNote = async (id: string) => {
     const targetUid = user?.role === 'PET_OWNER' ? user.id : pet?.id?.replace('PET-', '');
     if (!targetUid) return;
-    
     setDoctorNotes(prev => prev.filter(n => n.id !== id));
     setClinicalNotes(prev => prev.filter(n => n.id !== id));
-
     try {
       await api.deleteDoctorNote(targetUid, id);
     } catch (e) {
@@ -281,6 +265,7 @@ const App: React.FC = () => {
           routine={routine} onAddRoutine={handleAddRoutine} onUpdateRoutine={handleUpdateRoutine}
           onDeleteRoutine={handleDeleteRoutine} onCompleteReminder={handleCompleteReminder} 
           timeline={timeline} dailyLogs={dailyLogs} onUpdateLog={handleUpdateLog} 
+          onUpdatePet={handleUpdatePet}
           doctorNotes={doctorNotes} onDeleteNote={handleDeleteClinicalNote}
         />
       );

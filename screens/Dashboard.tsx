@@ -1,7 +1,8 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { PetProfile, Reminder, DailyChecklist, RoutineItem, TimelineEntry, DailyLog, DoctorNote } from '../types';
 import { HealthTrends } from '../components/HealthTrends';
+import { api } from '../lib/api';
 
 interface DashboardProps {
   pet: PetProfile;
@@ -16,6 +17,7 @@ interface DashboardProps {
   timeline: TimelineEntry[];
   dailyLogs: Record<string, DailyLog>;
   onUpdateLog: (date: string, data: Partial<DailyLog>) => void;
+  onUpdatePet?: (updated: PetProfile) => Promise<void>;
   doctorNotes?: DoctorNote[];
   onDeleteNote?: (id: string) => void;
   readOnly?: boolean;
@@ -34,6 +36,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   timeline,
   dailyLogs,
   onUpdateLog,
+  onUpdatePet,
   doctorNotes = [],
   onDeleteNote,
   readOnly = false
@@ -41,6 +44,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [showAddRoutine, setShowAddRoutine] = useState(false);
   const [showLogModal, setShowLogModal] = useState(false);
   const [editingRoutine, setEditingRoutine] = useState<RoutineItem | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const today = new Date().toISOString().split('T')[0];
   
@@ -62,6 +67,28 @@ const Dashboard: React.FC<DashboardProps> = ({
   const toggleRoutine = (item: RoutineItem) => {
     if (readOnly) return;
     onUpdateRoutine?.(item.id, { completed: !item.completed });
+  };
+
+  const handleAvatarClick = () => {
+    if (readOnly || isUploadingAvatar) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onUpdatePet) return;
+
+    setIsUploadingAvatar(true);
+    try {
+      const { url } = await api.uploadFile(file);
+      const updatedPet = { ...pet, avatar: url };
+      await onUpdatePet(updatedPet);
+    } catch (err) {
+      console.error("Avatar sync failed:", err);
+      alert("Failed to update identity photo.");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
   };
 
   const handleAddRoutine = () => {
@@ -122,6 +149,15 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="p-5 md:p-10 space-y-10 animate-in fade-in duration-700 pb-44 no-scrollbar">
+      {/* Hidden File Input for Avatar */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        className="hidden" 
+        accept="image/*" 
+        onChange={handleAvatarFileChange} 
+      />
+
       {/* Hero Card */}
       <section className={`rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl relative overflow-hidden group border transition-all duration-1000 ${isCelebration ? 'bg-gradient-to-br from-indigo-600 to-purple-600 border-indigo-400/50' : 'bg-zinc-950 border-zinc-800'}`}>
         {/* Ambient Glow */}
@@ -140,9 +176,29 @@ const Dashboard: React.FC<DashboardProps> = ({
         
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center relative z-10 gap-6">
           <div className="flex items-center gap-6">
-            <div className="relative group/avatar cursor-pointer">
+            <div 
+              className="relative group/avatar cursor-pointer outline-none" 
+              onClick={handleAvatarClick}
+              title={readOnly ? pet.name : "Click to change identity photo"}
+            >
               <div className="absolute inset-0 bg-white/20 blur-xl rounded-full scale-110 opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-500"></div>
-              <img src={pet.avatar} className={`w-16 h-16 md:w-20 md:h-20 rounded-[1.75rem] border-4 shadow-2xl transition-all duration-500 object-cover relative z-10 ${isCelebration ? 'border-white animate-spring-jump' : 'border-white/10 group-hover/avatar:rotate-6 group-hover/avatar:scale-105'}`} alt="Pet" />
+              
+              <div className="relative w-16 h-16 md:w-20 md:h-20 overflow-hidden rounded-[1.75rem] border-4 shadow-2xl transition-all duration-500 z-10 group-hover/avatar:rotate-6 group-hover/avatar:scale-105 border-white/10">
+                {isUploadingAvatar && (
+                  <div className="absolute inset-0 z-20 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                    <i className="fa-solid fa-spinner animate-spin text-white"></i>
+                  </div>
+                )}
+                <img src={pet.avatar} className={`w-full h-full object-cover transition-all duration-500 ${isCelebration ? 'animate-spring-jump' : ''}`} alt="Pet" />
+                
+                {/* Hover Camera Icon */}
+                {!readOnly && (
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center">
+                    <i className="fa-solid fa-camera text-white text-lg"></i>
+                  </div>
+                )}
+              </div>
+              
               {isCelebration && <div className="absolute -top-2 -right-2 text-2xl animate-bounce z-20">👑</div>}
             </div>
             <div>
