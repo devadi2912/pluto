@@ -18,6 +18,7 @@ interface PriorityItemData {
   type: string;
   color: string;
   targetId: string;
+  patientName: string;
 }
 
 interface DoctorDashboardProps {
@@ -87,80 +88,166 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [noteContent, setNoteContent] = useState('');
   
-  const [visitedPatientIds, setVisitedPatientIds] = useState<Set<string>>(new Set());
+  const [visitedPatients, setVisitedPatients] = useState<any[]>([]);
   const [priorityItems, setPriorityItems] = useState<PriorityItemData[]>([]);
 
-  const handleSearch = async (id?: string | any) => {
-    const query = typeof id === 'string' ? id : searchId;
-    const targetId = query.toUpperCase();
+  // State to hold the data of the patient we searched for
+  const [searchedPatientData, setSearchedPatientData] = useState<any>(null);
+
+  // Determine which dataset to use: The one passed from App (default) or the one we just searched for
+  const activePatientData = searchedPatientData || petData;
+  const activeDailyLogs = searchedPatientData ? searchedPatientData.dailyLogs : dailyLogs;
+  const activeDoctorNotes = searchedPatientData ? searchedPatientData.doctorNotes : doctorNotes;
+  const activeConsultedDoctors = searchedPatientData ? searchedPatientData.medicalNetworks : consultedDoctors;
+
+  // Fetch visited patients and their synced alerts on mount and refresh
+  const fetchDashboardData = async () => {
+    if (!doctor.id) return;
+    const records = await api.getDoctorVisitedPatients(doctor.id);
+    setVisitedPatients(records);
     
-    if (targetId.startsWith('PET-')) {
-      setVisitedPatientIds(prev => new Set([...Array.from(prev), targetId]));
+    // Process alerts from all visited patients
+    const allAlerts: PriorityItemData[] = [];
+    records.forEach((record: any) => {
+      if (record.alerts && Array.isArray(record.alerts)) {
+        record.alerts.forEach((alert: any) => {
+          allAlerts.push({
+             id: alert.id,
+             title: alert.title,
+             detail: `For ${record.petName} • ${new Date(alert.date).toLocaleDateString()}`,
+             type: alert.type,
+             color: 'bg-rose-100',
+             targetId: record.id,
+             patientName: record.petName
+          });
+        });
+      }
+    });
+    
+    // Sort by most urgent (could sort by date here if needed)
+    setPriorityItems(allAlerts.sort((a, b) => new Date(a.detail.split('•')[1]).getTime() - new Date(b.detail.split('•')[1]).getTime()));
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [doctor.id]);
+
+  const handleSearch = async (id?: string | any) => {
+    // Preserve case for the UID part, but check prefix case-insensitively
+    const rawInput = (typeof id === 'string' ? id : searchId).trim();
+    
+    // 1. Validate Format
+    if (!rawInput.toUpperCase().startsWith('PET-')) {
+      console.log("id is incorrect");
+      alert("Invalid ID format. Must start with PET-");
+      return;
+    }
+
+    // Extract UID by removing the first 4 characters "PET-" (case insensitive length is 4)
+    const uid = rawInput.substring(4);
+
+    try {
+      // 2. Search Database
+      const userProfile = await api.getUserProfile(uid);
       
-      if (doctor.doctorDetails?.id) {
-         await api.logDoctorVisit(targetId, doctor.doctorDetails.id);
-      }
+      if (userProfile && userProfile.petDetails) {
+         console.log("pet id found");
 
-      if (onVisitPatient) {
-        onVisitPatient(targetId);
-      }
+         // 3. Fetch Full Records
+         const records = await api.getPetRecords(uid);
+         
+         if (records) {
+            const fullData = {
+              pet: userProfile.petDetails,
+              timeline: records.timeline,
+              documents: records.documents,
+              checklist: records.checklist,
+              routine: records.routines,
+              reminders: records.reminders,
+              dailyLogs: records.dailyLogs,
+              doctorNotes: records.doctorNotes,
+              medicalNetworks: records.medicalNetworks
+            };
 
-      if (targetId === petData.pet.id) {
-        const newItems: PriorityItemData[] = petData.reminders
-          .filter(r => !r.completed)
-          .map(r => ({
-            id: `p-${r.id}-${Date.now()}`,
-            title: `${petData.pet.name}'s ${r.type}`,
-            detail: `Due: ${r.title}`,
-            type: "Urgent",
-            color: "bg-rose-100",
-            targetId: targetId
-          }))
-          .filter(newItem => !priorityItems.some(existing => existing.title === newItem.title));
-        
-        setPriorityItems(prev => [...prev, ...newItems]);
+            setSearchedPatientData(fullData);
+            
+            // Standardize ID
+            const standardId = `PET-${uid}`;
+            
+            // Log visit in backend and SYNC ALERTS
+            // FIX: Pass doctor.id (UID) instead of doctorDetails.id so collection is created in the correct user profile
+            if (doctor.id) {
+               await api.logDoctorVisit(standardId, doctor.id);
+               // Refresh dashboard data to pull in new synced alerts
+               await fetchDashboardData();
+            }
+
+            setIsViewingPatient(true);
+         } else {
+            console.log("id is incorrect"); // Profile exists but no records (rare edge case)
+            alert("Patient profile exists but records are unavailable.");
+         }
       } else {
-        const mockItem: PriorityItemData = {
-          id: `p-${targetId}-${Date.now()}`,
-          title: `${targetId.split('-')[1] || 'Patient'}'s Follow-up`,
-          detail: "Check recent lab reports",
-          type: "Review",
-          color: "bg-rose-100",
-          targetId: targetId
-        };
-        setPriorityItems(prev => [...prev, mockItem]);
+         console.log("id is incorrect");
+         alert("No patient found with this ID.");
       }
-
-      setIsViewingPatient(true);
-    } else {
-      alert("Please enter a valid Pet ID starting with PET-");
+    } catch (e) {
+      console.log("id is incorrect");
+      console.error("Search failed:", e);
+      alert("An error occurred while searching.");
     }
   };
 
-  const handleLeaveNote = () => {
-    if (!noteContent.trim()) return;
+  const handleLeaveNote = async () => {
+    if (!noteContent.trim() || !activePatientData.pet.id) return;
+    
     const newNote: DoctorNote = {
       id: Date.now().toString(),
       doctorId: doctor.doctorDetails?.id || doctor.id,
       doctorName: doctor.doctorDetails?.name || 'Veterinarian',
-      petId: petData.pet.id,
+      petId: activePatientData.pet.id,
       date: new Date().toISOString(),
       content: noteContent
     };
-    onAddNote(newNote);
+
+    // If we are looking at a searched patient, we must call the API directly
+    if (searchedPatientData) {
+        const patientUid = activePatientData.pet.id.replace('PET-', '');
+        await api.addDoctorNote(patientUid, newNote);
+        setSearchedPatientData((prev: any) => ({
+            ...prev,
+            doctorNotes: [newNote, ...prev.doctorNotes]
+        }));
+    } else {
+        onAddNote(newNote);
+    }
+
     setShowNoteModal(false);
     setNoteContent('');
     alert("Advice logged for pet owner!");
   };
 
-  const removePriorityItem = (id: string, e: React.MouseEvent) => {
+  const handleDismissAlert = async (e: React.MouseEvent, item: PriorityItemData) => {
     e.stopPropagation();
-    setPriorityItems(prev => prev.filter(item => item.id !== id));
+    if (!doctor.id) return;
+    
+    // Optimistic Update
+    setPriorityItems(prev => prev.filter(i => i.id !== item.id));
+
+    try {
+       await api.deleteDoctorAlert(doctor.id, item.targetId, item.id);
+    } catch (err) {
+       console.error("Failed to dismiss alert:", err);
+       fetchDashboardData();
+    }
   };
 
   const handleHomeClick = () => {
     setActiveTab('discover');
     setIsViewingPatient(false);
+    setSearchedPatientData(null); 
+    // Refresh alerts when returning home
+    fetchDashboardData();
   };
 
   const renderPetView = () => (
@@ -170,20 +257,29 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
           <button onClick={() => setIsViewingPatient(false)} className="w-10 h-10 flex items-center justify-center hover:bg-white/20 rounded-2xl transition-all">
             <i className="fa-solid fa-arrow-left"></i>
           </button>
-          <span className="font-bold text-sm tracking-tight">{petData.pet.name}</span>
+          <span className="font-bold text-sm tracking-tight">{activePatientData.pet.name}</span>
         </div>
-        <button onClick={() => setShowNoteModal(true)} className="bg-white/20 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">
-           <i className="fa-solid fa-pen-fancy mr-2"></i>Note
-        </button>
+        <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setDarkMode(!darkMode)} 
+              className="w-10 h-10 flex items-center justify-center bg-white/20 hover:bg-white/30 rounded-xl transition-all active:scale-90"
+              title="Toggle Theme"
+            >
+               <i className={`fa-solid ${darkMode ? 'fa-sun' : 'fa-moon'}`}></i>
+            </button>
+            <button onClick={() => setShowNoteModal(true)} className="bg-white/20 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest h-10 flex items-center">
+               <i className="fa-solid fa-pen-fancy mr-2"></i>Note
+            </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar relative h-full">
         <div className="hidden md:flex items-center justify-between p-8 border-b border-zinc-100 dark:border-zinc-800 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl">
            <div className="flex items-center gap-4">
-              <img src={petData.pet.avatar} className="w-16 h-16 rounded-2xl border-4 border-white dark:border-zinc-800 shadow-lg" alt="avatar" />
+              <img src={activePatientData.pet.avatar} className="w-16 h-16 rounded-2xl border-4 border-white dark:border-zinc-800 shadow-lg" alt="avatar" />
               <div>
-                 <h2 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide">{petData.pet.name}</h2>
-                 <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">{petData.pet.id} • Medical File</p>
+                 <h2 className="text-3xl font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide">{activePatientData.pet.name}</h2>
+                 <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">{activePatientData.pet.id} • Medical File</p>
               </div>
            </div>
         </div>
@@ -191,50 +287,49 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         <div className="relative md:p-10 pb-44 md:pb-12">
           {patientSubTab === 'profile' && (
             <Dashboard 
-              pet={petData.pet} 
-              reminders={petData.reminders} 
-              checklist={petData.checklist} 
+              pet={activePatientData.pet} 
+              reminders={activePatientData.reminders} 
+              checklist={activePatientData.checklist} 
               setChecklist={() => {}} 
-              routine={petData.routine} 
-              // Fix: Removed non-existent 'setRoutine' prop
+              routine={activePatientData.routine} 
               onCompleteReminder={() => {}} 
-              timeline={petData.timeline} 
-              dailyLogs={dailyLogs} 
+              timeline={activePatientData.timeline} 
+              dailyLogs={activeDailyLogs} 
               onUpdateLog={() => {}} 
-              doctorNotes={doctorNotes}
+              doctorNotes={activeDoctorNotes}
               onDeleteNote={onDeleteNote}
               readOnly={true}
             />
           )}
           {patientSubTab === 'timeline' && (
             <TimelineScreen 
-              timeline={petData.timeline} 
+              timeline={activePatientData.timeline} 
               setTimeline={() => {}} 
-              documents={petData.documents} 
-              reminders={petData.reminders} 
+              documents={activePatientData.documents} 
+              reminders={activePatientData.reminders} 
               setReminders={() => {}} 
-              dailyLogs={dailyLogs} 
+              dailyLogs={activeDailyLogs} 
               onUpdateLog={() => {}} 
-              petName={petData.pet.name} 
-              doctorNotes={doctorNotes}
+              petName={activePatientData.pet.name} 
+              doctorNotes={activeDoctorNotes}
               onDeleteNote={onDeleteNote}
-              consultedDoctors={consultedDoctors}
+              consultedDoctors={activeConsultedDoctors}
               readOnly={true}
             />
           )}
           {patientSubTab === 'docs' && (
             <DocumentsScreen 
-              documents={petData.documents} 
+              documents={activePatientData.documents} 
               setDocuments={() => {}} 
-              petName={petData.pet.name} 
+              petName={activePatientData.pet.name} 
               readOnly={true}
             />
           )}
           {patientSubTab === 'identity' && (
             <ProfileScreen 
-              pet={petData.pet} 
+              pet={activePatientData.pet} 
               setPet={() => {}} 
-              reminders={petData.reminders} 
+              reminders={activePatientData.reminders} 
               readOnly={true}
             />
           )}
@@ -263,7 +358,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
               <div className="flex justify-between items-center mb-6">
                  <div>
                     <h4 className="font-lobster text-3xl text-indigo-600 dark:text-indigo-400">Clinical Advice</h4>
-                    <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mt-1">Direct note to {petData.pet.name}'s Family</p>
+                    <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mt-1">Direct note to {activePatientData.pet.name}'s Family</p>
                  </div>
                  <button onClick={() => setShowNoteModal(false)} className="w-10 h-10 rounded-full bg-white/40 dark:bg-zinc-800/40 text-zinc-500 hover:text-rose-500 transition-all border border-zinc-200 dark:border-zinc-700">
                     <i className="fa-solid fa-xmark"></i>
@@ -350,11 +445,11 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
           <>
              <div className="flex flex-col items-center text-center mb-10 animate-in slide-in-from-left-4 duration-500">
                 <div className="w-24 h-24 rounded-[2rem] p-1 bg-gradient-to-tr from-indigo-500 to-rose-500 shadow-xl mb-4">
-                   <img src={petData.pet.avatar} className="w-full h-full object-cover rounded-[1.8rem] border-4 border-white dark:border-zinc-900" alt="pet" />
+                   <img src={activePatientData.pet.avatar} className="w-full h-full object-cover rounded-[1.8rem] border-4 border-white dark:border-zinc-900" alt="pet" />
                 </div>
-                <h2 className="text-2xl font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide">{petData.pet.name}</h2>
+                <h2 className="text-2xl font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide">{activePatientData.pet.name}</h2>
                 <div className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-full mt-2">
-                   <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">{petData.pet.id}</p>
+                   <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">{activePatientData.pet.id}</p>
                 </div>
              </div>
 
@@ -403,7 +498,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                       </div>
                    </button>
                    <button
-                      onClick={() => setIsViewingPatient(false)}
+                      onClick={() => { setIsViewingPatient(false); setSearchedPatientData(null); fetchDashboardData(); }}
                       className="flex-1 flex items-center justify-center h-14 rounded-2xl bg-rose-50 dark:bg-rose-950/20 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-all hover:scale-110 active:scale-90"
                       title="Exit Patient Record"
                    >
@@ -463,15 +558,22 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {priorityItems.length > 0 ? priorityItems.map(item => (
                           <div key={item.id} className="bg-rose-100 dark:bg-rose-900/30 p-5 rounded-[1.5rem] relative group animate-in slide-in-from-bottom-2 border-none shadow-sm">
+                            <button 
+                                onClick={(e) => handleDismissAlert(e, item)}
+                                className="absolute top-5 right-14 w-8 h-8 bg-white/60 dark:bg-zinc-800/40 rounded-full flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all opacity-0 group-hover:opacity-100 z-10 active:scale-90"
+                                title="Mark Resolved"
+                            >
+                                <i className="fa-solid fa-check"></i>
+                            </button>
                             <div className="flex justify-between items-start">
                                 <div>
                                     <span className="text-[9px] font-black uppercase tracking-widest text-rose-500 mb-1 block">URGENT</span>
                                     <h4 className="font-lobster text-xl text-rose-600 dark:text-rose-400">{item.title}</h4>
                                     <p className="text-[11px] font-bold text-rose-800/60 dark:text-rose-200/60 mt-0.5">{item.detail}</p>
                                 </div>
-                                <button onClick={(e) => removePriorityItem(item.id, e)} className="w-6 h-6 rounded-full bg-rose-200 dark:bg-rose-800 text-rose-500 dark:text-rose-300 flex items-center justify-center hover:bg-rose-300 transition-colors">
-                                     <i className="fa-solid fa-xmark text-[10px]"></i>
-                                </button>
+                                <div className="w-8 h-8 rounded-full bg-rose-200 dark:bg-rose-800 text-rose-500 dark:text-rose-300 flex items-center justify-center">
+                                     <i className={`fa-solid ${item.type === 'Medication' ? 'fa-pills' : item.type === 'Vaccination' ? 'fa-syringe' : 'fa-clock'} text-xs`}></i>
+                                </div>
                             </div>
                           </div>
                         )) : (
@@ -485,7 +587,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                   </div>
 
                   <div className="lg:col-span-4 flex flex-col gap-6">
-                    <button className="relative h-48 rounded-[3rem] p-8 text-left transition-all duration-300 hover:scale-[1.02] active:scale-95 overflow-hidden group border-2 border-transparent hover:border-indigo-400 hover:shadow-[0_0_30px_rgba(99,102,241,0.3)] bg-indigo-50/80 dark:bg-indigo-950/20 w-full">
+                    <button onClick={() => setActiveTab('patients')} className="relative h-48 rounded-[3rem] p-8 text-left transition-all duration-300 hover:scale-[1.02] active:scale-95 overflow-hidden group border-2 border-transparent hover:border-indigo-400 hover:shadow-[0_0_30px_rgba(99,102,241,0.3)] bg-indigo-50/80 dark:bg-indigo-950/20 w-full">
                         <div className="absolute -right-6 -bottom-6 text-[10rem] opacity-[0.03] rotate-12 group-hover:rotate-[20deg] transition-transform text-indigo-900 dark:text-indigo-100 pointer-events-none">
                             <i className="fa-solid fa-user-clock"></i>
                         </div>
@@ -497,7 +599,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                             <div>
                                 <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400/80 mb-2">Active Patients</p>
                                 <div className="flex flex-col">
-                                    <span className="text-3xl font-lobster text-indigo-600 dark:text-indigo-300">{visitedPatientIds.size} Accessed</span>
+                                    <span className="text-3xl font-lobster text-indigo-600 dark:text-indigo-300">{visitedPatients.length} Accessed</span>
                                     <span className="text-[10px] font-bold text-indigo-400/70 mt-1">Session History</span>
                                 </div>
                             </div>
@@ -528,8 +630,8 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
             )}
             {activeTab === 'patients' && (
               <DoctorPatientsScreen 
-                patients={Array.from(visitedPatientIds).map(id => ({ id, name: id.split('-')[1] || 'Patient', breed: 'N/A' }))} 
-                onSelectPatient={(id) => handleSearch(id)} 
+                patients={visitedPatients.map(p => ({ id: p.id, name: p.petName, breed: p.breed, avatar: p.petAvatar }))} 
+                onSelectPatient={(id) => handleSearch(id.startsWith('PET-') ? id : `PET-${id}`)} 
               />
             )}
             {activeTab === 'profile' && (

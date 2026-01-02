@@ -2,7 +2,7 @@
 import { AuthUser, PetProfile, TimelineEntry, PetDocument, Reminder, DoctorNote, DailyLog, DailyChecklist, RoutineItem, Doctor, Species, Gender } from '../types';
 import { auth, db } from './firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendEmailVerification, sendPasswordResetEmail, deleteUser } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc, deleteDoc, arrayUnion } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, deleteDoc, arrayUnion, collection, getDocs } from 'firebase/firestore';
 
 /**
  * Sanitizes objects for Firestore by removing undefined fields recursively.
@@ -353,25 +353,83 @@ class ApiClient {
     await updateDoc(this.userDoc(uid), { documents: sanitize(filtered) });
   }
 
+  // --- Doctor & Patient Visit Logic ---
+
   async logDoctorVisit(petId: string, doctorId: string) {
     const uid = petId.replace('PET-', '');
-    // Fetch doctor details to add to pet's medical network
+    
+    // 1. Fetch Pet Profile & Journal to sync data to Doctor's view
+    const [petSnap, journalSnap] = await Promise.all([
+       getDoc(this.userDoc(uid)),
+       getDoc(this.journalDoc(uid))
+    ]);
+
+    if (petSnap.exists()) {
+       const petDetails = petSnap.data().petDetails;
+       const journalData = journalSnap.exists() ? journalSnap.data() : {};
+       const reminders: Reminder[] = journalData.plannedCare || [];
+       
+       // Filter for upcoming/incomplete reminders to populate Priority Alerts
+       const alerts = reminders.filter(r => !r.completed);
+
+       // 2. Save Patient data and Alerts to Doctor's subcollection "pet_visits"
+       // Path: users/{doctorId}/pet_visits/{petId}
+       // Using passed doctorId (which should be UID) ensures this collection lives in the root user doc.
+       const visitedRef = doc(db, 'users', doctorId, 'pet_visits', petId);
+       
+       await setDoc(visitedRef, {
+          id: petId,
+          petName: petDetails?.name || 'Unknown Patient',
+          petAvatar: petDetails?.avatar || '',
+          breed: petDetails?.breed || '',
+          species: petDetails?.species || '',
+          alerts: sanitize(alerts), // The Priority Alerts Array
+          lastVisited: new Date().toISOString()
+       });
+    }
+
+    // 3. Update Pet's Record (Add Doctor to their network)
     const docSnap = await getDoc(this.userDoc(doctorId));
+    let officialDocId = doctorId; // Default to UID
+
     if (docSnap.exists()) {
       const docData = docSnap.data().doctorDetails;
       if (docData) {
-        // Add doctor to medicalNetworks array in pet's journal
-        const journalRef = this.journalDoc(uid);
-        const journalSnap = await getDoc(journalRef);
-        const currentNetwork = journalSnap.exists() ? (journalSnap.data().medicalNetworks || []) : [];
-        
-        // Prevent duplicates
-        if (!currentNetwork.find((d: any) => d.id === docData.id)) {
-           await setDoc(journalRef, { medicalNetworks: arrayUnion(sanitize(docData)) }, { merge: true });
-        }
+         officialDocId = docData.id || doctorId; // Use professional ID (DOC-...) if available for display
+         const journalRef = this.journalDoc(uid);
+         const currentNetwork = journalSnap.exists() ? (journalSnap.data().medicalNetworks || []) : [];
+         if (!currentNetwork.find((d: any) => d.id === docData.id)) {
+            await setDoc(journalRef, { medicalNetworks: arrayUnion(sanitize(docData)) }, { merge: true });
+         }
       }
     }
-    await updateDoc(this.userDoc(uid), { lastDoctorVisit: new Date().toISOString(), lastDoctorId: doctorId });
+    
+    // 4. Update Timestamp on Pet's Profile
+    // We store the "official" ID so the Pet Dashboard displays "DOC-..." correctly.
+    await updateDoc(this.userDoc(uid), { lastDoctorVisit: new Date().toISOString(), lastDoctorId: officialDocId });
+  }
+
+  async deleteDoctorAlert(doctorId: string, petId: string, alertId: string) {
+    const visitRef = doc(db, 'users', doctorId, 'pet_visits', petId);
+    const snap = await getDoc(visitRef);
+    if (!snap.exists()) return;
+
+    const data = snap.data();
+    const currentAlerts = data.alerts || [];
+    const updatedAlerts = currentAlerts.filter((a: any) => a.id !== alertId);
+
+    await updateDoc(visitRef, { alerts: updatedAlerts });
+  }
+
+  async getDoctorVisitedPatients(doctorId: string) {
+    try {
+      const colRef = collection(db, 'users', doctorId, 'pet_visits');
+      const snap = await getDocs(colRef);
+      return snap.docs.map(doc => doc.data());
+    } catch (e) {
+      console.error("Error fetching visited patients:", e);
+      return [];
+    }
   }
 
   async updateDoctorProfile(uid: string, updates: Partial<Doctor>): Promise<Doctor> {

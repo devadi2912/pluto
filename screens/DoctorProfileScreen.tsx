@@ -76,7 +76,19 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500 pb-44 max-w-7xl mx-auto px-4 sm:px-6">
-      
+      <style>{`
+        @keyframes float-slow {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-8px) rotate(2deg); }
+        }
+        @keyframes heartbeat-slow {
+          0%, 100% { transform: scale(1); opacity: 0.8; }
+          50% { transform: scale(1.05); opacity: 1; }
+        }
+        .animate-float-slow { animation: float-slow 4s ease-in-out infinite; }
+        .animate-heartbeat-slow { animation: heartbeat-slow 3s ease-in-out infinite; }
+      `}</style>
+
       {/* Header / Action Bar */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
@@ -106,19 +118,30 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
         
         {/* Left Column: Avatar Card & Status */}
         <div className="lg:col-span-4 space-y-6">
-           <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl p-8 rounded-[3rem] border border-white dark:border-zinc-800 shadow-2xl flex flex-col items-center text-center relative overflow-hidden group">
+           <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl p-8 rounded-[3rem] border border-white dark:border-zinc-800 shadow-2xl flex flex-col items-center text-center relative overflow-hidden group hover:shadow-emerald-500/10 transition-shadow duration-500">
               <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-emerald-500/10 to-transparent"></div>
               
+              {/* Decorative floating icons */}
+              <div className="absolute top-10 left-8 text-emerald-200/50 text-2xl animate-float-slow" style={{ animationDelay: '0s' }}>
+                 <i className="fa-solid fa-notes-medical"></i>
+              </div>
+              <div className="absolute top-20 right-8 text-teal-200/50 text-xl animate-float-slow" style={{ animationDelay: '1.5s' }}>
+                 <i className="fa-solid fa-pills"></i>
+              </div>
+
               <div className="relative mb-6 mt-4 cursor-pointer" onClick={toggleStatus}>
-                 <div className="w-48 h-48 bg-gradient-to-tr from-emerald-400 to-teal-500 rounded-[2.5rem] flex items-center justify-center text-white text-7xl shadow-2xl border-[6px] border-white dark:border-zinc-950 transition-transform duration-500 group-hover:rotate-3 group-hover:scale-105">
-                    <i className="fa-solid fa-user-doctor"></i>
+                 <div className="w-48 h-48 bg-gradient-to-tr from-emerald-400 to-teal-500 rounded-[2.5rem] flex items-center justify-center text-white text-7xl shadow-2xl border-[6px] border-white dark:border-zinc-950 transition-all duration-500 group-hover:rotate-3 group-hover:scale-105 relative z-10">
+                    <i className="fa-solid fa-user-doctor drop-shadow-md"></i>
                  </div>
-                 <div className={`absolute -bottom-3 left-1/2 -translate-x-1/2 px-5 py-2 ${getStatusColor(status)} text-white rounded-full shadow-lg border-4 border-white dark:border-zinc-950 transition-all active:scale-95`}>
+                 
+                 {/* Status Pill */}
+                 <div className={`absolute -bottom-3 left-1/2 -translate-x-1/2 px-5 py-2 ${getStatusColor(status)} text-white rounded-full shadow-lg border-4 border-white dark:border-zinc-950 transition-all active:scale-95 z-20 flex items-center gap-2`}>
+                    {status === 'In Surgery' && <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>}
                     <p className="text-[9px] font-black uppercase tracking-widest whitespace-nowrap">{status}</p>
                  </div>
               </div>
               
-              <div className="w-full relative z-10 px-2">
+              <div className="w-full relative z-10 px-2 mt-4">
                  {isEditing ? (
                    <input 
                      value={formData.name}
@@ -127,7 +150,7 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
                      placeholder="Dr. Name"
                    />
                  ) : (
-                   <h4 className="text-3xl font-bold font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide">{formData.name}</h4>
+                   <h4 className="text-3xl font-bold font-lobster text-zinc-900 dark:text-zinc-50 tracking-wide transition-colors group-hover:text-emerald-600 dark:group-hover:text-emerald-400">{formData.name}</h4>
                  )}
                  
                  {isEditing ? (
@@ -138,14 +161,10 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
                      placeholder="Specialization"
                    />
                  ) : (
-                   <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mt-2">{formData.specialization}</p>
+                   <div className="inline-block mt-2 px-3 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
+                     <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em]">{formData.specialization}</p>
+                   </div>
                  )}
-              </div>
-
-              <div className="flex gap-4 mt-8">
-                <SocialButton icon="share-nodes" onClick={() => copyToClipboard(doctorId, 'Profile Link')} />
-                <SocialButton icon="qrcode" onClick={() => alert("QR Code generation coming soon!")} />
-                <SocialButton icon="message" onClick={() => alert("Direct messaging is enabled for active patients.")} />
               </div>
 
               <div className="w-full mt-8 pt-8 border-t border-zinc-100 dark:border-zinc-800 space-y-4">
@@ -155,9 +174,10 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
               </div>
            </div>
            
-           <div className="bg-indigo-50/50 dark:bg-indigo-900/10 p-6 rounded-[2.5rem] border-2 border-indigo-100 dark:border-indigo-900/30 text-center">
+           <div className="bg-indigo-50/50 dark:bg-indigo-900/10 p-6 rounded-[2.5rem] border-2 border-indigo-100 dark:border-indigo-900/30 text-center relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-500/5 rounded-full blur-2xl -mr-10 -mt-10"></div>
               <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400 mb-2">Network Status</p>
-              <div className="inline-flex items-center gap-2 bg-white dark:bg-zinc-800 px-4 py-2 rounded-full shadow-sm">
+              <div className="inline-flex items-center gap-2 bg-white dark:bg-zinc-800 px-4 py-2 rounded-full shadow-sm border border-indigo-100 dark:border-indigo-900/50">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Active & Verified</span>
               </div>
@@ -168,9 +188,12 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
         <div className="lg:col-span-8 space-y-6">
            
            {/* Bio Section */}
-           <div className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md p-8 rounded-[3rem] border border-zinc-100 dark:border-zinc-800 shadow-xl transition-all hover:shadow-2xl hover:bg-white/80 dark:hover:bg-zinc-900/80 group">
-              <div className="flex items-center gap-3 mb-4">
-                 <div className="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center shadow-inner">
+           <div className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md p-8 rounded-[3rem] border border-zinc-100 dark:border-zinc-800 shadow-xl transition-all hover:shadow-2xl hover:bg-white/90 dark:hover:bg-zinc-900/90 group relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-700">
+                <i className="fa-solid fa-quote-right text-6xl"></i>
+              </div>
+              <div className="flex items-center gap-3 mb-4 relative z-10">
+                 <div className="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center shadow-inner group-hover:rotate-12 transition-transform duration-300">
                     <i className="fa-solid fa-quote-left text-sm"></i>
                  </div>
                  <h5 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">About Me</h5>
@@ -179,11 +202,11 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
                 <textarea 
                   value={formData.bio}
                   onChange={e => setFormData({...formData, bio: e.target.value})}
-                  className="w-full h-24 bg-zinc-50 dark:bg-black/20 p-4 rounded-2xl border-2 border-zinc-100 dark:border-zinc-700 focus:border-indigo-400 outline-none text-sm font-bold text-zinc-700 dark:text-zinc-300 resize-none"
+                  className="w-full h-24 bg-zinc-50 dark:bg-black/20 p-4 rounded-2xl border-2 border-zinc-100 dark:border-zinc-700 focus:border-indigo-400 outline-none text-sm font-bold text-zinc-700 dark:text-zinc-300 resize-none relative z-10"
                   placeholder="Share a brief professional bio..."
                 />
               ) : (
-                <p className="text-sm md:text-base font-bold text-zinc-600 dark:text-zinc-400 leading-relaxed italic opacity-90 group-hover:opacity-100 transition-opacity">
+                <p className="text-sm md:text-base font-bold text-zinc-600 dark:text-zinc-400 leading-relaxed italic opacity-90 group-hover:opacity-100 transition-opacity relative z-10">
                    "{formData.bio || 'No bio provided.'}"
                 </p>
               )}
@@ -241,15 +264,6 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
 
 // --- Subcomponents ---
 
-const SocialButton: React.FC<{ icon: string, onClick: () => void }> = ({ icon, onClick }) => (
-  <button 
-    onClick={onClick}
-    className="w-12 h-12 rounded-2xl bg-zinc-50 dark:bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900 dark:hover:bg-zinc-700 hover:-translate-y-1 transition-all shadow-sm flex items-center justify-center border border-zinc-200 dark:border-zinc-700"
-  >
-    <i className={`fa-solid fa-${icon} text-lg`}></i>
-  </button>
-);
-
 const StatRow: React.FC<{ 
   label: string, 
   value: string, 
@@ -259,12 +273,12 @@ const StatRow: React.FC<{
   copyable?: boolean,
   onClick?: () => void
 }> = ({ label, value, icon, isEditing, onChange, copyable, onClick }) => (
-  <div className="flex items-center gap-4 group">
-     <div className={`w-10 h-10 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-emerald-500 shadow-sm transition-colors border border-zinc-100 dark:border-zinc-700`}>
+  <div className="flex items-center gap-4 group cursor-default">
+     <div className={`w-10 h-10 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-emerald-500 group-hover:scale-110 shadow-sm transition-all border border-zinc-100 dark:border-zinc-700`}>
         <i className={`fa-solid fa-${icon}`}></i>
      </div>
      <div className="flex-1 min-w-0 text-left">
-        <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400">{label}</p>
+        <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-emerald-400 transition-colors">{label}</p>
         {isEditing && onChange ? (
            <input 
              value={value}
@@ -278,7 +292,7 @@ const StatRow: React.FC<{
         )}
      </div>
      {copyable && !isEditing && (
-       <button onClick={onClick} className="text-zinc-300 hover:text-emerald-500 transition-colors">
+       <button onClick={onClick} className="text-zinc-300 hover:text-emerald-500 transition-all hover:scale-110 active:scale-95">
          <i className="fa-solid fa-copy"></i>
        </button>
      )}
@@ -303,13 +317,19 @@ const InfoCard: React.FC<InfoCardProps> = ({ title, icon, color, fields, isEditi
     amber: 'text-amber-600 bg-amber-100 dark:bg-amber-900/30'
   };
 
+  const bgHoverColors = {
+    emerald: 'hover:shadow-emerald-500/10 hover:border-emerald-200 dark:hover:border-emerald-900/50',
+    sky: 'hover:shadow-sky-500/10 hover:border-sky-200 dark:hover:border-sky-900/50',
+    amber: 'hover:shadow-amber-500/10 hover:border-amber-200 dark:hover:border-amber-900/50'
+  };
+
   return (
-    <div className={`bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md p-8 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800 shadow-lg hover:shadow-xl transition-all ${fullWidth ? 'md:col-span-2' : ''}`}>
+    <div className={`bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md p-8 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800 shadow-lg hover:shadow-2xl transition-all hover:-translate-y-1 ${bgHoverColors[color]} ${fullWidth ? 'md:col-span-2' : ''} group`}>
        <div className="flex items-center gap-3 mb-6">
-          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${colors[color]} shadow-sm`}>
+          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${colors[color]} shadow-sm group-hover:scale-110 transition-transform duration-300`}>
              <i className={`fa-solid fa-${icon} text-sm`}></i>
           </div>
-          <h5 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{title}</h5>
+          <h5 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-zinc-700 dark:group-hover:text-white transition-colors">{title}</h5>
        </div>
        
        <div className={`grid ${fullWidth ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'} gap-6`}>
@@ -323,7 +343,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ title, icon, color, fields, isEditi
                     className="w-full p-3 rounded-xl bg-white dark:bg-black/20 border border-zinc-200 dark:border-zinc-700 focus:border-zinc-400 outline-none text-sm font-bold text-zinc-800 dark:text-zinc-200"
                   />
                 ) : (
-                  <p className="p-3 rounded-xl bg-zinc-50/50 dark:bg-zinc-800/30 border border-transparent text-sm font-bold text-zinc-700 dark:text-zinc-300 min-h-[46px] flex items-center">
+                  <p className="p-3 rounded-xl bg-zinc-50/50 dark:bg-zinc-800/30 border border-transparent text-sm font-bold text-zinc-700 dark:text-zinc-300 min-h-[46px] flex items-center transition-colors group-hover:bg-white dark:group-hover:bg-zinc-800/50">
                     {field.value || <span className="text-zinc-400 italic font-normal text-xs">Not provided</span>}
                   </p>
                 )}
