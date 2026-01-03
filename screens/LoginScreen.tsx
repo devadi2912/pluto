@@ -17,6 +17,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLogin, t
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
+  
+  // Custom Error State for subtle popup
+  const [error, setError] = useState<string | null>(null);
 
   // Pre-fill username if coming from registration
   useEffect(() => {
@@ -26,11 +29,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLogin, t
   }, [tempUser]);
 
   const handleLogin = async () => {
+    setError(null); // Clear previous errors
     const cleanUsername = username.trim();
     const cleanPassword = password.trim();
 
     if (!cleanUsername || !cleanPassword) {
-      alert("Please enter both your email and password.");
+      setError("Please enter both email and password.");
+      setTimeout(() => setError(null), 3000);
       return;
     }
 
@@ -51,11 +56,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLogin, t
       if (err.code !== 'auth/email-not-verified') {
          let msg = "Invalid credentials. Please try again.";
          if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-            msg = "Email or password incorrect";
+            msg = "Incorrect email or password";
          } else if (err.code === 'auth/too-many-requests') {
-            msg = "Too many failed attempts. Try again later.";
+            msg = "Too many attempts. Wait a moment.";
          }
-         alert(msg);
+         
+         // Trigger subtle popup
+         setError(msg);
+         setTimeout(() => setError(null), 4000);
       }
     } finally {
       setIsLoading(false);
@@ -82,6 +90,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLogin, t
         .animate-puppy-idle { animation: happy-bounce 2s ease-in-out infinite; }
         .animate-puppy-run { animation: runAround 3s ease-in-out forwards; z-index: 100; }
       `}</style>
+
+      {/* Subtle Error Popup */}
+      {error && (
+        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-5 fade-in duration-300 w-full max-w-sm px-4 flex justify-center pointer-events-none">
+           <div className="bg-white dark:bg-zinc-900 pl-4 pr-6 py-3 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.15)] border-2 border-rose-100 dark:border-rose-900/50 flex items-center gap-3 pointer-events-auto">
+              <div className="w-6 h-6 bg-rose-500 rounded-full flex items-center justify-center text-white text-[10px] shrink-0 shadow-md">
+                 <i className="fa-solid fa-xmark"></i>
+              </div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300">{error}</p>
+           </div>
+        </div>
+      )}
 
       <button 
         onClick={() => onNavigate('START')}
@@ -120,7 +140,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLogin, t
                 disabled={isLoading}
                 type="email" 
                 placeholder="you@email.com"
-                className="w-full p-4 md:p-6 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-transparent focus:border-orange-200 outline-none rounded-2xl md:rounded-[1.75rem] font-bold text-zinc-900 dark:text-white text-sm md:text-lg transition-all"
+                className={`w-full p-4 md:p-6 bg-zinc-50 dark:bg-zinc-800 border-2 focus:border-orange-200 outline-none rounded-2xl md:rounded-[1.75rem] font-bold text-zinc-900 dark:text-white text-sm md:text-lg transition-all ${error ? 'border-rose-100 dark:border-rose-900/40' : 'border-zinc-100 dark:border-transparent'}`}
                 value={username}
                 onChange={e => setUsername(e.target.value)}
               />
@@ -132,7 +152,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLogin, t
                   disabled={isLoading}
                   type={showPassword ? "text" : "password"} 
                   placeholder="••••••••"
-                  className="w-full p-4 md:p-6 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-transparent focus:border-orange-200 outline-none rounded-2xl md:rounded-[1.75rem] font-bold text-zinc-900 dark:text-white pr-14 md:pr-16 text-sm md:text-lg transition-all"
+                  className={`w-full p-4 md:p-6 bg-zinc-50 dark:bg-zinc-800 border-2 focus:border-orange-200 outline-none rounded-2xl md:rounded-[1.75rem] font-bold text-zinc-900 dark:text-white pr-14 md:pr-16 text-sm md:text-lg transition-all ${error ? 'border-rose-100 dark:border-rose-900/40' : 'border-zinc-100 dark:border-transparent'}`}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleLogin()}

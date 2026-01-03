@@ -175,12 +175,12 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* 4. Interactive Action Cards - Refined for mobile to reduce clutter */}
-        <div className="w-full flex flex-col gap-4 md:flex-row md:gap-10 mt-10 md:mt-16 max-w-5xl">
+        {/* 4. Interactive Action Cards - Reconfigured for Mobile (Side-by-side Tiles with Centered Content) */}
+        <div className="w-full grid grid-cols-2 gap-3 md:flex md:flex-row md:gap-10 mt-6 md:mt-16 max-w-5xl px-2 md:px-0">
           {/* Join Card */}
           <button 
             onClick={() => onNavigate('REGISTER')}
-            className="group relative h-32 md:h-48 rounded-[2.5rem] md:rounded-[4rem] bg-indigo-600 dark:bg-indigo-500 text-white overflow-hidden shadow-2xl transition-all duration-500 hover:scale-[1.04] active:scale-95 hover:shadow-[0_30px_60px_rgba(79,70,229,0.5)] border-[4px] md:border-[6px] border-white dark:border-zinc-900 flex-1"
+            className="group relative h-48 md:h-48 rounded-[2rem] md:rounded-[4rem] bg-indigo-600 dark:bg-indigo-500 text-white overflow-hidden shadow-2xl transition-all duration-500 hover:scale-[1.04] active:scale-95 hover:shadow-[0_30px_60px_rgba(79,70,229,0.5)] border-[4px] md:border-[6px] border-white dark:border-zinc-900 flex-1 flex flex-col justify-between"
           >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent)] pointer-events-none"></div>
             
@@ -188,15 +188,17 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onNavigate }) => {
                <i className="fa-solid fa-cloud-plus text-7xl md:text-9xl"></i>
             </div>
             
-            <div className="relative z-10 h-full flex flex-col justify-center items-start px-8 md:px-12 text-left space-y-1 md:space-y-3">
-              <div className="px-2.5 py-1 bg-white/20 rounded-full inline-block backdrop-blur-md">
-                 <span className="text-[6px] md:text-[9px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-white">New Family</span>
+            <div className="relative z-10 w-full flex flex-col items-center text-center md:items-start md:text-left p-5 md:px-12 md:py-0 md:justify-center h-full space-y-1 md:space-y-3">
+              <div className="px-2 py-1 bg-white/20 rounded-full inline-block backdrop-blur-md mb-2 md:mb-0">
+                 <span className="text-[7px] md:text-[9px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-white">New Family</span>
               </div>
-              <h3 className="text-2xl md:text-5xl font-lobster leading-none drop-shadow-md">Join Us</h3>
-              <p className="text-[9px] md:text-[12px] font-bold text-indigo-50/70 max-w-[150px] md:max-w-[200px] leading-tight md:leading-relaxed">Secure your pet's future identity.</p>
+              <div>
+                <h3 className="text-xl md:text-5xl font-lobster leading-none drop-shadow-md">Join Us</h3>
+                <p className="text-[9px] md:text-[12px] font-bold text-indigo-50/70 max-w-[150px] md:max-w-[200px] leading-tight md:leading-relaxed mt-1 mx-auto md:mx-0">Start your journey.</p>
+              </div>
             </div>
             
-            <div className="absolute top-1/2 -translate-y-1/2 right-6 md:right-10 w-10 h-10 md:w-14 md:h-14 bg-white/10 hover:bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center group-hover:bg-white text-white group-hover:text-indigo-600 transition-all duration-500 border border-white/20 group-hover:scale-110 group-active:scale-90 shadow-lg">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:top-1/2 md:-translate-y-1/2 md:right-10 w-10 h-10 md:w-14 md:h-14 bg-white/10 hover:bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center group-hover:bg-white text-white group-hover:text-indigo-600 transition-all duration-500 border border-white/20 group-hover:scale-110 group-active:scale-90 shadow-lg">
                <i className="fa-solid fa-arrow-right-long text-xs md:text-xl group-hover:translate-x-1 transition-transform"></i>
             </div>
           </button>
@@ -204,7 +206,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onNavigate }) => {
           {/* Login Card */}
           <button 
             onClick={() => onNavigate('LOGIN')}
-            className="group relative h-32 md:h-48 rounded-[2.5rem] md:rounded-[4rem] bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white overflow-hidden shadow-xl transition-all duration-500 hover:scale-[1.04] active:scale-95 border-[4px] md:border-[6px] border-zinc-50 dark:border-zinc-800 hover:border-orange-500/50 flex-1 hover:shadow-[0_30px_60px_rgba(0,0,0,0.1)]"
+            className="group relative h-48 md:h-48 rounded-[2rem] md:rounded-[4rem] bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white overflow-hidden shadow-xl transition-all duration-500 hover:scale-[1.04] active:scale-95 border-[4px] md:border-[6px] border-zinc-50 dark:border-zinc-800 hover:border-orange-500/50 flex-1 flex flex-col justify-between hover:shadow-[0_30px_60px_rgba(0,0,0,0.1)]"
           >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(249,115,22,0.05),transparent)] pointer-events-none"></div>
 
@@ -212,15 +214,17 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onNavigate }) => {
                <i className="fa-solid fa-house-chimney-heart text-7xl md:text-9xl"></i>
             </div>
 
-            <div className="relative z-10 h-full flex flex-col justify-center items-start px-8 md:px-12 text-left space-y-1 md:space-y-3">
-              <div className="px-2.5 py-1 bg-orange-50 dark:bg-orange-950/30 rounded-full inline-block">
-                <span className="text-[6px] md:text-[9px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-orange-500">Welcome Back</span>
+            <div className="relative z-10 w-full flex flex-col items-center text-center md:items-start md:text-left p-5 md:px-12 md:py-0 md:justify-center h-full space-y-1 md:space-y-3">
+              <div className="px-2 py-1 bg-orange-50 dark:bg-orange-950/30 rounded-full inline-block mb-2 md:mb-0">
+                <span className="text-[7px] md:text-[9px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-orange-500">Return</span>
               </div>
-              <h3 className="text-2xl md:text-5xl font-lobster leading-none drop-shadow-sm text-zinc-800 dark:text-white">Sign In</h3>
-              <p className="text-[9px] md:text-[12px] font-bold text-zinc-500 dark:text-zinc-400 max-w-[150px] md:max-w-[200px] leading-tight md:leading-relaxed">Access your medical safe.</p>
+              <div>
+                <h3 className="text-xl md:text-5xl font-lobster leading-none drop-shadow-sm text-zinc-800 dark:text-white">Sign In</h3>
+                <p className="text-[9px] md:text-[12px] font-bold text-zinc-500 dark:text-zinc-400 max-w-[150px] md:max-w-[200px] leading-tight md:leading-relaxed mt-1 mx-auto md:mx-0">Open your safe.</p>
+              </div>
             </div>
 
-            <div className="absolute top-1/2 -translate-y-1/2 right-6 md:right-10 w-10 h-10 md:w-14 md:h-14 bg-zinc-50 dark:bg-zinc-800 rounded-full flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white text-zinc-400 transition-all duration-500 border border-zinc-100 dark:border-zinc-700 group-hover:border-transparent group-hover:scale-110 group-active:scale-90 shadow-inner group-hover:shadow-lg">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:top-1/2 md:-translate-y-1/2 md:right-10 w-10 h-10 md:w-14 md:h-14 bg-zinc-50 dark:bg-zinc-800 rounded-full flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white text-zinc-400 transition-all duration-500 border border-zinc-100 dark:border-zinc-700 group-hover:border-transparent group-hover:scale-110 group-active:scale-90 shadow-inner group-hover:shadow-lg">
                <i className="fa-solid fa-key text-xs md:text-xl group-hover:rotate-12 transition-transform"></i>
             </div>
           </button>
