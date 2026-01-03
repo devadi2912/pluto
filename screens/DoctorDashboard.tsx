@@ -94,11 +94,12 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   // State to hold the data of the patient we searched for
   const [searchedPatientData, setSearchedPatientData] = useState<any>(null);
 
-  // Determine which dataset to use: The one passed from App (default) or the one we just searched for
+  // Determine which dataset to use
   const activePatientData = searchedPatientData || petData;
   const activeDailyLogs = searchedPatientData ? searchedPatientData.dailyLogs : dailyLogs;
   const activeDoctorNotes = searchedPatientData ? searchedPatientData.doctorNotes : doctorNotes;
   const activeConsultedDoctors = searchedPatientData ? searchedPatientData.medicalNetworks : consultedDoctors;
+  const activeLastVisit = searchedPatientData ? { date: searchedPatientData.lastDoctorVisit, id: searchedPatientData.lastDoctorId } : null;
 
   // Fetch visited patients and their synced alerts on mount and refresh
   const fetchDashboardData = async () => {
@@ -124,7 +125,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
       }
     });
     
-    // Sort by most urgent (could sort by date here if needed)
     setPriorityItems(allAlerts.sort((a, b) => new Date(a.detail.split('•')[1]).getTime() - new Date(b.detail.split('•')[1]).getTime()));
   };
 
@@ -136,21 +136,17 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
     // Preserve case for the UID part, but check prefix case-insensitively
     const rawInput = (typeof id === 'string' ? id : searchId).trim();
     
-    // 1. Validate Format
     if (!rawInput.toUpperCase().startsWith('PET-')) {
       alert("Invalid ID format. Must start with PET-");
       return;
     }
 
-    // Extract UID by removing the first 4 characters "PET-" (case insensitive length is 4)
     const uid = rawInput.substring(4);
 
     try {
-      // 2. Search Database
       const userProfile = await api.getUserProfile(uid);
       
       if (userProfile && userProfile.petDetails) {
-         // 3. Fetch Full Records
          const records = await api.getPetRecords(uid);
          
          if (records) {
@@ -163,22 +159,22 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
               reminders: records.reminders,
               dailyLogs: records.dailyLogs,
               doctorNotes: records.doctorNotes,
-              medicalNetworks: records.medicalNetworks
+              medicalNetworks: records.medicalNetworks,
+              lastDoctorVisit: records.lastDoctorVisit,
+              lastDoctorId: records.lastDoctorId
             };
 
             setSearchedPatientData(fullData);
             
-            // Standardize ID
             const standardId = `PET-${uid}`;
             
-            // Log visit in backend and SYNC ALERTS
             if (doctor.id) {
                await api.logDoctorVisit(standardId, doctor.id);
-               // Refresh dashboard data to pull in new synced alerts
                await fetchDashboardData();
             }
 
             setIsViewingPatient(true);
+            setPatientSubTab('profile'); // Reset to dashboard view for new patient
          } else {
             alert("Patient profile exists but records are unavailable.");
          }
@@ -196,14 +192,13 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
     
     const newNote: DoctorNote = {
       id: Date.now().toString(),
-      doctorId: doctor.doctorDetails?.id || doctor.id,
+      doctorId: doctor.id,
       doctorName: doctor.doctorDetails?.name || 'Veterinarian',
       petId: activePatientData.pet.id,
       date: new Date().toISOString(),
       content: noteContent
     };
 
-    // If we are looking at a searched patient, we must call the API directly
     if (searchedPatientData) {
         const patientUid = activePatientData.pet.id.replace('PET-', '');
         await api.addDoctorNote(patientUid, newNote);
@@ -221,12 +216,10 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   };
 
   const handleDeleteNote = async (noteId: string) => {
-    // If we are viewing a searched patient, we must handle deletion locally targeting the patient ID
     if (searchedPatientData && activePatientData.pet.id) {
       const patientUid = activePatientData.pet.id.replace('PET-', '');
       try {
         await api.deleteDoctorNote(patientUid, noteId);
-        // Optimistic update
         setSearchedPatientData((prev: any) => ({
           ...prev,
           doctorNotes: prev.doctorNotes.filter((n: DoctorNote) => n.id !== noteId)
@@ -236,7 +229,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         alert("Could not delete note.");
       }
     } else if (onDeleteNote) {
-      // Fallback to prop (though prop might fail if App.tsx doesn't have correct pet ID loaded)
       onDeleteNote(noteId);
     }
   };
@@ -245,7 +237,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
     e.stopPropagation();
     if (!doctor.id) return;
     
-    // Optimistic Update
     setPriorityItems(prev => prev.filter(i => i.id !== item.id));
 
     try {
@@ -260,7 +251,6 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
     setActiveTab('discover');
     setIsViewingPatient(false);
     setSearchedPatientData(null); 
-    // Refresh alerts when returning home
     fetchDashboardData();
   };
 
@@ -326,9 +316,10 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
               onUpdateLog={() => {}} 
               petName={activePatientData.pet.name} 
               doctorNotes={activeDoctorNotes}
-              onDeleteNote={handleDeleteNote} // Use local handler
-              canManageNotes={true} // Allow doctors to manage notes even in readOnly mode
+              onDeleteNote={handleDeleteNote}
+              canManageNotes={true} 
               consultedDoctors={activeConsultedDoctors}
+              lastVisit={activeLastVisit}
               readOnly={true}
             />
           )}
@@ -646,7 +637,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
             {activeTab === 'patients' && (
               <DoctorPatientsScreen 
                 patients={visitedPatients.map(p => ({ id: p.id, name: p.petName, breed: p.breed, avatar: p.petAvatar }))} 
-                onSelectPatient={(id) => handleSearch(id.startsWith('PET-') ? id : `PET-${id}`)} 
+                onSelectPatient={(id) => handleSearch(id)} 
               />
             )}
             {activeTab === 'profile' && (

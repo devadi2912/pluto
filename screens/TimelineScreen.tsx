@@ -22,6 +22,7 @@ interface TimelineProps {
   petId?: string;
   readOnly?: boolean;
   lastVisit?: { date: string; id: string } | null;
+  onRemoveDoctor?: (id: string) => Promise<void>;
 }
 
 const TimelineScreen: React.FC<TimelineProps> = ({ 
@@ -38,7 +39,8 @@ const TimelineScreen: React.FC<TimelineProps> = ({
   consultedDoctors = [],
   petId,
   readOnly = false,
-  lastVisit
+  lastVisit,
+  onRemoveDoctor
 }) => {
   const [showAdd, setShowAdd] = useState(false);
   const [showAddReminder, setShowAddReminder] = useState(false);
@@ -282,59 +284,64 @@ const TimelineScreen: React.FC<TimelineProps> = ({
          </div>
       </section>
 
-      {/* 4. Doctor Visit Section */}
+      {/* 4. Doctor Visit Section - Unified Single Card Design */}
       <section className="space-y-6 pt-12 border-t border-zinc-100 dark:border-zinc-800">
          <div className="px-2">
             <h2 className="text-4xl font-lobster text-rose-500 dark:text-rose-400">Doctor Visit</h2>
-            <p className="text-[11px] font-black uppercase text-zinc-500 tracking-widest mt-1">Professionals who accessed these records</p>
+            <p className="text-[11px] font-black uppercase text-zinc-500 tracking-widest mt-1">Verified professional visit history</p>
          </div>
 
-         {/* Simplified Last Visit Insight Card */}
-         {lastVisit && (
-            <div className="px-2 mb-8 animate-in fade-in slide-in-from-top-4 duration-1000">
-              <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl rounded-[2.5rem] p-6 border-4 border-white dark:border-zinc-800 shadow-lg transition-all duration-300 hover:scale-[1.01] hover:shadow-2xl hover:border-rose-200 dark:hover:border-rose-900/30 group cursor-default">
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 rounded-2xl bg-rose-500 text-white flex items-center justify-center text-2xl shadow-lg group-hover:rotate-12 transition-transform">
-                          <i className="fa-solid fa-user-doctor"></i>
-                        </div>
-                        <div className="text-center md:text-left">
-                          <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 font-lobster leading-tight">
-                              {new Date(lastVisit.date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
-                          </h3>
-                          <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400 mt-0.5">
-                              <i className="fa-regular fa-clock mr-2 opacity-60"></i>
-                              {new Date(lastVisit.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </div>
-                    </div>
-                    <div className="bg-white dark:bg-zinc-950 px-5 py-3 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-inner">
-                        <p className="text-[9px] font-black uppercase text-zinc-400 tracking-widest text-center">Doctor ID</p>
-                        <p className="font-mono font-bold text-rose-500 text-sm tracking-wide">{lastVisit.id}</p>
-                    </div>
-                  </div>
-              </div>
-            </div>
-          )}
-
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {consultedDoctors && consultedDoctors.length > 0 ? consultedDoctors.map(doctor => (
-               <div key={doctor.id} className="bg-rose-50/50 dark:bg-rose-950/10 border-2 border-rose-100/50 dark:border-rose-900/20 p-6 rounded-[2.5rem] flex items-center gap-6 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all group">
-                  <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 flex items-center justify-center text-2xl group-hover:rotate-6 transition-transform">
-                    <i className="fa-solid fa-user-doctor"></i>
+            {consultedDoctors && consultedDoctors.length > 0 ? consultedDoctors.map(doctor => {
+               const isLastVisit = lastVisit?.id === doctor.id;
+               
+               return (
+                <div 
+                  key={doctor.id} 
+                  className={`bg-rose-50/50 dark:bg-rose-950/10 border-2 ${isLastVisit ? 'border-rose-400' : 'border-rose-100/50'} dark:border-rose-900/20 p-6 rounded-[2.5rem] flex items-center justify-between shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all group relative`}
+                >
+                  <div className="flex items-center gap-6">
+                    <div className={`w-14 h-14 rounded-2xl ${isLastVisit ? 'bg-rose-500' : 'bg-rose-100 dark:bg-rose-900/40'} text-${isLastVisit ? 'white' : 'rose-600'} flex items-center justify-center text-2xl group-hover:rotate-6 transition-transform shadow-lg`}>
+                      <i className="fa-solid fa-user-doctor"></i>
+                    </div>
+                    <div className="flex-1">
+                      <h5 className="text-xl font-lobster text-zinc-950 dark:text-zinc-50 leading-tight">{doctor.name}</h5>
+                      <p className="text-[10px] font-black text-rose-700 dark:text-rose-500 uppercase tracking-widest mt-1">{doctor.clinic} • {doctor.specialization}</p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h5 className="text-lg font-bold text-zinc-950 dark:text-zinc-200">{doctor.name}</h5>
-                    <p className="text-[11px] font-black text-rose-700 dark:text-rose-500 uppercase tracking-widest mt-1">{doctor.clinic} • {doctor.specialization}</p>
+
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="text-right">
+                      <p className={`text-[8px] font-black uppercase tracking-[0.2em] mb-1 ${isLastVisit ? 'text-rose-600' : 'text-zinc-400'}`}>
+                        {isLastVisit ? 'Last Active Visit' : 'Prior Consultation'}
+                      </p>
+                      <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                        {isLastVisit && lastVisit?.date 
+                          ? new Date(lastVisit.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                          : 'Past Record'}
+                      </p>
+                    </div>
+                    
+                    {!readOnly && (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onRemoveDoctor) onRemoveDoctor(doctor.id);
+                        }}
+                        className="w-8 h-8 bg-white dark:bg-zinc-800 text-zinc-300 hover:text-rose-500 rounded-full flex items-center justify-center shadow-sm border border-zinc-100 dark:border-zinc-700 hover:border-rose-100 transition-all active:scale-90"
+                        title="Remove Visit Entry"
+                      >
+                        <i className="fa-solid fa-trash-can text-[10px]"></i>
+                      </button>
+                    )}
                   </div>
-               </div>
-            )) : (
-              !lastVisit && (
-                <div className="md:col-span-2 py-10 text-center border-4 border-dashed border-zinc-100 dark:border-zinc-800 rounded-[3rem] text-zinc-400">
-                    <i className="fa-solid fa-users-medical text-4xl mb-3 opacity-30"></i>
-                    <p className="text-xs font-bold">No verified medical visits yet.</p>
-                 </div>
-              )
+                </div>
+               );
+            }) : (
+              <div className="md:col-span-2 py-10 text-center border-4 border-dashed border-zinc-100 dark:border-zinc-800 rounded-[3rem] text-zinc-400">
+                  <i className="fa-solid fa-users-medical text-4xl mb-3 opacity-30"></i>
+                  <p className="text-xs font-bold">No verified medical visits yet.</p>
+              </div>
             )}
          </div>
       </section>

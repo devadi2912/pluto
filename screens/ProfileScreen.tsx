@@ -33,6 +33,9 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Today's date for display
+  const todayStr = useMemo(() => new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }), []);
+
   // Sync form data whenever the source pet object changes (e.g., after hydration)
   useEffect(() => {
     if (pet && !isEditing) {
@@ -277,6 +280,14 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
                 />
 
                 <ColorField 
+                   label="Present Date" 
+                   value={todayStr} 
+                   icon="calendar-check" 
+                   isEditing={false}
+                   highlight
+                />
+
+                <ColorField 
                    label="Species" 
                    value={formData.species} 
                    icon="paw" 
@@ -459,7 +470,7 @@ const ColorField: React.FC<{
         <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-sm bg-white dark:bg-zinc-800 ${highlight ? 'text-orange-500' : 'text-zinc-400 dark:text-zinc-500'} shadow-sm transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6`}>
           <i className={`fa-solid fa-${icon}`}></i>
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 text-left">
           <p className="text-[8px] font-black uppercase tracking-widest mb-0.5 text-zinc-400 dark:text-zinc-500 group-hover:text-orange-500 transition-colors">{label}</p>
           {isEditing ? (
             component || (

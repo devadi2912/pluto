@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Doctor } from '../types';
 import { api } from '../lib/api';
 
@@ -12,6 +12,9 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
+  // Today's date for display
+  const todayStr = useMemo(() => new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }), []);
+
   // Initialize state merging props with default fallbacks for visual completeness
   const [formData, setFormData] = useState<Doctor>(() => ({
     ...doctorProfile,
@@ -90,7 +93,7 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
       `}</style>
 
       {/* Header / Action Bar */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 text-left">
         <div>
           <h3 className="text-4xl md:text-5xl font-lobster text-zinc-900 dark:text-zinc-50 leading-tight tracking-wide">Professional Profile</h3>
           <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] mt-2 ml-1">Verified Medical Identity Vault</p>
@@ -168,6 +171,7 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
               </div>
 
               <div className="w-full mt-8 pt-8 border-t border-zinc-100 dark:border-zinc-800 space-y-4">
+                 <StatRow label="Present Date" value={todayStr} icon="calendar-day" />
                  <StatRow label="System ID" value={doctorId} icon="fingerprint" copyable onClick={() => copyToClipboard(doctorId, 'UID')} />
                  <StatRow label="License #" value={formData.registrationId} icon="id-card" isEditing={isEditing} onChange={v => setFormData({...formData, registrationId: v})} />
                  <StatRow label="Experience" value={formData.experience} icon="briefcase" isEditing={isEditing} onChange={v => setFormData({...formData, experience: v})} />
@@ -188,7 +192,7 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
         <div className="lg:col-span-8 space-y-6">
            
            {/* Bio Section */}
-           <div className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md p-8 rounded-[3rem] border border-zinc-100 dark:border-zinc-800 shadow-xl transition-all hover:shadow-2xl hover:bg-white/90 dark:hover:bg-zinc-900/90 group relative overflow-hidden">
+           <div className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md p-8 rounded-[3rem] border border-zinc-100 dark:border-zinc-800 shadow-xl transition-all hover:shadow-2xl hover:bg-white/90 dark:hover:bg-zinc-900/90 group relative overflow-hidden text-left">
               <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-700">
                 <i className="fa-solid fa-quote-right text-6xl"></i>
               </div>
@@ -213,7 +217,7 @@ const DoctorProfileScreen: React.FC<DoctorProfileScreenProps> = ({ doctorProfile
            </div>
 
            {/* Info Grid */}
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
               <InfoCard 
                 title="Practice Info" 
                 icon="clinic-medical" 

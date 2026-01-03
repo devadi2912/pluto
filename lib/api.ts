@@ -48,6 +48,7 @@ class ApiClient {
   private journalDoc(uid: string) { return db.collection('users').doc(uid).collection('journals').doc('records'); }
   private homeDoc(uid: string) { return db.collection('users').doc(uid).collection('home').doc('dashboard'); }
   private filesDoc(uid: string) { return db.collection('users').doc(uid).collection('files').doc('uploads'); }
+  private doctorVisitsColl(doctorId: string) { return this.userDoc(doctorId).collection('pet_visits'); }
 
   // --- Auth & Root Profile ---
 
@@ -145,17 +146,11 @@ class ApiClient {
    * Helper to delete an item from an array in a document.
    */
   private async deleteNestedArrayNode(ref: firebase.firestore.DocumentReference, arrayName: string, targetId: string) {
-    console.log(`[API] deleteNestedArrayNode: Initiated for ${arrayName}. Searching for ID: "${targetId}" in ${ref.path}`);
-    
     const snap = await ref.get();
-    if (!snap.exists) {
-      console.error(`[API] deleteNestedArrayNode: ERROR - Document at ${ref.path} does not exist in the database.`);
-      return false;
-    }
+    if (!snap.exists) return false;
 
     const data = snap.data();
     const currentArray = data ? (data[arrayName] || []) : [];
-    console.log(`[API] deleteNestedArrayNode: Fetched ${arrayName}. Current count: ${currentArray.length}`);
     
     const normalizedTarget = String(targetId).trim().toLowerCase();
     const filtered = currentArray.filter((item: any) => {
@@ -163,20 +158,13 @@ class ApiClient {
         return itemId !== normalizedTarget;
     });
     
-    if (filtered.length === currentArray.length) {
-      console.warn(`[API] deleteNestedArrayNode: NO MATCH FOUND. Target ID "${targetId}" was not located in the documents array.`);
-      return false;
-    }
+    if (filtered.length === currentArray.length) return false;
 
-    const removedCount = currentArray.length - filtered.length;
-    console.log(`[API] deleteNestedArrayNode: SUCCESS - Match found. Purging ${removedCount} item(s). Updating Firestore...`);
-    
     try {
         await ref.update({ [arrayName]: filtered });
-        console.log(`[API] deleteNestedArrayNode: DONE - Firestore field "${arrayName}" updated successfully.`);
         return true;
     } catch (err) {
-        console.error(`[API] deleteNestedArrayNode: CRITICAL ERROR - Failed to update Firestore:`, err);
+        console.error(`[API] deleteNestedArrayNode Error:`, err);
         return false;
     }
   }
@@ -370,14 +358,33 @@ class ApiClient {
     return this.deleteNestedArrayNode(this.journalDoc(uid), 'doctorNotes', id);
   }
 
+  async removeDoctorFromNetwork(uid: string, doctorId: string) {
+    return this.deleteNestedArrayNode(this.journalDoc(uid), 'medicalNetworks', doctorId);
+  }
+
   async logDoctorVisit(petId: string, doctorId: string) {
     const uid = petId.replace('PET-', '');
     const date = new Date().toISOString();
+    
+    // 1. Snapshot patient reminders for the doctor's alert logs
+    const records = await this.getPetRecords(uid);
+    const urgentAlerts = (records?.reminders || [])
+      .filter(r => !r.completed)
+      .map(r => ({
+        id: r.id,
+        title: r.title,
+        date: r.date,
+        type: r.type,
+        loggedAt: date
+      }));
+
+    // 2. Update Patient's root for Last Visit badges
     await this.userDoc(uid).update({
       lastDoctorVisit: date,
       lastDoctorId: doctorId
     });
     
+    // 3. Add doctor to patient's Medical Network list
     const docProfile = await this.getUserProfile(doctorId);
     if (docProfile?.doctorDetails) {
       const journalSnap = await this.journalDoc(uid).get();
@@ -389,34 +396,50 @@ class ApiClient {
       }
     }
     
-    await db.collection('doctors').doc(doctorId).collection('patients').doc(uid).set({
+    // 4. Log to DOCTOR'S private sub-collection with the snapshot of alerts
+    await this.doctorVisitsColl(doctorId).doc(uid).set({
       id: petId,
-      lastVisit: date
+      lastVisit: date,
+      alerts: sanitize(urgentAlerts) // The Array requested to store the logs
     });
   }
 
   async getDoctorVisitedPatients(doctorId: string) {
-    const snap = await db.collection('doctors').doc(doctorId).collection('patients').get();
-    const patients = [];
-    for (const doc of snap.docs) {
+    const snap = await this.doctorVisitsColl(doctorId).get();
+    
+    const patients = await Promise.all(snap.docs.map(async (doc) => {
       const uid = doc.id;
       const profile = await this.getUserProfile(uid);
+      
       if (profile?.petDetails) {
-        patients.push({
+        return {
           id: `PET-${uid}`,
           petName: profile.petDetails.name,
           breed: profile.petDetails.breed,
           petAvatar: profile.petDetails.avatar,
+          species: profile.petDetails.species,
           lastVisit: doc.data().lastVisit,
-          alerts: []
-        });
+          alerts: doc.data().alerts || [] // Retrieve the stored array of logs/alerts
+        };
       }
-    }
-    return patients;
+      return null;
+    }));
+
+    return patients.filter(p => p !== null);
   }
 
   async deleteDoctorAlert(doctorId: string, petId: string, alertId: string) {
-    return true;
+    const uid = petId.replace('PET-', '');
+    const docRef = this.doctorVisitsColl(doctorId).doc(uid);
+    const snap = await docRef.get();
+    
+    if (snap.exists) {
+      const currentAlerts = snap.data()?.alerts || [];
+      const updated = currentAlerts.filter((a: any) => a.id !== alertId);
+      await docRef.update({ alerts: sanitize(updated) });
+      return true;
+    }
+    return false;
   }
 
   async updateDoctorProfile(doctorId: string, data: Partial<Doctor>) {

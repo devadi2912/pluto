@@ -202,6 +202,17 @@ const App: React.FC = () => {
     }
   };
 
+  const handleRemoveDoctor = async (doctorId: string) => {
+    if (user?.role !== 'PET_OWNER' || !user?.id) return;
+    const success = await api.removeDoctorFromNetwork(user.id, doctorId);
+    if (success) {
+      setMedicalNetworks(prev => prev.filter(d => d.id !== doctorId));
+      if (lastVisitInfo?.id === doctorId) {
+        setLastVisitInfo(null);
+      }
+    }
+  };
+
   const handleCompleteReminder = async (id: string) => {
     if (!user?.id) return;
     const reminder = reminders.find(r => r.id === id);
@@ -277,7 +288,7 @@ const App: React.FC = () => {
           onUpdateLog={handleUpdateLog} petName={pet?.name} doctorNotes={doctorNotes} 
           onDeleteNote={handleDeleteClinicalNote} onDeleteTimelineEntry={handleDeleteTimelineEntry}
           onDeleteReminder={handleDeleteReminder} petId={user.id} consultedDoctors={medicalNetworks}
-          lastVisit={lastVisitInfo}
+          lastVisit={lastVisitInfo} onRemoveDoctor={handleRemoveDoctor}
         />
       );
       case 'documents': return <DocumentsScreen documents={documents} setDocuments={setDocuments} onDeleteDocument={handleDeleteDocument} petName={pet?.name} petId={user.id} />;
