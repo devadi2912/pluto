@@ -222,6 +222,14 @@ const VerifyEmailScreen: React.FC<{ email: string, onNavigate: () => void }> = (
                Please check your inbox (and spam folder), click the link, and then log in.
              </p>
              
+             {/* Small visual note for users regarding spam */}
+             <div className="bg-orange-50/50 dark:bg-zinc-800/30 p-3 rounded-xl border border-orange-100/50 dark:border-zinc-700/50">
+               <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 leading-relaxed italic">
+                 If email not received, please check the <span className="text-orange-500">spam folder</span>. 
+                 Email will be sent from <span className="font-mono">noreply@...</span>
+               </p>
+             </div>
+             
              {/* Resend Logic */}
              <div className="pt-2">
                 <button
