@@ -25,7 +25,13 @@ const PET_FACTS = [
 ];
 
 // Demo Data Logic for suggested prompts
-const getDemoResponse = (query: string, petName: string, petBreed: string) => {
+const getDemoResponse = (
+  query: string, 
+  petName: string, 
+  petBreed: string,
+  timeline: TimelineEntry[],
+  documents: PetDocument[]
+) => {
   const normalized = query.toLowerCase();
   const breed = petBreed.toLowerCase();
   
@@ -66,8 +72,16 @@ const getDemoResponse = (query: string, petName: string, petBreed: string) => {
   }
   
   if (normalized.includes('history')) {
+      const docSection = documents.length > 0 
+          ? documents.map(doc => `• 📄 **${doc.name}** (${doc.type}) - *${new Date(doc.date).toLocaleDateString()}*`).join('\n')
+          : "• No files uploaded yet.";
+
+      const journalSection = timeline.length > 0
+          ? timeline.map(entry => `• 🗓️ **${new Date(entry.date).toLocaleDateString()}** - ${entry.title} (${entry.type})`).join('\n')
+          : "• No journal entries recorded yet.";
+
       return {
-          text: `Here is a summary of ${petName}'s recent health timeline:\n\n• **Yesterday:** Activity goal reached (100%!) 🎉\n• **Last Week:** Uploaded 'Lab Results - Bloodwork' 📄\n• **Oct 12:** Annual Wellness Exam (Weight: Healthy) 🏥\n\nEverything looks stable. No missed medications in the last 30 days!`,
+          text: `Here is the full record history for **${petName}** based on your dashboard data: 📂\n\n**🗂️ Uploaded Documents:**\n${docSection}\n\n**🏥 Care Timeline:**\n${journalSection}`,
           sources: []
       };
   }
@@ -132,7 +146,7 @@ const AIScreen: React.FC<AIProps> = ({ pet, timeline, documents, reminders }) =>
 
     // DEMO INTERCEPTION
     // Check if the input matches our demo prompts to provide a seamless presentation experience
-    const demoResponse = getDemoResponse(textToSend, pet.name, pet.breed);
+    const demoResponse = getDemoResponse(textToSend, pet.name, pet.breed, timeline, documents);
     
     if (demoResponse) {
       // Simulate a natural thinking delay
