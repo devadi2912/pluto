@@ -87,7 +87,7 @@ export const PetOwnerShell: React.FC<PetOwnerShellProps> = ({
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto no-scrollbar relative bg-[#FFFAF3] dark:bg-zinc-950 pt-24 md:pt-0">
+      <main className="flex-1 overflow-y-auto no-scrollbar relative bg-[#FFFAF3] dark:bg-zinc-950 pt-32 md:pt-0">
         {children}
       </main>
 

@@ -543,7 +543,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         </header>
       )}
 
-      <main className={`flex-1 overflow-y-auto no-scrollbar relative ${!isViewingPatient ? 'pt-24 md:pt-0' : ''}`}>
+      <main className={`flex-1 overflow-y-auto no-scrollbar relative ${!isViewingPatient ? 'pt-32 md:pt-0' : ''}`}>
         {isViewingPatient ? renderPetView() : (
           <div className="p-8 md:p-12 max-w-6xl mx-auto space-y-12 pb-32">
             {activeTab === 'discover' && (
