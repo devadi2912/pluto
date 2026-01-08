@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { PetProfile, Species, Gender, Reminder } from '../types';
 import { api } from '../lib/api';
@@ -26,6 +25,7 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
     microchip: ''
   });
   const [showBirthdate, setShowBirthdate] = useState(false);
+  const [showNecessities, setShowNecessities] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -86,6 +86,11 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
     }
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    alert(`Copied: ${text}`);
+  };
+
   const pendingCount = reminders.filter(r => !r.completed).length;
   const isHealthy = pendingCount === 0;
 
@@ -117,8 +122,25 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
     }
   };
 
+  const emergencyContacts = [
+    { name: "Rishav Mobile Paws Pet Emergency", number: "+916291283373" },
+    { name: "Wonder Vet", number: "+91 7411794092" },
+    { name: "Furry Tales", number: "+91 9147071150" }
+  ];
+
   return (
     <div className="p-4 md:p-10 space-y-10 animate-in slide-in-from-bottom-10 duration-700 max-w-7xl mx-auto pb-40">
+      <style>{`
+        @keyframes drive-ambulance {
+          0% { transform: translateX(0) scale(1); }
+          20% { transform: translateX(-2px) scale(0.95); }
+          50% { transform: translateX(5px) scale(1.05); }
+          80% { transform: translateX(-1px) scale(1); }
+          100% { transform: translateX(0); }
+        }
+        .animate-drive { animation: drive-ambulance 0.8s ease-in-out infinite; }
+      `}</style>
+
       {/* Header */}
       <div className="flex items-center justify-between px-2">
         <div>
@@ -190,27 +212,27 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
 
         {/* Right Column: Interaction Cards & Details */}
         <div className="lg:col-span-8 space-y-6">
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Birthday Card */}
               <button 
                 onClick={() => setShowBirthdate(!showBirthdate)}
-                className="relative h-48 rounded-[3rem] p-8 text-left transition-all duration-300 hover:scale-[1.02] active:scale-95 overflow-hidden group border-2 border-transparent hover:border-rose-400 hover:shadow-[0_0_30px_rgba(244,63,94,0.3)] bg-rose-50/80 dark:bg-rose-950/20"
+                className="relative h-48 rounded-[3rem] p-6 text-left transition-all duration-300 hover:scale-[1.02] active:scale-95 overflow-hidden group border-2 border-transparent hover:border-rose-400 hover:shadow-[0_0_30px_rgba(244,63,94,0.3)] bg-rose-100 dark:bg-rose-900/40"
               >
-                 <div className="absolute -right-6 -bottom-6 text-[10rem] opacity-[0.03] rotate-12 group-hover:rotate-[20deg] transition-transform text-rose-900 dark:text-rose-100 pointer-events-none">
+                 <div className="absolute -right-6 -bottom-6 text-[8rem] opacity-10 rotate-12 group-hover:rotate-[20deg] transition-transform text-rose-900 dark:text-rose-100 pointer-events-none">
                     <i className="fa-solid fa-cake-candles"></i>
                  </div>
                  
                  <div className="relative z-10 flex flex-col justify-between h-full">
-                    <div className={`w-12 h-12 bg-white dark:bg-rose-900/40 rounded-2xl flex items-center justify-center text-rose-500 text-xl shadow-sm ${showBirthdate ? 'animate-party' : ''}`}>
+                    <div className={`w-10 h-10 bg-white dark:bg-rose-900/40 rounded-2xl flex items-center justify-center text-rose-600 dark:text-rose-400 text-lg shadow-sm ${showBirthdate ? 'animate-party' : ''}`}>
                        <i className="fa-solid fa-cake-candles"></i>
                     </div>
                     <div>
-                       <p className="text-[9px] font-black uppercase tracking-widest text-rose-400/80 mb-2">Celebration Day</p>
-                       <div className="h-10 flex items-center overflow-hidden">
+                       <p className="text-[9px] font-black uppercase tracking-widest text-rose-600/70 dark:text-rose-300/70 mb-2">Celebration</p>
+                       <div className="h-8 flex items-center overflow-hidden">
                          {showBirthdate ? (
-                           <span className="text-2xl font-lobster text-rose-600 dark:text-rose-300 animate-in slide-in-from-bottom-4">{birthDisplay}</span>
+                           <span className="text-lg font-lobster text-rose-600 dark:text-rose-300 animate-in slide-in-from-bottom-4">{birthDisplay}</span>
                          ) : (
-                           <span className="text-xl font-bold text-rose-900/30 dark:text-rose-100/30 group-hover:text-rose-500/50 transition-colors">Tap to Reveal</span>
+                           <span className="text-lg font-bold text-rose-900/30 dark:text-rose-100/30 group-hover:text-rose-500/50 transition-colors">Tap to Reveal</span>
                          )}
                        </div>
                     </div>
@@ -221,24 +243,24 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
               <div 
                 onClick={handleVitalityClick}
                 className={`
-                  relative h-48 rounded-[3rem] p-8 text-left transition-all duration-300 overflow-hidden group border-2 border-transparent 
+                  relative h-48 rounded-[3rem] p-6 text-left transition-all duration-300 overflow-hidden group border-2 border-transparent 
                   ${isHealthy 
-                    ? 'bg-emerald-50/80 dark:bg-emerald-950/20 hover:border-emerald-400 hover:shadow-[0_0_30px_rgba(52,211,153,0.3)] cursor-default' 
-                    : 'bg-amber-50/80 dark:bg-amber-950/20 hover:border-amber-400 hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] cursor-pointer hover:scale-[1.02] active:scale-95'
+                    ? 'bg-emerald-100 dark:bg-emerald-900/40 hover:border-emerald-400 hover:shadow-[0_0_30px_rgba(52,211,153,0.3)] cursor-default' 
+                    : 'bg-amber-100 dark:bg-amber-900/40 hover:border-amber-400 hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] cursor-pointer hover:scale-[1.02] active:scale-95'
                   }
                 `}
               >
-                 <div className={`absolute -right-6 -bottom-6 text-[10rem] opacity-[0.03] rotate-12 group-hover:rotate-[20deg] transition-transform pointer-events-none ${isHealthy ? 'text-emerald-900 dark:text-emerald-100' : 'text-amber-900 dark:text-amber-100'}`}>
+                 <div className={`absolute -right-6 -bottom-6 text-[8rem] opacity-10 rotate-12 group-hover:rotate-[20deg] transition-transform pointer-events-none ${isHealthy ? 'text-emerald-900 dark:text-emerald-100' : 'text-amber-900 dark:text-amber-100'}`}>
                     <i className={`fa-solid ${isHealthy ? 'fa-heart-pulse' : 'fa-triangle-exclamation'}`}></i>
                  </div>
                  
                  <div className="relative z-10 flex flex-col justify-between h-full">
                     <div 
                       className={`
-                        w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-sm transition-all
+                        w-10 h-10 rounded-2xl flex items-center justify-center text-lg shadow-sm transition-all
                         ${isHealthy 
-                          ? 'bg-white dark:bg-emerald-900/40 text-emerald-500' 
-                          : 'bg-white dark:bg-amber-900/40 text-amber-500 animate-spring-jump'
+                          ? 'bg-white dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400' 
+                          : 'bg-white dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 animate-spring-jump'
                         }
                       `}
                       style={!isHealthy ? { animationIterationCount: 'infinite' } : {}}
@@ -246,23 +268,46 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
                        <i className={`fa-solid ${isHealthy ? 'fa-heart-pulse' : 'fa-bell'}`}></i>
                     </div>
                     <div>
-                       <p className={`text-[9px] font-black uppercase tracking-widest mb-1 ${isHealthy ? 'text-emerald-400/80' : 'text-amber-400/80'}`}>Vitality Status</p>
+                       <p className={`text-[9px] font-black uppercase tracking-widest mb-1 ${isHealthy ? 'text-emerald-600/70 dark:text-emerald-300/70' : 'text-amber-600/70 dark:text-amber-300/70'}`}>Vitality</p>
                        <div className="flex flex-col">
-                         <span className={`text-3xl font-lobster ${isHealthy ? 'text-emerald-600 dark:text-emerald-300' : 'text-amber-600 dark:text-amber-300'}`}>
-                           {isHealthy ? 'Excellent' : 'Action Needed'}
+                         <span className={`text-2xl font-lobster ${isHealthy ? 'text-emerald-600 dark:text-emerald-300' : 'text-amber-600 dark:text-amber-300'}`}>
+                           {isHealthy ? 'Excellent' : 'Action'}
                          </span>
                          {!isHealthy && (
-                           <div className="flex items-center gap-2 mt-2 text-amber-600/70 dark:text-amber-400/70">
-                              <span className="text-[10px] font-bold bg-amber-100 dark:bg-amber-900/50 px-2 py-1 rounded-md">
-                                {pendingCount} Pending
+                           <div className="flex items-center gap-2 mt-1 text-amber-600/70 dark:text-amber-400/70">
+                              <span className="text-[8px] font-bold bg-amber-100 dark:bg-amber-900/50 px-1.5 py-0.5 rounded-md">
+                                {pendingCount}
                               </span>
-                              <span className="text-[9px] font-black uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">Tap to Review</span>
+                              <span className="text-[8px] font-black uppercase tracking-widest opacity-60">Pending</span>
                            </div>
                          )}
                        </div>
                     </div>
                  </div>
               </div>
+
+              {/* Necessities Card (New) */}
+              <button 
+                onClick={() => setShowNecessities(true)}
+                className="relative h-48 rounded-[3rem] p-6 text-left transition-all duration-300 hover:scale-[1.02] active:scale-95 overflow-hidden group border-2 border-transparent hover:border-indigo-400 hover:shadow-[0_0_30px_rgba(99,102,241,0.3)] bg-indigo-100 dark:bg-indigo-900/40"
+              >
+                 <div className="absolute -right-6 -bottom-6 text-[8rem] opacity-10 rotate-12 group-hover:rotate-[20deg] transition-transform text-indigo-900 dark:text-indigo-100 pointer-events-none">
+                    <i className="fa-solid fa-briefcase-medical"></i>
+                 </div>
+                 
+                 <div className="relative z-10 flex flex-col justify-between h-full">
+                    <div className="w-10 h-10 bg-white dark:bg-indigo-900/40 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-lg shadow-sm group-hover:scale-110 transition-transform relative overflow-hidden">
+                       <i className="fa-solid fa-briefcase-medical absolute transition-all duration-300 opacity-100 group-hover:opacity-0 group-hover:scale-0"></i>
+                       <i className="fa-solid fa-truck-medical absolute transition-all duration-300 opacity-0 group-hover:opacity-100 group-hover:animate-drive text-base"></i>
+                    </div>
+                    <div>
+                       <p className="text-[9px] font-black uppercase tracking-widest text-indigo-600/70 dark:text-indigo-300/70 mb-2">Necessities</p>
+                       <div className="h-8 flex items-center overflow-hidden">
+                          <span className="text-lg font-bold text-indigo-900/30 dark:text-indigo-100/30 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Tap for Help</span>
+                       </div>
+                    </div>
+                 </div>
+              </button>
            </div>
 
            <div className="bg-white/30 dark:bg-zinc-900/30 backdrop-blur-xl rounded-[3rem] p-8 border border-white/40 dark:border-zinc-800 shadow-lg">
@@ -394,6 +439,91 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
         </div>
       </div>
 
+      {/* Necessities Modal (New) */}
+      {showNecessities && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-transparent pointer-events-none">
+          {/* Background is interactive/scrollable because pointer-events-none is on the container and no blocking overlay */}
+          
+          {/* Glass Card - Compact Size & Heavy Blur */}
+          <div className="bg-white/60 dark:bg-black/60 backdrop-blur-md w-full max-w-sm rounded-[3rem] p-5 shadow-[0_40px_100px_rgba(0,0,0,0.25)] border-2 border-white/40 dark:border-zinc-700/40 space-y-5 relative z-10 animate-in zoom-in-95 duration-300 pointer-events-auto overflow-hidden">
+              
+              {/* Emergency Section */}
+              <div className="space-y-3">
+                 <div className="flex items-center justify-center gap-3 text-rose-500 dark:text-rose-400 mb-1">
+                    <div className="w-10 h-10 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-lg shadow-inner">
+                        <i className="fa-solid fa-truck-medical animate-drive"></i>
+                    </div>
+                    <h3 className="font-lobster text-3xl text-zinc-900 dark:text-zinc-50 drop-shadow-sm">Emergency</h3>
+                 </div>
+                 
+                 <div className="space-y-2">
+                    {emergencyContacts.map((contact, idx) => (
+                      <div 
+                        key={idx} 
+                        className="group relative flex items-center justify-between p-3 rounded-[1.5rem] bg-white/50 dark:bg-black/20 border border-rose-100 dark:border-rose-900/30 hover:border-rose-400 dark:hover:border-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all duration-300 hover:scale-[1.02]"
+                        style={{ animationDelay: `${idx * 100}ms` }}
+                      >
+                        <div className="flex-1 min-w-0 pr-3">
+                           <p className="font-black text-zinc-800 dark:text-zinc-200 text-xs truncate group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">{contact.name}</p>
+                           <p className="text-[10px] font-mono text-rose-500 dark:text-rose-400/80 mt-0.5 tracking-wider font-bold">{contact.number}</p>
+                        </div>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            copyToClipboard(contact.number);
+                          }}
+                          className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-800 text-zinc-400 group-hover:text-white group-hover:bg-rose-500 shadow-sm flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-90"
+                        >
+                           <i className="fa-solid fa-copy text-xs"></i>
+                        </button>
+                      </div>
+                    ))}
+                 </div>
+                 
+                 <div className="text-center">
+                    <p className="text-[8px] font-black uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500 flex items-center justify-center gap-2">
+                      <span className="w-1 h-1 rounded-full bg-emerald-500 animate-ping"></span>
+                      24/7 Helpline Support
+                    </p>
+                 </div>
+              </div>
+
+              {/* Divider */}
+              <div className="h-px w-full bg-gradient-to-r from-transparent via-zinc-200 dark:via-zinc-700 to-transparent"></div>
+
+              {/* Necessities Quick Actions */}
+              <div className="space-y-4">
+                 <h3 className="font-lobster text-xl text-center text-zinc-900 dark:text-zinc-50 opacity-80">Quick Access</h3>
+                 <div className="grid grid-cols-2 gap-3">
+                    <QuickAccessButton 
+                      href="https://www.google.com/maps/search/veterinarians+near+me" 
+                      icon="user-doctor" label="Doctors" color="indigo" 
+                    />
+                    <QuickAccessButton 
+                      href="https://www.google.com/maps/search/pet+groomers+near+me" 
+                      icon="scissors" label="Groomers" color="pink" 
+                    />
+                    <QuickAccessButton 
+                      href="https://www.google.com/maps/search/pet+stores+near+me" 
+                      icon="store" label="Pet Stores" color="amber" 
+                    />
+                    <QuickAccessButton 
+                      href="https://www.google.com/search?q=pet+events+near+me" 
+                      icon="baseball" label="Events" color="emerald" 
+                    />
+                 </div>
+              </div>
+
+              <button 
+                onClick={() => setShowNecessities(false)}
+                className="w-full py-3.5 mt-1 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[9px] hover:scale-[1.02] active:scale-95 transition-all shadow-lg hover:shadow-[0_0_20px_rgba(0,0,0,0.5)] dark:hover:shadow-[0_0_20px_rgba(255,255,255,0.5)]"
+              >
+                Close Panel
+              </button>
+          </div>
+        </div>
+      )}
+
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-transparent pointer-events-none">
@@ -438,17 +568,53 @@ const ProfileScreen: React.FC<ProfileProps> = ({ pet, setPet, reminders, onNavig
   );
 };
 
+const QuickAccessButton: React.FC<{ href: string, icon: string, label: string, color: string }> = ({ href, icon, label, color }) => {
+  const colorClasses: any = {
+    indigo: 'bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-100 dark:border-indigo-900/30 hover:border-indigo-400 dark:hover:border-indigo-400 text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white',
+    pink: 'bg-pink-50/50 dark:bg-pink-900/10 border-pink-100 dark:border-pink-900/30 hover:border-pink-400 dark:hover:border-pink-400 text-pink-500 group-hover:bg-pink-500 group-hover:text-white',
+    amber: 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30 hover:border-amber-400 dark:hover:border-amber-400 text-amber-500 group-hover:bg-amber-500 group-hover:text-white',
+    emerald: 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30 hover:border-emerald-400 dark:hover:border-emerald-400 text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white',
+  };
+
+  const textColors: any = {
+    indigo: 'text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300',
+    pink: 'text-pink-600 dark:text-pink-400 group-hover:text-pink-700 dark:group-hover:text-pink-300',
+    amber: 'text-amber-600 dark:text-amber-400 group-hover:text-amber-700 dark:group-hover:text-amber-300',
+    emerald: 'text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-700 dark:group-hover:text-emerald-300',
+  };
+
+  const glowClasses: any = {
+    indigo: 'hover:shadow-[0_0_25px_rgba(99,102,241,0.6)]',
+    pink: 'hover:shadow-[0_0_25px_rgba(236,72,153,0.6)]',
+    amber: 'hover:shadow-[0_0_25px_rgba(245,158,11,0.6)]',
+    emerald: 'hover:shadow-[0_0_25px_rgba(16,185,129,0.6)]',
+  };
+
+  return (
+    <a 
+      href={href} 
+      target="_blank" 
+      rel="noreferrer" 
+      className={`group flex flex-col items-center gap-2 p-3 rounded-[1.5rem] border hover:scale-[1.03] active:scale-95 transition-all duration-300 ${colorClasses[color].split(' group')[0]} ${glowClasses[color]}`}
+    >
+       <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all duration-300 bg-white dark:bg-zinc-800 shadow-sm group-hover:scale-110 group-hover:rotate-6 ${colorClasses[color].match(/text-\w+-\d+/)?.[0]} group-hover:bg-${color}-500 group-hover:text-white`}>
+          <i className={`fa-solid fa-${icon}`}></i>
+       </div>
+       <span className={`text-[8px] font-black uppercase tracking-widest transition-colors ${textColors[color]}`}>{label}</span>
+    </a>
+  );
+};
+
 const ColorField: React.FC<{ 
   label: string, 
   value: string, 
   icon: string, 
-  isEditing: boolean,
-  onChange?: (val: string) => void,
-  component?: React.ReactNode,
-  inputType?: string,
+  isEditing: boolean, 
+  onChange?: (val: string) => void, 
+  component?: React.ReactNode, 
+  inputType?: string, 
   highlight?: boolean
 }> = ({ label, value, icon, isEditing, onChange, component, inputType = "text", highlight }) => {
-  
   return (
     <div className={`
       relative p-4 rounded-3xl transition-all duration-500 group border
